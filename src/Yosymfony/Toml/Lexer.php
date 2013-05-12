@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the YosymfonyTomlBundle package.
+ * This file is part of the Yosymfony\Toml package.
  *
  * (c) YoSymfony <http://github.com/yosymfony>
  *
@@ -271,12 +271,12 @@ class Lexer
     {
         $allowed = array(
             
-    		'\\b' => "\b",
-			'\\t' => "\t",
-			'\\n' => "\n",
-			'\\f' => "\f",
+            '\\b' => "\b",
+            '\\t' => "\t",
+            '\\n' => "\n",
+            '\\f' => "\f",
             '\\r' => "\r", 
-			'\\"' => '"',
+            '\\"' => '"',
             '\\/' => '/',
 		);
         
