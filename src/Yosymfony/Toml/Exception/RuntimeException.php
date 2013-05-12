@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the YosymfonyTomlBundle package.
+ * This file is part of the Yosymfony\Toml package.
  *
  * (c) YoSymfony <http://github.com/yosymfony>
  *
