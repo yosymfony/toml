@@ -1,0 +1,21 @@
+<?php
+
+/*
+ * This file is part of the YosymfonyTomlBundle package.
+ *
+ * (c) YoSymfony <http://github.com/yosymfony>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+ 
+namespace Yosymfony\Toml\Exception;
+ 
+/**
+ * Exception class thrown when an error occurs during parsing.
+ *
+ * @author Victor Puertas <vpgugr@gmail.com>
+ */
+class RuntimeException extends \RuntimeException implements ExceptionInterface
+{
+}
