@@ -36,6 +36,8 @@ From a file:
 
 Unit tests
 ----------
+This package are in compliance with BurntSushi [test suite form TOML parsers](https://github.com/BurntSushi/toml-test).
+
 You can run the unit tests with the following command:
 
     $ cd your-path/vendor/yosymfony/toml
