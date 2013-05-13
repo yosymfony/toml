@@ -1,6 +1,6 @@
 {
     "name": "yosymfony/toml",
-	"description": "Yosymfony TOML component",
+	"description": "A PHP parser for TOML compatible with TOML v0.1.0",
     "type": "library",
 	"keywords": ["toml"],
 	"homepage": "http://github.com/yosymfony/toml",
