@@ -5,4 +5,5 @@ CHANGELOG
 ------------------
 
 * Initial release.
-* Support to TOML 0.1.0
+* Support to TOML 0.1.0.
+* BurntSushi test suite included.
