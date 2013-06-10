@@ -33,7 +33,7 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
             addValue('f', false)->
             
             addGroup('data.integer')->
-            addValue('positive', 25)->
+            addValue('positive', 25, 'Comment inline.')->
             addValue('negative', -25)->
             
             addGroup('data.float')->
