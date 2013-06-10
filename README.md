@@ -1,4 +1,4 @@
-Toml component
+TOML parser
 ==============
 
 A PHP parser for [TOML](https://github.com/mojombo/toml) compatible with [TOML v0.1.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.1.0.md).
