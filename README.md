@@ -34,6 +34,78 @@ From a file:
     
     print_r($array);
 
+### TomlBuilder
+You can create inline TOML string with TomlBuilder. TomBuilder used Fluent interface for more readable code:
+
+    use Yosymfony\Toml\TomlBuilder;
+    
+    $tb = new TomlBuilder();
+        
+    $result = $tb->addComment('Toml file')->
+        addGroup('data.string')->
+        addValue('name', "Toml", 'This is your name')->
+        addValue('newline', "This string has a \n new line character.")->
+        addValue('winPath', "C:\\Users\\nodejs\\templates")->
+        addValue('unicode', 'unicode character: ' . json_decode('"\u03B4"'))->
+        
+        addGroup('data.bool')->
+        addValue('t', true)->
+        addValue('f', false)->
+        
+        addGroup('data.integer')->
+        addValue('positive', 25, 'Comment inline.')->
+        addValue('negative', -25)->
+        
+        addGroup('data.float')->
+        addValue('positive', 25.25)->
+        addValue('negative', -25.25)->
+        
+        addGroup('data.datetime')->
+        addValue('datetime', new \Datetime())->
+        
+        addComment('Related to arrays')->
+        addGroup('data.array')->
+        addValue('simple', array(1,2,3))->
+        addValue('multiple', array( 
+            array(1,2), 
+            array('abc', 'def'), 
+            array(1.1, 1.2), 
+            array(true, false), 
+            array( new \Datetime()) ))->
+        
+        getTomlString();    // Generate the TOML string
+
+The result of this example:
+
+    #Toml file
+    
+    [data.string]
+    name = "Toml" #This is your name
+    newline = "This string has a \n new line character."
+    winPath = "C:\\Users\\nodejs\\templates"
+    unicode = "unicode character: δ"
+    
+    [data.bool]
+    t = true
+    f = false
+    
+    [data.integer]
+    positive = 25 #Comment inline.
+    negative = -25
+    
+    [data.float]
+    positive = 25.25
+    negative = -25.25
+    
+    [data.datetime]
+    datetime = 2013-06-10T21:12:48Z
+    #Related to arrays
+    
+    [data.array]
+    simple = [1, 2, 3]
+    multiple = [[1, 2], ["abc", "def"], [1.1, 1.2], [true, false], [2013-06-10T21:12:48Z]]
+
+
 Unit tests
 ----------
 This package are in compliance with BurntSushi [test suite for TOML parsers](https://github.com/BurntSushi/toml-test).
