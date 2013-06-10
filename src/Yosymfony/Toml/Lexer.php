@@ -270,7 +270,6 @@ class Lexer
     private function transformSpecialCharacter($val)
     {
         $allowed = array(
-            
             '\\b' => "\b",
             '\\t' => "\t",
             '\\n' => "\n",
@@ -303,37 +302,6 @@ class Lexer
             $result);
         $result = str_replace('[\\\\]', '\\', $result);
         return $result;
-    }
-    
-    private function isValidForSpecialCharacter()
-    {
-        $this->snippet = $this->getCurrent();
-        
-        switch($this->getCurrent())
-        {
-            case 'b':
-            case 't':
-            case 'n':
-            case 'f':
-            case 'r':
-            case '"':
-            case '/':
-            case '\\':
-                return true;
-            case 'u':
-                $hexVal = $this->getNext(1,4);
-
-                if(preg_match('/[0-9a-fA-F]{4}/',$hexVal) === 1)
-                {
-                    return true;
-                }
-                else
-                {
-                    $this->snippet = "\\u".$hexVal;
-                }
-        }
-        
-        return false;
     }
     
     private function getTokenComment()
