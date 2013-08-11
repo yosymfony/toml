@@ -1,23 +1,26 @@
 {
     "name": "yosymfony/toml",
-	"description": "A PHP parser for TOML compatible with TOML v0.1.0",
+    "description": "A PHP parser for TOML compatible with TOML v0.1.0",
     "type": "library",
-	"keywords": ["toml", "parser", "mojombo"],
-	"homepage": "http://github.com/yosymfony/toml",
-	"license": "MIT",
-	"authors": [
-		{
-			"name": "Victor Puertas",
-			"email": "vpgugr@gmail.com",
-			"homepage": "http://yosymfony.com"
-		}
-	],
-	"require": {
-		"php": ">=5.3.0"
-	},
-	"autoload": {
-		"psr-0": {
-			"Yosymfony\\Toml": "src/"
-		}
-	}
+    "keywords": ["toml", "parser", "mojombo"],
+    "homepage": "http://github.com/yosymfony/toml",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Victor Puertas",
+            "email": "vpgugr@gmail.com",
+            "homepage": "http://yosymfony.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "psr-0": { "Yosymfony\\Toml": "src/" }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1.x-dev"
+        }
+    }
 }
