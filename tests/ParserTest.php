@@ -29,6 +29,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 {
     public function testArrayEmpty()
     {
+        date_default_timezone_set('UTC');
+        
         $parser = new Parser();
         
         $array = $parser->parse('thevoid = [[[[[]]]]]');
@@ -185,9 +187,11 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertNotNull($array);
         
         $this->assertArrayHasKey('best-day-ever', $array);
+        $this->assertArrayHasKey('emptyName', $array);
         $this->assertArrayHasKey('numtheory', $array);
         
         $this->assertTrue($array['best-day-ever'] instanceof \Datetime);
+        $this->assertEquals("", $array['emptyName']);
         $this->assertTrue(is_array($array['numtheory']));
         
         $this->assertEquals($array['numtheory']['boring'], false);
