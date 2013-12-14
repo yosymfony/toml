@@ -12,3 +12,10 @@ CHANGELOG
 ------------------
 
 * Included TomlBuilder for create inline TOML strings.
+
+0.1.2 (2013-12-14)
+------------------
+* Fixed bug with empty string value parse error.
+* Fixed exception default timezone unset in unit tests.
+* Added travis configuration file.
+* Fixed some issues in README.md.

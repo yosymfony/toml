@@ -40,6 +40,7 @@ From a file:
 ### TomlBuilder
 You can create inline TOML string with TomlBuilder. TomBuilder used Fluent interface for more readable code:
 
+```php
     use Yosymfony\Toml\TomlBuilder;
     
     $tb = new TomlBuilder();
@@ -77,7 +78,7 @@ You can create inline TOML string with TomlBuilder. TomBuilder used Fluent inter
             array( new \Datetime()) ))
         
         ->getTomlString();    // Generate the TOML string
-
+```
 The result of this example:
 
     #Toml file

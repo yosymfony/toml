@@ -239,11 +239,14 @@ class Lexer
         $buffer = '';
         $isNotTheEnd = true;
         
-        do
+        if($this->isValidForString())
         {
-            $buffer .= $this->getCurrent();
-            $isNotTheEnd = $this->consume();
-        } while($isNotTheEnd && $this->isValidForString());
+            do
+            {
+                $buffer .= $this->getCurrent();
+                $isNotTheEnd = $this->consume();
+            } while($isNotTheEnd && $this->isValidForString());
+        }
         
         $this->beginQuoteOpen = false;
         
