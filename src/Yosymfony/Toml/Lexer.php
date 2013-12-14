@@ -80,7 +80,6 @@ class Lexer
     {
         $this->backToken = $this->currentToken;
         $this->currentToken = $this->consumeToken();
-        
         return $this->currentToken;
     }
     
@@ -123,6 +122,14 @@ class Lexer
     {
         if($this->beginQuoteOpen)
         {
+            if($this->getNext() === '"')
+            {//detect empty string
+                $this->consume();
+                $this->current = '';
+                $this->beginQuoteOpen = false;
+                $this->goBack();
+                return new Token(self::TOKEN_STRING, $this->getNemo(self::TOKEN_STRING), '');
+            }
             $this->consume();
             return $this->getTokenString();
         }
@@ -221,7 +228,7 @@ class Lexer
     private function consume()
     {
         $tmpVal = $this->getNext();
-        
+
         if(null !== $tmpVal)
         {
             $this->position++;
