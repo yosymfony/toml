@@ -3,6 +3,7 @@ TOML parser
 
 A PHP parser for [TOML](https://github.com/mojombo/toml) compatible with [TOML v0.1.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.1.0.md).
 
+[![Build Status](https://travis-ci.org/yosymfony/Toml.png?branch=master)](https://travis-ci.org/yosymfony/Toml)
 [![Latest Stable Version](https://poser.pugx.org/yosymfony/toml/v/stable.png)](https://packagist.org/packages/yosymfony/toml)
 [![Total Downloads](https://poser.pugx.org/yosymfony/toml/downloads.png)](https://packagist.org/packages/yosymfony/toml)
 
