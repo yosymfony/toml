@@ -44,39 +44,39 @@ You can create inline TOML string with TomlBuilder. TomBuilder used Fluent inter
     
     $tb = new TomlBuilder();
         
-    $result = $tb->addComment('Toml file')->
-        addGroup('data.string')->
-        addValue('name', "Toml", 'This is your name')->
-        addValue('newline', "This string has a \n new line character.")->
-        addValue('winPath', "C:\\Users\\nodejs\\templates")->
-        addValue('unicode', 'unicode character: ' . json_decode('"\u03B4"'))->
+    $result = $tb->addComment('Toml file')
+        ->addGroup('data.string')
+        ->addValue('name', "Toml", 'This is your name')
+        ->addValue('newline', "This string has a \n new line character.")
+        ->addValue('winPath', "C:\\Users\\nodejs\\templates")
+        ->addValue('unicode', 'unicode character: ' . json_decode('"\u03B4"'))
         
-        addGroup('data.bool')->
-        addValue('t', true)->
-        addValue('f', false)->
+        ->addGroup('data.bool')
+        ->addValue('t', true)
+        ->addValue('f', false)
         
-        addGroup('data.integer')->
-        addValue('positive', 25, 'Comment inline.')->
-        addValue('negative', -25)->
+        ->addGroup('data.integer')
+        ->addValue('positive', 25, 'Comment inline.')
+        ->addValue('negative', -25)
         
-        addGroup('data.float')->
-        addValue('positive', 25.25)->
-        addValue('negative', -25.25)->
+        ->addGroup('data.float')
+        ->addValue('positive', 25.25)
+        ->addValue('negative', -25.25)
         
-        addGroup('data.datetime')->
-        addValue('datetime', new \Datetime())->
+        ->addGroup('data.datetime')->
+        ->addValue('datetime', new \Datetime())
         
-        addComment('Related to arrays')->
-        addGroup('data.array')->
-        addValue('simple', array(1,2,3))->
-        addValue('multiple', array( 
+        ->addComment('Related to arrays')
+        ->addGroup('data.array')
+        ->addValue('simple', array(1,2,3))
+        ->addValue('multiple', array( 
             array(1,2), 
             array('abc', 'def'), 
             array(1.1, 1.2), 
             array(true, false), 
-            array( new \Datetime()) ))->
+            array( new \Datetime()) ))
         
-        getTomlString();    // Generate the TOML string
+        ->getTomlString();    // Generate the TOML string
 
 The result of this example:
 
