@@ -16,6 +16,35 @@ use Yosymfony\Toml\Token;
 
 class LexerTest extends \PHPUnit_Framework_TestCase
 {
+    public function testGetToken()
+    {
+        $lexer = new Lexer('title = "TOML Example"');
+        
+        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LITERAL);
+    }
+    
+    public function testGetNextToken()
+    {
+        $lexer = new Lexer('[[fruit]]');
+        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LBRANK);
+        $this->assertEquals($lexer->getNextToken()->getType(), Lexer::TOKEN_LBRANK);
+        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LBRANK);
+        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LITERAL);
+        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_RBRANK);
+        $this->assertEquals($lexer->getNextToken()->getType(), Lexer::TOKEN_RBRANK);
+        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_RBRANK);
+    }
+    
+    public function testGetBackToken()
+    {
+        $lexer = new Lexer('[[fruit]]');
+        $lexer->getToken();
+        $lexer->getToken();
+        
+        $this->assertEquals($lexer->getBackToken()->getType(), Lexer::TOKEN_LBRANK);
+        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LITERAL);
+    }
+    
     public function testTitle()
     {
         $lexer = new Lexer('title = "TOML Example"');
@@ -234,7 +263,6 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         $token = $lexer->getToken();
         
         $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
-        
     }
     
     public function testNegativeFloat()
@@ -249,7 +277,6 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         $token = $lexer->getToken();
         
         $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
-        
     }
     
     public function testDateTimeFloat()
@@ -264,7 +291,6 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         $token = $lexer->getToken();
         
         $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
-        
     }
     
     public function testArray()
@@ -344,5 +370,4 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         
         $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
     }
-    
 }
