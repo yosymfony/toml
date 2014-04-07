@@ -15,7 +15,7 @@ Use [Composer](http://getcomposer.org/) to install Yosyfmony Toml package:
 Add the following to your `composer.json` and run `composer update`.
 
     "require": {
-        "yosymfony/toml": "0.2.*@dev"
+        "yosymfony/toml": "dev-develop"
     }
 
 More informations about the package on [Packagist](https://packagist.org/packages/yosymfony/toml).
