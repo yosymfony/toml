@@ -326,4 +326,64 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
         
         $array = $parser->parse(file_get_contents($filename));
     }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableArrayImplicit()
+    {
+        $filename = __DIR__.'/Fixtures/invalid/tableArrayImplicit.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableArrayMalformedBracket()
+    {
+        $filename = __DIR__.'/Fixtures/invalid/tableArrayMalformedBracket.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableArrayMalformedEmpty()
+    {
+        $filename = __DIR__.'/Fixtures/invalid/tableArrayMalformedEmpty.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableNestedBracketsClose()
+    {
+        $filename = __DIR__.'/Fixtures/invalid/tableNestedBracketsClose.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableNestedBracketsOpen()
+    {
+        $filename = __DIR__.'/Fixtures/invalid/tableNestedBracketsOpen.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
 }

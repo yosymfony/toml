@@ -466,4 +466,73 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         
         $this->assertEquals($array['answer'], 'δ');
     }
+    
+    public function testTableArrayImplicit()
+    {
+        $filename = __DIR__.'/Fixtures/tableArrayImplicit.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+        
+        $this->assertNotNull($array);
+        $this->assertCount(1, $array);
+        $this->assertEquals('Glory Days', $array['albums'][0]['songs'][0]['name']);
+    }
+    
+    public function testTableArrayMany()
+    {
+        $filename = __DIR__.'/Fixtures/tableArrayMany.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+        
+        $this->assertNotNull($array);
+        $this->assertCount(1, $array);
+        
+        $this->assertEquals('Bruce', $array['people'][0]['first_name']);
+        $this->assertEquals('Springsteen', $array['people'][0]['last_name']);
+        
+        $this->assertEquals('Eric', $array['people'][1]['first_name']);
+        $this->assertEquals('Clapton', $array['people'][1]['last_name']);
+        
+        $this->assertEquals('Bob', $array['people'][2]['first_name']);
+        $this->assertEquals('Seger', $array['people'][2]['last_name']);
+    }
+    
+    public function testTableArrayNest()
+    {
+        $filename = __DIR__.'/Fixtures/tableArrayNest.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+        
+        $this->assertNotNull($array);
+        $this->assertCount(1, $array);
+        
+        $this->assertEquals('Born to Run', $array['albums'][0]['name']);
+        $this->assertEquals('Jungleland', $array['albums'][0]['songs'][0]['name']);
+        $this->assertEquals('Meeting Across the River', $array['albums'][0]['songs'][1]['name']);
+        
+        $this->assertEquals('Born in the USA', $array['albums'][1]['name']);
+        $this->assertEquals('Glory Days', $array['albums'][1]['songs'][0]['name']);
+        $this->assertEquals('Dancing in the Dark', $array['albums'][1]['songs'][1]['name']);
+    }
+    
+    public function testTableArrayOne()
+    {
+        $filename = __DIR__.'/Fixtures/tableArrayOne.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+        
+        $this->assertNotNull($array);
+        $this->assertCount(1, $array);
+        
+        $this->assertEquals('Bruce', $array['people'][0]['first_name']);
+        $this->assertEquals('Springsteen', $array['people'][0]['last_name']);
+    }
 }
