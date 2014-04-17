@@ -19,4 +19,4 @@ CHANGELOG
 0.2.0 (not released)
 --------------------
 * Support to TOML 0.2.0.
-* New test for arrays of tables.
+* New tests for arrays of tables.
