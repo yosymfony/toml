@@ -386,4 +386,16 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
         
         $array = $parser->parse(file_get_contents($filename));
     }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableArrayWithSomeNameOfTable()
+    {
+        $filename = __DIR__.'/Fixtures/invalid/tableArrayWithSomeNameOfTable.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
 }
