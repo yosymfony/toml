@@ -1,5 +1,5 @@
-TOML parser
-==============
+TOML parser for PHP
+===================
 
 A PHP parser for [TOML](https://github.com/mojombo/toml) compatible with [TOML v0.2.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.2.0.md).
 
