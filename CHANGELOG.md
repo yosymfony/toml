@@ -20,3 +20,4 @@ CHANGELOG
 --------------------
 * Support to TOML 0.2.0.
 * New tests for arrays of tables.
+* Fixtures folder in tests renamed to fixtures.
