@@ -477,7 +477,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         
         $this->assertNotNull($array);
         $this->assertCount(1, $array);
-        $this->assertEquals('Glory Days', $array['albums']['songs'][0]['name']);
+        $this->assertEquals('Glory Days', $array['albums']['songs']['name']);
     }
     
     public function testTableArrayMany()
