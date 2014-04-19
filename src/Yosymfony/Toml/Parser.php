@@ -25,7 +25,9 @@ class Parser
     private $currentToken = null;
     private $data = null;
     private $result = array();
-    private $keysTables = array();
+    private $tableNames = array();
+    private $arrayTableNames = array();
+    private $invalidArrayTablesName = array();
     
     public function __construct()
     {
@@ -35,9 +37,9 @@ class Parser
     /**
      * Parses TOML string into a PHP value.
      * 
-     * @param string  $value        A TOML string
+     * @param string $value A TOML string
      * 
-     * @return mixed  A PHP value
+     * @return mixed A PHP value
      */
     public function parse($value)
     {
@@ -78,12 +80,12 @@ class Parser
     
     private function isTokenValidForComment(Token $token)
     {
-        return $token->getType() !== Lexer::TOKEN_NEWLINE && $token->getType() !== Lexer::TOKEN_EOF;
+        return Lexer::TOKEN_NEWLINE !== $token->getType() && Lexer::TOKEN_EOF !== $token->getType();
     }
     
     private function processTables()
     {
-        if($this->lexer->getNextToken()->getType() === Lexer::TOKEN_LBRANK )
+        if(Lexer::TOKEN_LBRANK === $this->lexer->getNextToken()->getType())
         {
             $this->processArrayOfTables();
         }
@@ -128,7 +130,7 @@ class Parser
         $currentTokenType = $this->lexer->getCurrentToken()->getType();
         $nextTokenType = $this->lexer->getToken()->getType();
         
-        if($currentTokenType !== Lexer::TOKEN_RBRANK || $nextTokenType !== Lexer::TOKEN_RBRANK)
+        if(Lexer::TOKEN_RBRANK !== $currentTokenType || Lexer::TOKEN_RBRANK !== $nextTokenType)
         {
             throw new ParseException(
                 'Syntax error: expected close brank',
@@ -148,7 +150,7 @@ class Parser
         
         $this->setTable($tablename);
         
-        if($this->lexer->getCurrentToken()->getType() !== Lexer::TOKEN_RBRANK)
+        if(Lexer::TOKEN_RBRANK !== $this->lexer->getCurrentToken()->getType())
         {
             throw new ParseException(
                 'Syntax error: expected close brank',
@@ -159,80 +161,96 @@ class Parser
     
     private function isTokenValidForTablename(Token $token)
     {
-        if($token->getType() === Lexer::TOKEN_HASH)
+        if(Lexer::TOKEN_HASH === $token->getType())
         {
             $this->lexer->setCommentOpen(false);
             
             return true;
         }
         
-        return $token->getType() === Lexer::TOKEN_LITERAL;
+        return Lexer::TOKEN_LITERAL === $token->getType();
     }
     
     private function setTable($tablename)
     {
-        $keyParts = explode('.', $tablename);
+        $nameParts = explode('.', $tablename);
         $this->data = &$this->result;
         
-        if(in_array($tablename, $this->keysTables))
+        if(in_array($tablename, $this->tableNames) || in_array($tablename, $this->arrayTableNames))
         {
             throw new ParseException(
-                sprintf('Syntax error: the key %s has already been defined', $tablename), 
+                sprintf('Syntax error: the table %s has already been defined', $tablename), 
                 $this->currentLine, $this->lexer->getCurrentToken()->getValue());
         }
         
-        $this->keysTables[] = $tablename;
+        $this->tableNames[] = $tablename;
         
-        foreach($keyParts as $keyPart)
+        foreach($nameParts as $namePart)
         {
-            if(strlen($keyPart) == 0 )
+            if(0 == strlen($namePart))
             {
-                throw new ParseException('The key must not be empty', $this->currentLine, $tablename);
+                throw new ParseException('The name of the table must not be empty', $this->currentLine, $tablename);
             }
             
-            if(array_key_exists($keyPart, $this->data))
+            if(array_key_exists($namePart, $this->data))
             {
-                if(!is_array($this->data[$keyPart]))
+                if(!is_array($this->data[$namePart]))
                 {
                     throw new ParseException(
-                        sprintf('Syntax error: the key %s has already been defined', $tablename),
+                        sprintf('Syntax error: the table %s has already been defined', $tablename),
                         $this->currentLine, $this->lexer->getCurrentToken()->getValue());
                 }
             }
             else
             {
-                $this->data[$keyPart] = array();
+                $this->data[$namePart] = array();
             }
             
-            $this->data = &$this->data[$keyPart];
+            $this->data = &$this->data[$namePart];
         }
     }
     
     private function setArrayOfTables($tablename)
     {
-        $keyParts = explode('.', $tablename);
-        $endIndex = count($keyParts) - 1;
-        $this->data = &$this->result;
-        $this->keysTables[] = $tablename;
+        $nameParts = explode('.', $tablename);
+        $endIndex = count($nameParts) - 1;
         
-        foreach($keyParts as $index => $keyPart)
+        if(true == $this->isTableImplicit($nameParts))
         {
-            if(strlen($keyPart) == 0 )
+            $this->addInvalidArrayTablesName($nameParts);
+            $this->setTable($tablename);
+            
+            return;
+        }
+        
+        if(in_array($tablename, $this->invalidArrayTablesName))
+        {
+            throw new ParseException(
+                sprintf('Syntax error: the array of tables %s has already been defined as previous table', $tablename), 
+                $this->currentLine, $this->lexer->getCurrentToken()->getValue());
+        }
+        
+        $this->data = &$this->result;
+        $this->arrayTableNames[] = $tablename;
+        
+        foreach($nameParts as $index => $namePart)
+        {
+            if(0 == strlen($namePart))
             {
                 throw new ParseException('The key must not be empty', $this->currentLine, $tablename);
             }
             
-            if(!array_key_exists($keyPart, $this->data))
+            if(false == array_key_exists($namePart, $this->data))
             {
-                $this->data[$keyPart] = array();
-                $this->data[$keyPart][] = array();
+                $this->data[$namePart] = array();
+                $this->data[$namePart][] = array();
             }
             else if($endIndex == $index)
             {
-                $this->data[$keyPart][] = array();
+                $this->data[$namePart][] = array();
             }
             
-            $this->data = &$this->getLastElementRef($this->data[$keyPart]);
+            $this->data = &$this->getLastElementRef($this->data[$namePart]);
         }
     }
     
@@ -245,7 +263,7 @@ class Parser
             $key = $key . $this->lexer->getCurrentToken()->getValue();
         }
         
-        if($this->lexer->getCurrentToken()->getType() !== Lexer::TOKEN_EQUAL)
+        if(Lexer::TOKEN_EQUAL !== $this->lexer->getCurrentToken()->getType())
         {
             throw new ParseException(
                 'Syntax error: expected equal',
@@ -284,16 +302,16 @@ class Parser
     
     private function isTokenValidForKey(Token $token)
     {
-        return $token->getType() !== Lexer::TOKEN_EQUAL 
-            && $token->getType() !== Lexer::TOKEN_NEWLINE 
-            && $token->getType() !== Lexer::TOKEN_EOF;
+        return Lexer::TOKEN_EQUAL  !== $token->getType() 
+            && Lexer::TOKEN_NEWLINE !== $token->getType()
+            && Lexer::TOKEN_EOF !== $token->getType();
     }
     
     private function getStringValue()
     {
         $result = "";
         
-        if($this->lexer->getToken()->getType() !== Lexer::TOKEN_STRING)
+        if(Lexer::TOKEN_STRING !== $this->lexer->getToken()->getType())
         {
             throw new ParseException(
                 'Syntax error: expected string',
@@ -303,7 +321,7 @@ class Parser
         
         $result = (string) $this->lexer->getCurrentToken()->getValue();
         
-        if($this->lexer->getToken()->getType()  !== Lexer::TOKEN_QUOTES)
+        if(Lexer::TOKEN_QUOTES !== $this->lexer->getToken()->getType())
         {
             throw new ParseException(
                 'Syntax error: expected close quotes',
@@ -321,7 +339,7 @@ class Parser
         $lastType = null;
         $value = null;
         
-        while($this->lexer->getToken()->getType() != Lexer::TOKEN_RBRANK )
+        while(Lexer::TOKEN_RBRANK != $this->lexer->getToken()->getType())
         {
             switch($this->lexer->getCurrentToken()->getType())
             {
@@ -430,5 +448,31 @@ class Parser
         end($array);
         
         return $array[key($array)]; 
+    }
+    
+    private function isTableImplicit(array $tablenameParts)
+    {
+        if(count($tablenameParts) > 1)
+        {
+            array_pop($tablenameParts);
+            
+            $tablename = implode('.', $tablenameParts);
+            
+            if(false == in_array($tablename, $this->arrayTableNames))
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    private function addInvalidArrayTablesName(array $tablenameParts)
+    {
+        foreach($tablenameParts as $part)
+        {
+            $this->invalidArrayTablesName[] = implode('.', $tablenameParts);
+            array_pop($tablenameParts);
+        }
     }
 }
