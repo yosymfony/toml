@@ -20,5 +20,7 @@ CHANGELOG
 --------------------
 * Support to TOML 0.2.0.
 * New tests for arrays of tables.
+* TomlBuilder: new methods addTable
+* TomlBuilder: Deprecated methods addGroup.
 * Fixtures folder in tests renamed to fixtures.
 * Fixtures reorganized.

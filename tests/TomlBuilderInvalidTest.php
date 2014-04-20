@@ -24,8 +24,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
          $tb = new TomlBuilder();
         
-        $result = $tb->addValue('arrays-and-ints', array(1, array("Arrays are not integers.")))->
-            getTomlString();
+        $result = $tb->addValue('arrays-and-ints', array(1, array("Arrays are not integers.")))
+            ->getTomlString();
     }
     
     /**
@@ -35,8 +35,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
          $tb = new TomlBuilder();
         
-        $result = $tb->addValue('arrays-and-ints', array(1, 1.0))->
-            getTomlString();
+        $result = $tb->addValue('arrays-and-ints', array(1, 1.0))
+            ->getTomlString();
     }
     
     /**
@@ -46,8 +46,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
          $tb = new TomlBuilder();
         
-        $result = $tb->addValue('arrays-and-ints', array("hi", 42))->
-            getTomlString();
+        $result = $tb->addValue('arrays-and-ints', array("hi", 42))
+            ->getTomlString();
     }
     
     /**
@@ -57,9 +57,9 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('a')->
-            addGroup('a')->
-            getTomlString();
+        $result = $tb->addGroup('a')
+            ->addTable('a')
+            ->getTomlString();
     }
     
     /**
@@ -69,10 +69,10 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('fruit')->
-            addValue('type', 'apple')->
-            addGroup('fruit.type')->
-            getTomlString();
+        $result = $tb->addGroup('fruit')
+            ->addValue('type', 'apple')
+            ->addTable('fruit.type')
+            ->getTomlString();
     }
     
     /**
@@ -82,9 +82,9 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addValue('dupe', false)->
-            addValue('dupe', true)->
-            getTomlString();
+        $result = $tb->addValue('dupe', false)
+            ->addValue('dupe', true)
+            ->getTomlString();
     }
     
     /**
@@ -94,8 +94,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('')->
-            getTomlString();
+        $result = $tb->addTable('')
+            ->getTomlString();
     }
     
     /**
@@ -105,8 +105,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('naughty..naughty')->
-            getTomlString();
+        $result = $tb->addTable('naughty..naughty')
+            ->getTomlString();
     }
     
     /**
@@ -116,8 +116,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup(null)->
-            getTomlString();
+        $result = $tb->addTable(null)
+            ->getTomlString();
     }
     
     /**
@@ -127,8 +127,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup(2)->
-            getTomlString();
+        $result = $tb->addTable(2)
+            ->getTomlString();
     }
     
     /**
@@ -138,8 +138,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addValue(2, '2')->
-            getTomlString();
+        $result = $tb->addValue(2, '2')
+            ->getTomlString();
     }
     
     /**
@@ -149,8 +149,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addValue(null, 'null')->
-            getTomlString();
+        $result = $tb->addValue(null, 'null')
+            ->getTomlString();
     }
     
     /**
@@ -160,7 +160,7 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addValue('theNull', null)->
-            getTomlString();
+        $result = $tb->addValue('theNull', null)
+            ->getTomlString();
     }
 }

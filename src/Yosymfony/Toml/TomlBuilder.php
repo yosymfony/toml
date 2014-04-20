@@ -83,34 +83,48 @@ class TomlBuilder
     }
     
     /**
-     * Add a keygroup
+     * Alias for addTable method.
      * 
-     * @param string $key
+     * @deprecated Since version 0.2
+     * 
+     * @param string $keygroup
      * 
      * @return TomlBuilder
      */
     public function addGroup($keygroup)
     {
-        if(false === is_string($keygroup))
+        return $this->addTable($keygroup);
+    }
+    
+    /**
+     * Add a table
+     * 
+     * @param string $key Tablename. Dot character have a speciaal meant.
+     * 
+     * @return TomlBuilder
+     */
+    public function addTable($key)
+    {
+        if(false === is_string($key))
         {
-            throw new DumpException(sprintf('The keygroup must be a string'));
+            throw new DumpException(sprintf('The key of a table must be a string'));
         }
         
         $addPreNewline = $this->currentLine > 0 ? true : false;
         
-        $keyParts = explode('.', $keygroup);
-        $val = '['. $keygroup . ']';
+        $keyParts = explode('.', $key);
+        $val = '['. $key . ']';
         
         foreach($keyParts as $keyPart)
         {
             if(strlen($keyPart) == 0 )
             {
-                throw new DumpException(sprintf('The key must not be empty at keygroup: %s', $keygroup));
+                throw new DumpException(sprintf('The key must not be empty at table: %s', $key));
             }
         }
         
-        $this->addKeyToKeyList($keygroup);
-        $this->currentKeygroup = $keygroup;
+        $this->addKeyToKeyList($key);
+        $this->currentKeygroup = $key;
         
         $this->append($val, true, false, $addPreNewline);
         
