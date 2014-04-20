@@ -112,7 +112,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testDuplicateKeyKeygroup()
     {
-        $filename = __DIR__.'/fixtures/duplicateKeyKeygroup.toml';
+        $filename = __DIR__.'/fixtures/invalid/duplicateKeyKeygroup.toml';
         
         $parser = new Parser();
         
@@ -124,7 +124,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testDuplicateKeygroup()
     {
-        $filename = __DIR__.'/fixtures/duplicateKeygroup.toml';
+        $filename = __DIR__.'/fixtures/invalid/duplicateKeygroup.toml';
         
         $parser = new Parser();
         
@@ -136,7 +136,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testDuplicateKeys()
     {
-        $filename = __DIR__.'/fixtures/duplicateKeys.toml';
+        $filename = __DIR__.'/fixtures/invalid/duplicateKeys.toml';
         
         $parser = new Parser();
         
@@ -168,7 +168,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testFloatNoLeadingZero()
     {
-        $filename = __DIR__.'/fixtures/floatNoLeadingZero.toml';
+        $filename = __DIR__.'/fixtures/invalid/floatNoLeadingZero.toml';
         
         $parser = new Parser();
         
@@ -180,7 +180,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testFloatNoTrailingDigits()
     {
-        $filename = __DIR__.'/fixtures/floatNoTrailingDigits.toml';
+        $filename = __DIR__.'/fixtures/invalid/floatNoTrailingDigits.toml';
         
         $parser = new Parser();
         
@@ -202,7 +202,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testKeygroupNestedBracketsClose()
     {
-        $filename = __DIR__.'/fixtures/keygroupNestedBracketsClose.toml';
+        $filename = __DIR__.'/fixtures/invalid/keygroupNestedBracketsClose.toml';
         
         $parser = new Parser();
         
@@ -214,7 +214,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testKeygroupNestedBracketsOpen()
     {
-        $filename = __DIR__.'/fixtures/keygroupNestedBracketsOpen.toml';
+        $filename = __DIR__.'/fixtures/invalid/keygroupNestedBracketsOpen.toml';
         
         $parser = new Parser();
         
@@ -266,7 +266,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testTextAfterArrayEntries()
     {
-        $filename = __DIR__.'/fixtures/textAfterArrayEntries.toml';
+        $filename = __DIR__.'/fixtures/invalid/textAfterArrayEntries.toml';
         
         $parser = new Parser();
         
@@ -308,7 +308,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testTextBeforeArraySeparator()
     {
-        $filename = __DIR__.'/fixtures/textBeforeArraySeparator.toml';
+        $filename = __DIR__.'/fixtures/invalid/textBeforeArraySeparator.toml';
         
         $parser = new Parser();
         
@@ -320,7 +320,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testTextInArray()
     {
-        $filename = __DIR__.'/fixtures/textInArray.toml';
+        $filename = __DIR__.'/fixtures/invalid/textInArray.toml';
         
         $parser = new Parser();
         
