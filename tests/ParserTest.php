@@ -321,7 +321,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['key#name'], 5);
     }
     
-    public function testKeyGroupEmpty()
+    public function testTableEmpty()
     {
         $parser = new Parser();
         
@@ -332,9 +332,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(is_array($array['a']));
     }
     
-    public function testKeygroupSubEmpty()
+    public function testTableSubEmpty()
     {
-        $filename = __DIR__.'/fixtures/valid/keygroupSubEmpty.toml';
+        $filename = __DIR__.'/fixtures/valid/tableSubEmpty.toml';
         
         $parser = new Parser();
         
@@ -346,7 +346,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(is_array($array['a']['b']));
     }
     
-    public function testKeyGroupWhiteSpace()
+    public function testTableWhiteSpace()
     {
         $parser = new Parser();
         
@@ -357,9 +357,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(is_array($array['valid key']));
     }
     
-    public function testKeyGroupWithPound()
+    public function testTableWithPound()
     {
-        $filename = __DIR__.'/fixtures/valid/keyGroupWithPound.toml';
+        $filename = __DIR__.'/fixtures/valid/tableWithPound.toml';
         
         $parser = new Parser();
         

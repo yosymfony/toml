@@ -110,9 +110,9 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testDuplicateKeyKeygroup()
+    public function testDuplicateKeyTable()
     {
-        $filename = __DIR__.'/fixtures/invalid/duplicateKeyKeygroup.toml';
+        $filename = __DIR__.'/fixtures/invalid/duplicateKeyTable.toml';
         
         $parser = new Parser();
         
@@ -122,9 +122,9 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testDuplicateKeygroup()
+    public function testDuplicateTable()
     {
-        $filename = __DIR__.'/fixtures/invalid/duplicateKeygroup.toml';
+        $filename = __DIR__.'/fixtures/invalid/duplicateTable.toml';
         
         $parser = new Parser();
         
@@ -146,7 +146,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testEmptyImplicitKeygroup()
+    public function testEmptyImplicitTable()
     {        
         $parser = new Parser();
 
@@ -156,7 +156,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testEmptyEmptyKeygroup()
+    public function testEmptyTable()
     {        
         $parser = new Parser();
 
@@ -195,30 +195,6 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
         $parser = new Parser();
 
         $array = $parser->parse('key= = 1');
-    }
-    
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testKeygroupNestedBracketsClose()
-    {
-        $filename = __DIR__.'/fixtures/invalid/keygroupNestedBracketsClose.toml';
-        
-        $parser = new Parser();
-        
-        $array = $parser->parse(file_get_contents($filename));
-    }
-    
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testKeygroupNestedBracketsOpen()
-    {
-        $filename = __DIR__.'/fixtures/invalid/keygroupNestedBracketsOpen.toml';
-        
-        $parser = new Parser();
-        
-        $array = $parser->parse(file_get_contents($filename));
     }
     
     /**
@@ -286,7 +262,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testTextAfterKeygroup()
+    public function testTextAfterTable()
     {
         $parser = new Parser();
 
