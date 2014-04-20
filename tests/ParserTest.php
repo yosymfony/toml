@@ -89,7 +89,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testArrays()
     {   
-        $filename = __DIR__.'/fixtures/arrays.toml';
+        $filename = __DIR__.'/fixtures/valid/arrays.toml';
         
         $parser = new Parser();
         
@@ -121,7 +121,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testBool()
     {
-        $filename = __DIR__.'/fixtures/bool.toml';
+        $filename = __DIR__.'/fixtures/valid/bool.toml';
         
         $parser = new Parser();
         
@@ -138,7 +138,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testCommentsEverywhere()
     {
-        $filename = __DIR__.'/fixtures/commentsEverywhere.toml';
+        $filename = __DIR__.'/fixtures/valid/commentsEverywhere.toml';
         
         $parser = new Parser();
         
@@ -178,7 +178,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testExample()
     {
-        $filename = __DIR__.'/fixtures/example.toml';
+        $filename = __DIR__.'/fixtures/valid/example.toml';
         
         $parser = new Parser();
         
@@ -202,7 +202,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testFloat()
     {
-        $filename = __DIR__.'/fixtures/float.toml';
+        $filename = __DIR__.'/fixtures/valid/float.toml';
         
         $parser = new Parser();
         
@@ -219,7 +219,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testImplicitAndExplicitAfter()
     {
-        $filename = __DIR__.'/fixtures/implicitAndExplicitAfter.toml';
+        $filename = __DIR__.'/fixtures/valid/implicitAndExplicitAfter.toml';
         
         $parser = new Parser();
         
@@ -238,7 +238,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testImplicitAndExplicitBefore()
     {
-        $filename = __DIR__.'/fixtures/implicitAndExplicitBefore.toml';
+        $filename = __DIR__.'/fixtures/valid/implicitAndExplicitBefore.toml';
         
         $parser = new Parser();
         
@@ -257,7 +257,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testImplicitGroups()
     {
-        $filename = __DIR__.'/fixtures/implicitGroups.toml';
+        $filename = __DIR__.'/fixtures/valid/implicitGroups.toml';
         
         $parser = new Parser();
         
@@ -274,7 +274,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testImplicitInteger()
     {
-        $filename = __DIR__.'/fixtures/integer.toml';
+        $filename = __DIR__.'/fixtures/valid/integer.toml';
         
         $parser = new Parser();
         
@@ -299,7 +299,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testKeySpecialChars()
     {
-        $filename = __DIR__.'/fixtures/keySpecialChars.toml';
+        $filename = __DIR__.'/fixtures/valid/keySpecialChars.toml';
         
         $parser = new Parser();
         
@@ -334,7 +334,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testKeygroupSubEmpty()
     {
-        $filename = __DIR__.'/fixtures/keygroupSubEmpty.toml';
+        $filename = __DIR__.'/fixtures/valid/keygroupSubEmpty.toml';
         
         $parser = new Parser();
         
@@ -359,7 +359,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testKeyGroupWithPound()
     {
-        $filename = __DIR__.'/fixtures/keyGroupWithPound.toml';
+        $filename = __DIR__.'/fixtures/valid/keyGroupWithPound.toml';
         
         $parser = new Parser();
         
@@ -374,7 +374,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testLongFloat()
     {
-        $filename = __DIR__.'/fixtures/longFloat.toml';
+        $filename = __DIR__.'/fixtures/valid/longFloat.toml';
         
         $parser = new Parser();
         
@@ -388,7 +388,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testLongInteger()
     {
-        $filename = __DIR__.'/fixtures/longInteger.toml';
+        $filename = __DIR__.'/fixtures/valid/longInteger.toml';
         
         $parser = new Parser();
         
@@ -402,7 +402,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testStringEscapes()
     {
-        $filename = __DIR__.'/fixtures/stringEscapes.toml';
+        $filename = __DIR__.'/fixtures/valid/stringEscapes.toml';
         
         $parser = new Parser();
         
@@ -433,7 +433,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testStringWithPound()
     {
-        $filename = __DIR__.'/fixtures/stringWithPound.toml';
+        $filename = __DIR__.'/fixtures/valid/stringWithPound.toml';
         
         $parser = new Parser();
         
@@ -469,7 +469,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testTableArrayImplicit()
     {
-        $filename = __DIR__.'/fixtures/tableArrayImplicit.toml';
+        $filename = __DIR__.'/fixtures/valid/tableArrayImplicit.toml';
         
         $parser = new Parser();
         
@@ -482,7 +482,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testTableArrayMany()
     {
-        $filename = __DIR__.'/fixtures/tableArrayMany.toml';
+        $filename = __DIR__.'/fixtures/valid/tableArrayMany.toml';
         
         $parser = new Parser();
         
@@ -503,7 +503,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testTableArrayNest()
     {
-        $filename = __DIR__.'/fixtures/tableArrayNest.toml';
+        $filename = __DIR__.'/fixtures/valid/tableArrayNest.toml';
         
         $parser = new Parser();
         
@@ -523,7 +523,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testTableArrayOne()
     {
-        $filename = __DIR__.'/fixtures/tableArrayOne.toml';
+        $filename = __DIR__.'/fixtures/valid/tableArrayOne.toml';
         
         $parser = new Parser();
         
