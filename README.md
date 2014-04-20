@@ -112,7 +112,7 @@ The result of this example:
     multiple = [[1, 2], ["abc", "def"], [1.1, 1.2], [true, false], [2013-06-10T21:12:48Z]]
 
 ### Deprecated methods
-* **addGroup**: since version 0.2.
+* **addGroup**: since version 0.2. Replaced by `addTable`.
 
 Unit tests
 ----------
