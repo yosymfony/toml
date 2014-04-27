@@ -163,4 +163,36 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
         $result = $tb->addValue('theNull', null)
             ->getTomlString();
     }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     */
+    public function testTableArrayImplicit()
+    {
+        $tb = new TomlBuilder();
+        
+        $result = $tb
+            ->addTables('albums.songs')
+                ->addValue('name', 'Glory Days')
+            ->addTables('albums')
+                ->addValue('name', 'Born in the USA')
+            ->getTomlString();
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     */
+    public function testTableArrayWithSomeNameOfTable()
+    {
+        $tb = new TomlBuilder();
+        
+        $result = $tb
+            ->addTables('fruit')
+                ->addValue('name', 'apple')
+            ->addTables('fruit.variety')
+                ->addValue('name', 'red delicious')
+            ->addTable('fruit.variety')
+                ->addValue('name', 'granny smith')
+            ->getTomlString();
+    }
 }

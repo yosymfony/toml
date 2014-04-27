@@ -23,31 +23,25 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
         
         $result = $tb->addComment('Toml file')
             ->addTable('data.string')
-            ->addValue('name', "Toml", 'This is your name')
-            ->addValue('newline', "This string has a \n new line character.")
-            ->addValue('winPath', "C:\\Users\\nodejs\\templates")
-            ->addValue('unicode', 'unicode character: ' . json_decode('"\u03B4"'))
-            
+                ->addValue('name', "Toml", 'This is your name')
+                ->addValue('newline', "This string has a \n new line character.")
+                ->addValue('winPath', "C:\\Users\\nodejs\\templates")
+                ->addValue('unicode', 'unicode character: ' . json_decode('"\u03B4"'))
             ->addTable('data.bool')
-            ->addValue('t', true)
-            ->addValue('f', false)
-            
+                ->addValue('t', true)
+                ->addValue('f', false)
             ->addTable('data.integer')
-            ->addValue('positive', 25, 'Comment inline.')
-            ->addValue('negative', -25)
-            
+                ->addValue('positive', 25, 'Comment inline.')
+                ->addValue('negative', -25)
             ->addTable('data.float')
-            ->addValue('positive', 25.25)
-            ->addValue('negative', -25.25)
-            
+                ->addValue('positive', 25.25)
+                ->addValue('negative', -25.25)
             ->addTable('data.datetime')
-            ->addValue('datetime', new \Datetime())
-            
+                ->addValue('datetime', new \Datetime())
             ->addComment('Related to arrays')
             ->addTable('data.array')
-            ->addValue('simple', array(1,2,3))
-            ->addValue('multiple', array( array(1,2), array('abc', 'def'), array(1.1, 1.2), array(true, false), array( new \Datetime()) ))
-
+                ->addValue('simple', array(1,2,3))
+                ->addValue('multiple', array( array(1,2), array('abc', 'def'), array(1.1, 1.2), array(true, false), array( new \Datetime()) ))
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
@@ -68,10 +62,10 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('a.b.c')
-            ->addValue('answer', 42)
+        $result = $tb->addTable('a.b.c')
+                ->addValue('answer', 42)
             ->addTable('a')
-            ->addValue('better', 43)
+                ->addValue('better', 43)
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
@@ -81,10 +75,10 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('a')
-            ->addValue('better', 43)
+        $result = $tb->addTable('a')
+                ->addValue('better', 43)
             ->addTable('a.b.c')
-            ->addValue('answer', 42)
+                ->addValue('answer', 42)
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
@@ -104,7 +98,7 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('a')
+        $result = $tb->addTable('a')
             ->addTable('a.b')
             ->getTomlString();
 
@@ -115,7 +109,7 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('valid key')
+        $result = $tb->addTable('valid key')
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
@@ -138,7 +132,8 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertNotNull(Toml::Parse($result));
     }
     
-    public function testKeySpecialChars() {
+    public function testKeySpecialChars()
+    {
         $tb = new TomlBuilder();
         
         $result = $tb->addValue("~!@#$^&*()_+-`1234567890[]\|/?><.,;:'", 1)
@@ -147,7 +142,8 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertNotNull(Toml::Parse($result));
     }
     
-    public function testStringEscapesSingleQuote() {
+    public function testStringEscapesSingleQuote()
+    {
         $tb = new TomlBuilder();
         
         $result = $tb->addValue('backspace', 'This string has a \b backspace character.')
@@ -161,5 +157,24 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
+    }
+    
+    public function testArrayOfTables()
+    {
+        $tb = new TomlBuilder();
+        
+        $result = $tb->addTables('fruit')
+                ->addValue('name', 'apple')
+            ->addTables('fruit.variety')
+                ->addValue('name', 'red delicious')
+            ->addTables('fruit.variety')
+                ->addValue('name', 'granny smith')
+            ->addTables('fruit')
+                ->addValue('name', 'banana')
+            ->addTables('fruit.variety')
+                ->addValue('name', 'platain')
+            ->getTomlString();
+            
+            $this->assertNotNull(Toml::Parse($result));
     }
 }

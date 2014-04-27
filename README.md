@@ -45,29 +45,29 @@ You can create inline TOML string with TomlBuilder. TomBuilder used Fluent inter
     use Yosymfony\Toml\TomlBuilder;
     
     $tb = new TomlBuilder();
-        
+
     $result = $tb->addComment('Toml file')
         ->addTable('data.string')
         ->addValue('name', "Toml", 'This is your name')
         ->addValue('newline', "This string has a \n new line character.")
         ->addValue('winPath', "C:\\Users\\nodejs\\templates")
         ->addValue('unicode', 'unicode character: ' . json_decode('"\u03B4"'))
-        
+
         ->addTable('data.bool')
         ->addValue('t', true)
         ->addValue('f', false)
-        
+
         ->addTable('data.integer')
         ->addValue('positive', 25, 'Comment inline.')
         ->addValue('negative', -25)
-        
+
         ->addTable('data.float')
         ->addValue('positive', 25.25)
         ->addValue('negative', -25.25)
-        
+
         ->addTable('data.datetime')->
         ->addValue('datetime', new \Datetime())
-        
+
         ->addComment('Related to arrays')
         
         ->addTable('data.array')
@@ -78,7 +78,19 @@ You can create inline TOML string with TomlBuilder. TomBuilder used Fluent inter
             array(1.1, 1.2), 
             array(true, false), 
             array( new \Datetime()) ))
-        
+
+        // Array of tables
+        ->addTables('fruit')                            // Row
+            ->addValue('name', 'apple')
+            ->addTables('fruit.variety')
+                ->addValue('name', 'red delicious')
+            ->addTables('fruit.variety')
+                ->addValue('name', 'granny smith')
+        ->addTables('fruit')                            // Row
+            ->addValue('name', 'banana')
+            ->addTables('fruit.variety')
+                ->addValue('name', 'platain')
+
         ->getTomlString();    // Generate the TOML string
 ```
 The result of this example:
