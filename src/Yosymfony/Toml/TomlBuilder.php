@@ -34,7 +34,7 @@ class TomlBuilder
     protected $currentLine = 0;
     protected $keyList = array();
     protected $keyListArryOfTables = array();
-    protected $invalidArrayOfTablesKey = array();
+    protected $keyListInvalidArrayOfTables = array();
     protected $currentTable = '';
     protected $currentArrayOfTables = '';
     protected $currentKey = null;
@@ -337,7 +337,7 @@ class TomlBuilder
             return;
         }
         
-        if(in_array($key, $this->invalidArrayOfTablesKey))
+        if(in_array($key, $this->keyListInvalidArrayOfTables))
         {
             throw new DumpException(
                 sprintf('The array of tables %s has already been defined as previous table', $key));
@@ -413,7 +413,7 @@ class TomlBuilder
     {
         foreach($keyParts as $keyPart)
         {
-            $this->invalidArrayOfTablesKey[] = implode('.', $keyParts);
+            $this->keyListInvalidArrayOfTables[] = implode('.', $keyParts);
             array_pop($keyParts);
         }
     }
