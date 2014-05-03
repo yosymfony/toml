@@ -53,11 +53,11 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testDuplicateKeygroup()
+    public function testDuplicateTable()
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('a')
+        $result = $tb->addTable('a')
             ->addTable('a')
             ->getTomlString();
     }
@@ -65,11 +65,11 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testDuplicateKeyKeygroup()
+    public function testDuplicateKeyTable()
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('fruit')
+        $result = $tb->addTable('fruit')
             ->addValue('type', 'apple')
             ->addTable('fruit.type')
             ->getTomlString();
@@ -90,7 +90,7 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testEmptyKeygroup()
+    public function testEmptyTable()
     {
         $tb = new TomlBuilder();
         
@@ -112,7 +112,7 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testNullKeygroup()
+    public function testNullTable()
     {
         $tb = new TomlBuilder();
         
@@ -123,7 +123,7 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testNonStringKeygroup()
+    public function testNonStringTable()
     {
         $tb = new TomlBuilder();
         
@@ -172,9 +172,9 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
         $tb = new TomlBuilder();
         
         $result = $tb
-            ->addTables('albums.songs')
+            ->addArrayTables('albums.songs')
                 ->addValue('name', 'Glory Days')
-            ->addTables('albums')
+            ->addArrayTables('albums')
                 ->addValue('name', 'Born in the USA')
             ->getTomlString();
     }
@@ -187,9 +187,9 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
         $tb = new TomlBuilder();
         
         $result = $tb
-            ->addTables('fruit')
+            ->addArrayTables('fruit')
                 ->addValue('name', 'apple')
-            ->addTables('fruit.variety')
+            ->addArrayTables('fruit.variety')
                 ->addValue('name', 'red delicious')
             ->addTable('fruit.variety')
                 ->addValue('name', 'granny smith')

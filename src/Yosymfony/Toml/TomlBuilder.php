@@ -134,7 +134,7 @@ class TomlBuilder
      * 
      * @return TomlBuilder
      */
-    public function addTables($key)
+    public function addArrayTables($key)
     {
         if(false === is_string($key))
         {

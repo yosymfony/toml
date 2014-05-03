@@ -84,7 +84,7 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertNotNull(Toml::Parse($result));
     }
     
-    public function testKeyGroupEmpty()
+    public function testTableEmpty()
     {
         $tb = new TomlBuilder();
         
@@ -94,7 +94,7 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertNotNull(Toml::Parse($result));
     }
     
-    public function testKeyGroupSubEmpty()
+    public function testTableSubEmpty()
     {
         $tb = new TomlBuilder();
         
@@ -105,7 +105,7 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertNotNull(Toml::Parse($result));
     }
     
-    public function testKeygroupWhitespace()
+    public function testTableWhitespace()
     {
         $tb = new TomlBuilder();
         
@@ -163,15 +163,15 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addTables('fruit')
+        $result = $tb->addArrayTables('fruit')
                 ->addValue('name', 'apple')
-            ->addTables('fruit.variety')
+            ->addArrayTables('fruit.variety')
                 ->addValue('name', 'red delicious')
-            ->addTables('fruit.variety')
+            ->addArrayTables('fruit.variety')
                 ->addValue('name', 'granny smith')
-            ->addTables('fruit')
+            ->addArrayTables('fruit')
                 ->addValue('name', 'banana')
-            ->addTables('fruit.variety')
+            ->addArrayTables('fruit.variety')
                 ->addValue('name', 'platain')
             ->getTomlString();
             
