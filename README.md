@@ -3,7 +3,7 @@ TOML parser for PHP
 
 A PHP parser for [TOML](https://github.com/mojombo/toml) compatible with [TOML v0.2.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.2.0.md).
 
-[![Build Status](https://travis-ci.org/yosymfony/Toml.png?branch=develop)](https://travis-ci.org/yosymfony/Toml)
+[![Build Status](https://travis-ci.org/yosymfony/Toml.png?branch=master)](https://travis-ci.org/yosymfony/Toml)
 [![Latest Stable Version](https://poser.pugx.org/yosymfony/toml/v/stable.png)](https://packagist.org/packages/yosymfony/toml)
 [![Total Downloads](https://poser.pugx.org/yosymfony/toml/downloads.png)](https://packagist.org/packages/yosymfony/toml)
 
@@ -15,7 +15,7 @@ Use [Composer](http://getcomposer.org/) to install Yosyfmony Toml package:
 Add the following to your `composer.json` and run `composer update`.
 
     "require": {
-        "yosymfony/toml": "dev-develop"
+        "yosymfony/toml": "0.2.x-dev"
     }
 
 More informations about the package on [Packagist](https://packagist.org/packages/yosymfony/toml).
