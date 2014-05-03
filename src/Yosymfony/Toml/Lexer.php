@@ -56,7 +56,6 @@ class Lexer
     private $currentToken;
     private $backToken;
     private $inputLength = 0;
-    private $snippet = '';
     
     private $beginQuoteOpen = false;
     private $endQuoteOpen = false;
