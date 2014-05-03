@@ -116,16 +116,16 @@ class Parser
     
     private function processArrayOfTables()
     {
-        $tablename = '';
+        $key = '';
         
         $this->lexer->getToken();
         
         while($this->isTokenValidForTablename($this->lexer->getToken()))
         {
-            $tablename .= $this->lexer->getCurrentToken()->getValue();
+            $key .= $this->lexer->getCurrentToken()->getValue();
         }
         
-        $this->setArrayOfTables($tablename);
+        $this->setArrayOfTables($key);
         
         $currentTokenType = $this->lexer->getCurrentToken()->getType();
         $nextTokenType = $this->lexer->getToken()->getType();
@@ -141,14 +141,14 @@ class Parser
     
     private function processTable()
     {
-        $tablename = '';
+        $key = '';
         
         while($this->isTokenValidForTablename($this->lexer->getToken()))
         {
-            $tablename .= $this->lexer->getCurrentToken()->getValue();
+            $key .= $this->lexer->getCurrentToken()->getValue();
         }
         
-        $this->setTable($tablename);
+        $this->setTable($key);
         
         if(Lexer::TOKEN_RBRANK !== $this->lexer->getCurrentToken()->getType())
         {
@@ -171,25 +171,25 @@ class Parser
         return Lexer::TOKEN_LITERAL === $token->getType();
     }
     
-    private function setTable($tablename)
+    private function setTable($key)
     {
-        $nameParts = explode('.', $tablename);
+        $nameParts = explode('.', $key);
         $this->data = &$this->result;
         
-        if(in_array($tablename, $this->tableNames) || in_array($tablename, $this->arrayTableNames))
+        if(in_array($key, $this->tableNames) || in_array($key, $this->arrayTableNames))
         {
             throw new ParseException(
-                sprintf('Syntax error: the table %s has already been defined', $tablename), 
+                sprintf('Syntax error: the table %s has already been defined', $key), 
                 $this->currentLine, $this->lexer->getCurrentToken()->getValue());
         }
         
-        $this->tableNames[] = $tablename;
+        $this->tableNames[] = $key;
         
         foreach($nameParts as $namePart)
         {
             if(0 == strlen($namePart))
             {
-                throw new ParseException('The name of the table must not be empty', $this->currentLine, $tablename);
+                throw new ParseException('The name of the table must not be empty', $this->currentLine, $key);
             }
             
             if(array_key_exists($namePart, $this->data))
@@ -197,7 +197,7 @@ class Parser
                 if(!is_array($this->data[$namePart]))
                 {
                     throw new ParseException(
-                        sprintf('Syntax error: the table %s has already been defined', $tablename),
+                        sprintf('Syntax error: the table %s has already been defined', $key),
                         $this->currentLine, $this->lexer->getCurrentToken()->getValue());
                 }
             }
@@ -210,34 +210,34 @@ class Parser
         }
     }
     
-    private function setArrayOfTables($tablename)
+    private function setArrayOfTables($key)
     {
-        $nameParts = explode('.', $tablename);
+        $nameParts = explode('.', $key);
         $endIndex = count($nameParts) - 1;
         
         if(true == $this->isTableImplicit($nameParts))
         {
             $this->addInvalidArrayTablesName($nameParts);
-            $this->setTable($tablename);
+            $this->setTable($key);
             
             return;
         }
         
-        if(in_array($tablename, $this->invalidArrayTablesName))
+        if(in_array($key, $this->invalidArrayTablesName))
         {
             throw new ParseException(
-                sprintf('Syntax error: the array of tables %s has already been defined as previous table', $tablename), 
+                sprintf('Syntax error: the array of tables %s has already been defined as previous table', $key), 
                 $this->currentLine, $this->lexer->getCurrentToken()->getValue());
         }
         
         $this->data = &$this->result;
-        $this->arrayTableNames[] = $tablename;
+        $this->arrayTableNames[] = $key;
         
         foreach($nameParts as $index => $namePart)
         {
             if(0 == strlen($namePart))
             {
-                throw new ParseException('The key must not be empty', $this->currentLine, $tablename);
+                throw new ParseException('The key must not be empty', $this->currentLine, $key);
             }
             
             if(false == array_key_exists($namePart, $this->data))
