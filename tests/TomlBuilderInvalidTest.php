@@ -24,8 +24,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
          $tb = new TomlBuilder();
         
-        $result = $tb->addValue('arrays-and-ints', array(1, array("Arrays are not integers.")))->
-            getTomlString();
+        $result = $tb->addValue('arrays-and-ints', array(1, array("Arrays are not integers.")))
+            ->getTomlString();
     }
     
     /**
@@ -35,8 +35,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
          $tb = new TomlBuilder();
         
-        $result = $tb->addValue('arrays-and-ints', array(1, 1.0))->
-            getTomlString();
+        $result = $tb->addValue('arrays-and-ints', array(1, 1.0))
+            ->getTomlString();
     }
     
     /**
@@ -46,33 +46,33 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
          $tb = new TomlBuilder();
         
-        $result = $tb->addValue('arrays-and-ints', array("hi", 42))->
-            getTomlString();
+        $result = $tb->addValue('arrays-and-ints', array("hi", 42))
+            ->getTomlString();
     }
     
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testDuplicateKeygroup()
+    public function testDuplicateTable()
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('a')->
-            addGroup('a')->
-            getTomlString();
+        $result = $tb->addTable('a')
+            ->addTable('a')
+            ->getTomlString();
     }
     
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testDuplicateKeyKeygroup()
+    public function testDuplicateKeyTable()
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('fruit')->
-            addValue('type', 'apple')->
-            addGroup('fruit.type')->
-            getTomlString();
+        $result = $tb->addTable('fruit')
+            ->addValue('type', 'apple')
+            ->addTable('fruit.type')
+            ->getTomlString();
     }
     
     /**
@@ -82,20 +82,20 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addValue('dupe', false)->
-            addValue('dupe', true)->
-            getTomlString();
+        $result = $tb->addValue('dupe', false)
+            ->addValue('dupe', true)
+            ->getTomlString();
     }
     
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testEmptyKeygroup()
+    public function testEmptyTable()
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('')->
-            getTomlString();
+        $result = $tb->addTable('')
+            ->getTomlString();
     }
     
     /**
@@ -105,30 +105,30 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup('naughty..naughty')->
-            getTomlString();
+        $result = $tb->addTable('naughty..naughty')
+            ->getTomlString();
     }
     
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testNullKeygroup()
+    public function testNullTable()
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup(null)->
-            getTomlString();
+        $result = $tb->addTable(null)
+            ->getTomlString();
     }
     
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testNonStringKeygroup()
+    public function testNonStringTable()
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addGroup(2)->
-            getTomlString();
+        $result = $tb->addTable(2)
+            ->getTomlString();
     }
     
     /**
@@ -138,8 +138,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addValue(2, '2')->
-            getTomlString();
+        $result = $tb->addValue(2, '2')
+            ->getTomlString();
     }
     
     /**
@@ -149,8 +149,8 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addValue(null, 'null')->
-            getTomlString();
+        $result = $tb->addValue(null, 'null')
+            ->getTomlString();
     }
     
     /**
@@ -160,7 +160,39 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
         
-        $result = $tb->addValue('theNull', null)->
-            getTomlString();
+        $result = $tb->addValue('theNull', null)
+            ->getTomlString();
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     */
+    public function testTableArrayImplicit()
+    {
+        $tb = new TomlBuilder();
+        
+        $result = $tb
+            ->addArrayTables('albums.songs')
+                ->addValue('name', 'Glory Days')
+            ->addArrayTables('albums')
+                ->addValue('name', 'Born in the USA')
+            ->getTomlString();
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     */
+    public function testTableArrayWithSomeNameOfTable()
+    {
+        $tb = new TomlBuilder();
+        
+        $result = $tb
+            ->addArrayTables('fruit')
+                ->addValue('name', 'apple')
+            ->addArrayTables('fruit.variety')
+                ->addValue('name', 'red delicious')
+            ->addTable('fruit.variety')
+                ->addValue('name', 'granny smith')
+            ->getTomlString();
     }
 }

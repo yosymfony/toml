@@ -64,7 +64,6 @@ class Lexer
     
     public function __construct($input)
     {
-        //$this->input = str_replace('\\', '\\\\', $input);
         $this->input = $input;
         $this->inputLength = strlen($input);
     }
@@ -74,7 +73,7 @@ class Lexer
      * 
      * @return Token 
      * 
-     * @throws LexerException if special character is not valid 
+     * @throws LexerException if a special character is not valid 
      */
     public function getToken()
     {
@@ -95,6 +94,33 @@ class Lexer
     }
     
     /**
+     * Get the next token of the stream.
+     * This operation does not alter the current pointer of the stream.
+     * 
+     * @return Token or null
+     */
+    public function getNextToken()
+    {
+        $currentPosition = $this->position;
+        $nextToken = $this->consumeToken();
+        $subPositions = $this->position - $currentPosition;
+        $this->goBack($subPositions);
+        
+        return $nextToken;
+    }
+    
+    /**
+     * Get the back token of the stream.
+     * This operation does not alter the current pointer of the stream.
+     * 
+     * @return Token or null
+     */
+    public function getBackToken()
+    {
+        return $this->backToken;
+    }
+    
+    /**
      * Set the Comment Open status
      * 
      * @param bool $value
@@ -102,16 +128,6 @@ class Lexer
     public function setCommentOpen($value)
     {
         $this->commentOpen = (bool) $value;
-    }
-    
-    /**
-     * Get the back token of the stream
-     * 
-     * @return Token or null
-     */
-    public function getBackToken()
-    {
-        return $this->backToken;
     }
     
     private function getCurrent()
@@ -124,12 +140,14 @@ class Lexer
         if($this->beginQuoteOpen)
         {
             $this->consume();
+            
             return $this->getTokenString();
         }
         
         if($this->commentOpen)
         {
             $this->consume();
+            
             return $this->getTokenComment();
         }
         
@@ -230,7 +248,6 @@ class Lexer
             return true;
         }
         
-        
         return false;
     }
     
@@ -304,6 +321,7 @@ class Lexer
             }, 
             $result);
         $result = str_replace('[\\\\]', '\\', $result);
+        
         return $result;
     }
     
@@ -326,7 +344,6 @@ class Lexer
         }
         
         return new Token(self::TOKEN_COMMENT, $this->getNemo(self::TOKEN_COMMENT), $buffer);
-        
     }
     
     private function getLiteralToken()
@@ -346,7 +363,6 @@ class Lexer
         }
         
         return new Token(self::TOKEN_LITERAL, $this->getNemo(self::TOKEN_LITERAL), trim($buffer));
-        
     }
     
     private function isValidForLiteral()

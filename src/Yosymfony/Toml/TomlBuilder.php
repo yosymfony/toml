@@ -20,11 +20,11 @@ use Yosymfony\Toml\Exception\DumpException;
  * 
  * Usage:
  * <code>
- * $tomlString = new TomlBuilder()->
- *  addGroup('server.mail')->
- *  addValue('ip', '192.168.0.1', 'Internal IP')->
- *  addValue('port', 25)->
- *  getTomlString();
+ * $tomlString = new TomlBuilder()
+ *  ->addTable('server.mail')
+ *  ->addValue('ip', '192.168.0.1', 'Internal IP')
+ *  ->addValue('port', 25)
+ *  ->getTomlString();
  * </code>
  */
 class TomlBuilder 
@@ -33,7 +33,10 @@ class TomlBuilder
     protected $output = '';
     protected $currentLine = 0;
     protected $keyList = array();
-    protected $currentKeygroup = '';
+    protected $keyListArryOfTables = array();
+    protected $keyListInvalidArrayOfTables = array();
+    protected $currentTable = '';
+    protected $currentArrayOfTables = '';
     protected $currentKey = null;
     
     /**
@@ -62,7 +65,6 @@ class TomlBuilder
             throw new DumpException(sprintf('The key must be a string'));
         }
         
-        $this->currentKey = $key;
         $keyPart = $this->getKeyPart($key);
         
         $this->append($keyPart);
@@ -74,44 +76,85 @@ class TomlBuilder
             $data .= ' ' . $this->dumpComment($comment);
         }
         
-        $this->addKeyToKeyList($this->getAbsoluteKey($key));
-        
+        $this->addKey($key);
         $this->append($data, true);
-        
         
         return $this;
     }
     
     /**
-     * Add a keygroup
+     * Alias for addTable method.
      * 
-     * @param string $key
+     * @deprecated Since version 0.2
+     * 
+     * @param string $keygroup
      * 
      * @return TomlBuilder
      */
     public function addGroup($keygroup)
     {
-        if(false === is_string($keygroup))
+        return $this->addTable($keygroup);
+    }
+    
+    /**
+     * Add a table
+     * 
+     * @param string $key Tablename. Dot character have a speciaal meant.
+     * 
+     * @return TomlBuilder
+     */
+    public function addTable($key)
+    {
+        if(false === is_string($key))
         {
-            throw new DumpException(sprintf('The keygroup must be a string'));
+            throw new DumpException(sprintf('The key of a table must be a string'));
         }
         
         $addPreNewline = $this->currentLine > 0 ? true : false;
         
-        $keyParts = explode('.', $keygroup);
-        $val = '['. $keygroup . ']';
+        $keyParts = explode('.', $key);
+        $val = '['. $key . ']';
         
         foreach($keyParts as $keyPart)
         {
             if(strlen($keyPart) == 0 )
             {
-                throw new DumpException(sprintf('The key must not be empty at keygroup: %s', $keygroup));
+                throw new DumpException(sprintf('The key must not be empty at table: %s', $key));
             }
         }
         
-        $this->addKeyToKeyList($keygroup);
-        $this->currentKeygroup = $keygroup;
+        $this->addKeyTable($key, $keyParts);
+        $this->append($val, true, false, $addPreNewline);
         
+        return $this;
+    }
+    
+    /**
+     * @param string $key
+     * 
+     * @return TomlBuilder
+     */
+    public function addArrayTables($key)
+    {
+        if(false === is_string($key))
+        {
+            throw new DumpException(sprintf('The key of a table must be a string'));
+        }
+        
+        $addPreNewline = $this->currentLine > 0 ? true : false;
+        
+        $keyParts = explode('.', $key);
+        $val = '[['. $key . ']]';
+        
+        foreach($keyParts as $keyPart)
+        {
+            if(strlen($keyPart) == 0 )
+            {
+                throw new DumpException(sprintf('The key must not be empty at array of tables: %s', $key));
+            }
+        }
+        
+        $this->addKeyArrayOfTables($key, $keyParts);
         $this->append($val, true, false, $addPreNewline);
         
         return $this;
@@ -264,6 +307,73 @@ class TomlBuilder
         }
     }
     
+    private function addKey($key)
+    {
+        $this->currentKey = $key;
+        $absKey = $this->getAbsoluteKey($key, $this->currentTable, $this->currentArrayOfTables);
+        $this->addKeyToKeyList($absKey);
+    }
+    
+    private function addKeyTable($key, array $keyParts)
+    {
+        if(in_array($key, $this->keyListArryOfTables))
+        {
+            throw new DumpException(
+                sprintf('The table %s has already been defined as previous array of tables', $key));
+        }
+        
+        $this->currentTable = $key;
+        $absKey = $this->getAbsoluteKey($key, '', $this->currentArrayOfTables);
+        $this->addKeyToKeyList($absKey);
+    }
+    
+    private function addKeyArrayOfTables($key, array $keyParts)
+    {
+        if(true == $this->isTableImplicit($keyParts))
+        {
+            $this->addInvalidArrayOfTablesKey($keyParts);
+            $this->addKeyTable($key, $keyParts);
+            
+            return;
+        }
+        
+        if(in_array($key, $this->keyListInvalidArrayOfTables))
+        {
+            throw new DumpException(
+                sprintf('The array of tables %s has already been defined as previous table', $key));
+        }
+        
+        if(false == isset($this->keyListArryOfTables[$key]))
+        {
+            $this->keyListArryOfTables[$key] = 0;
+            $this->addKeyToKeyList($key);
+        }
+        else
+        {
+            $counter = $this->keyListArryOfTables[$key] + 1;
+            $this->keyListArryOfTables[$key] = $counter + 1;
+        }
+        
+        $keyPath = $this->getArrayTablesKeyPath($key, $keyParts);
+        $this->addKeyToKeyList($keyPath);
+        $this->currentArrayOfTables = $keyPath;
+    }
+    
+    private function getArrayTablesKeyPath($key, array $keyParts)
+    {
+        $path = $simplePath = '';
+        
+        foreach($keyParts as $keyPart)
+        {
+            $simplePath .= $keyPart;
+            $counter = $this->keyListArryOfTables[$simplePath];
+            $path .= $keyPart . $counter . '.';
+            $simplePath .= '.';
+        }
+        
+        return rtrim($path, '.');
+    }
+    
     private function addKeyToKeyList($key)
     {
         if(in_array($key, $this->keyList))
@@ -274,14 +384,38 @@ class TomlBuilder
         $this->keyList[] = $key;
     }
     
-    private function getAbsoluteKey($key)
+    private function getAbsoluteKey($key, $currentKeyTable, $currentKeyArrayOfTables)
     {
-        if(strlen($this->currentKeygroup) == 0)
+        $prefix = strlen($currentKeyArrayOfTables) > 0 ? $currentKeyArrayOfTables . '.' : '';
+        $prefix .= strlen($currentKeyTable) > 0 ? $currentKeyTable . '.' : '';
+        
+        return $prefix . $key;
+    }
+    
+    private function isTableImplicit(array $keyParts)
+    {
+        if(count($keyParts) > 1)
         {
-            return $key;
+            array_pop($keyParts);
+            
+            $key = implode('.', $keyParts);
+            
+            if(false == in_array($key, $this->keyListArryOfTables))
+            {
+                return true;
+            }
         }
         
-        return $this->currentKeygroup . '.' . $key;
+        return false;
+    }
+    
+    private function addInvalidArrayOfTablesKey(array $keyParts)
+    {
+        foreach($keyParts as $keyPart)
+        {
+            $this->keyListInvalidArrayOfTables[] = implode('.', $keyParts);
+            array_pop($keyParts);
+        }
     }
     
     /**

@@ -18,7 +18,7 @@ class TomlTest extends \PHPUnit_Framework_TestCase
 {
     public function testFile()
     {
-        $filename = __DIR__.'/Fixtures/toml.toml';
+        $filename = __DIR__.'/fixtures/valid/toml.toml';
         
         $array = Toml::parse($filename);
         

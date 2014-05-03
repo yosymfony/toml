@@ -1,6 +1,6 @@
 {
     "name": "yosymfony/toml",
-    "description": "A PHP parser for TOML compatible with TOML v0.1.0",
+    "description": "A PHP parser for TOML compatible with specification 0.2.0",
     "type": "library",
     "keywords": ["toml", "parser", "mojombo"],
     "homepage": "http://github.com/yosymfony/toml",
@@ -17,10 +17,5 @@
     },
     "autoload": {
         "psr-0": { "Yosymfony\\Toml": "src/" }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "0.1.x-dev"
-        }
     }
 }

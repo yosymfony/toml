@@ -89,7 +89,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testArrays()
     {   
-        $filename = __DIR__.'/Fixtures/arrays.toml';
+        $filename = __DIR__.'/fixtures/valid/arrays.toml';
         
         $parser = new Parser();
         
@@ -121,7 +121,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testBool()
     {
-        $filename = __DIR__.'/Fixtures/bool.toml';
+        $filename = __DIR__.'/fixtures/valid/bool.toml';
         
         $parser = new Parser();
         
@@ -138,7 +138,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testCommentsEverywhere()
     {
-        $filename = __DIR__.'/Fixtures/commentsEverywhere.toml';
+        $filename = __DIR__.'/fixtures/valid/commentsEverywhere.toml';
         
         $parser = new Parser();
         
@@ -178,7 +178,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testExample()
     {
-        $filename = __DIR__.'/Fixtures/example.toml';
+        $filename = __DIR__.'/fixtures/valid/example.toml';
         
         $parser = new Parser();
         
@@ -202,7 +202,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testFloat()
     {
-        $filename = __DIR__.'/Fixtures/float.toml';
+        $filename = __DIR__.'/fixtures/valid/float.toml';
         
         $parser = new Parser();
         
@@ -219,7 +219,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testImplicitAndExplicitAfter()
     {
-        $filename = __DIR__.'/Fixtures/implicitAndExplicitAfter.toml';
+        $filename = __DIR__.'/fixtures/valid/implicitAndExplicitAfter.toml';
         
         $parser = new Parser();
         
@@ -238,7 +238,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testImplicitAndExplicitBefore()
     {
-        $filename = __DIR__.'/Fixtures/implicitAndExplicitBefore.toml';
+        $filename = __DIR__.'/fixtures/valid/implicitAndExplicitBefore.toml';
         
         $parser = new Parser();
         
@@ -257,7 +257,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testImplicitGroups()
     {
-        $filename = __DIR__.'/Fixtures/implicitGroups.toml';
+        $filename = __DIR__.'/fixtures/valid/implicitGroups.toml';
         
         $parser = new Parser();
         
@@ -274,7 +274,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testImplicitInteger()
     {
-        $filename = __DIR__.'/Fixtures/integer.toml';
+        $filename = __DIR__.'/fixtures/valid/integer.toml';
         
         $parser = new Parser();
         
@@ -299,7 +299,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testKeySpecialChars()
     {
-        $filename = __DIR__.'/Fixtures/keySpecialChars.toml';
+        $filename = __DIR__.'/fixtures/valid/keySpecialChars.toml';
         
         $parser = new Parser();
         
@@ -321,7 +321,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['key#name'], 5);
     }
     
-    public function testKeyGroupEmpty()
+    public function testTableEmpty()
     {
         $parser = new Parser();
         
@@ -332,9 +332,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(is_array($array['a']));
     }
     
-    public function testKeygroupSubEmpty()
+    public function testTableSubEmpty()
     {
-        $filename = __DIR__.'/Fixtures/keygroupSubEmpty.toml';
+        $filename = __DIR__.'/fixtures/valid/tableSubEmpty.toml';
         
         $parser = new Parser();
         
@@ -346,7 +346,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(is_array($array['a']['b']));
     }
     
-    public function testKeyGroupWhiteSpace()
+    public function testTableWhiteSpace()
     {
         $parser = new Parser();
         
@@ -357,9 +357,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(is_array($array['valid key']));
     }
     
-    public function testKeyGroupWithPound()
+    public function testTableWithPound()
     {
-        $filename = __DIR__.'/Fixtures/keyGroupWithPound.toml';
+        $filename = __DIR__.'/fixtures/valid/tableWithPound.toml';
         
         $parser = new Parser();
         
@@ -374,7 +374,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testLongFloat()
     {
-        $filename = __DIR__.'/Fixtures/longFloat.toml';
+        $filename = __DIR__.'/fixtures/valid/longFloat.toml';
         
         $parser = new Parser();
         
@@ -388,7 +388,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testLongInteger()
     {
-        $filename = __DIR__.'/Fixtures/longInteger.toml';
+        $filename = __DIR__.'/fixtures/valid/longInteger.toml';
         
         $parser = new Parser();
         
@@ -402,7 +402,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testStringEscapes()
     {
-        $filename = __DIR__.'/Fixtures/stringEscapes.toml';
+        $filename = __DIR__.'/fixtures/valid/stringEscapes.toml';
         
         $parser = new Parser();
         
@@ -433,7 +433,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     
     public function testStringWithPound()
     {
-        $filename = __DIR__.'/Fixtures/stringWithPound.toml';
+        $filename = __DIR__.'/fixtures/valid/stringWithPound.toml';
         
         $parser = new Parser();
         
@@ -465,5 +465,74 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertNotNull($array);
         
         $this->assertEquals($array['answer'], 'δ');
+    }
+    
+    public function testTableArrayImplicit()
+    {
+        $filename = __DIR__.'/fixtures/valid/tableArrayImplicit.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+        
+        $this->assertNotNull($array);
+        $this->assertCount(1, $array);
+        $this->assertEquals('Glory Days', $array['albums']['songs']['name']);
+    }
+    
+    public function testTableArrayMany()
+    {
+        $filename = __DIR__.'/fixtures/valid/tableArrayMany.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+        
+        $this->assertNotNull($array);
+        $this->assertCount(1, $array);
+        
+        $this->assertEquals('Bruce', $array['people'][0]['first_name']);
+        $this->assertEquals('Springsteen', $array['people'][0]['last_name']);
+        
+        $this->assertEquals('Eric', $array['people'][1]['first_name']);
+        $this->assertEquals('Clapton', $array['people'][1]['last_name']);
+        
+        $this->assertEquals('Bob', $array['people'][2]['first_name']);
+        $this->assertEquals('Seger', $array['people'][2]['last_name']);
+    }
+    
+    public function testTableArrayNest()
+    {
+        $filename = __DIR__.'/fixtures/valid/tableArrayNest.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+        
+        $this->assertNotNull($array);
+        $this->assertCount(1, $array);
+        
+        $this->assertEquals('Born to Run', $array['albums'][0]['name']);
+        $this->assertEquals('Jungleland', $array['albums'][0]['songs'][0]['name']);
+        $this->assertEquals('Meeting Across the River', $array['albums'][0]['songs'][1]['name']);
+        
+        $this->assertEquals('Born in the USA', $array['albums'][1]['name']);
+        $this->assertEquals('Glory Days', $array['albums'][1]['songs'][0]['name']);
+        $this->assertEquals('Dancing in the Dark', $array['albums'][1]['songs'][1]['name']);
+    }
+    
+    public function testTableArrayOne()
+    {
+        $filename = __DIR__.'/fixtures/valid/tableArrayOne.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+        
+        $this->assertNotNull($array);
+        $this->assertCount(1, $array);
+        
+        $this->assertEquals('Bruce', $array['people'][0]['first_name']);
+        $this->assertEquals('Springsteen', $array['people'][0]['last_name']);
     }
 }

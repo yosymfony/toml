@@ -110,9 +110,9 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testDuplicateKeyKeygroup()
+    public function testDuplicateKeyTable()
     {
-        $filename = __DIR__.'/Fixtures/duplicateKeyKeygroup.toml';
+        $filename = __DIR__.'/fixtures/invalid/duplicateKeyTable.toml';
         
         $parser = new Parser();
         
@@ -122,9 +122,9 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testDuplicateKeygroup()
+    public function testDuplicateTable()
     {
-        $filename = __DIR__.'/Fixtures/duplicateKeygroup.toml';
+        $filename = __DIR__.'/fixtures/invalid/duplicateTable.toml';
         
         $parser = new Parser();
         
@@ -136,7 +136,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testDuplicateKeys()
     {
-        $filename = __DIR__.'/Fixtures/duplicateKeys.toml';
+        $filename = __DIR__.'/fixtures/invalid/duplicateKeys.toml';
         
         $parser = new Parser();
         
@@ -146,7 +146,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testEmptyImplicitKeygroup()
+    public function testEmptyImplicitTable()
     {        
         $parser = new Parser();
 
@@ -156,7 +156,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testEmptyEmptyKeygroup()
+    public function testEmptyTable()
     {        
         $parser = new Parser();
 
@@ -168,7 +168,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testFloatNoLeadingZero()
     {
-        $filename = __DIR__.'/Fixtures/floatNoLeadingZero.toml';
+        $filename = __DIR__.'/fixtures/invalid/floatNoLeadingZero.toml';
         
         $parser = new Parser();
         
@@ -180,7 +180,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testFloatNoTrailingDigits()
     {
-        $filename = __DIR__.'/Fixtures/floatNoTrailingDigits.toml';
+        $filename = __DIR__.'/fixtures/invalid/floatNoTrailingDigits.toml';
         
         $parser = new Parser();
         
@@ -195,30 +195,6 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
         $parser = new Parser();
 
         $array = $parser->parse('key= = 1');
-    }
-    
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testKeygroupNestedBracketsClose()
-    {
-        $filename = __DIR__.'/Fixtures/keygroupNestedBracketsClose.toml';
-        
-        $parser = new Parser();
-        
-        $array = $parser->parse(file_get_contents($filename));
-    }
-    
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testKeygroupNestedBracketsOpen()
-    {
-        $filename = __DIR__.'/Fixtures/keygroupNestedBracketsOpen.toml';
-        
-        $parser = new Parser();
-        
-        $array = $parser->parse(file_get_contents($filename));
     }
     
     /**
@@ -266,7 +242,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testTextAfterArrayEntries()
     {
-        $filename = __DIR__.'/Fixtures/textAfterArrayEntries.toml';
+        $filename = __DIR__.'/fixtures/invalid/textAfterArrayEntries.toml';
         
         $parser = new Parser();
         
@@ -286,7 +262,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testTextAfterKeygroup()
+    public function testTextAfterTable()
     {
         $parser = new Parser();
 
@@ -308,7 +284,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testTextBeforeArraySeparator()
     {
-        $filename = __DIR__.'/Fixtures/textBeforeArraySeparator.toml';
+        $filename = __DIR__.'/fixtures/invalid/textBeforeArraySeparator.toml';
         
         $parser = new Parser();
         
@@ -320,7 +296,79 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
      */
     public function testTextInArray()
     {
-        $filename = __DIR__.'/Fixtures/textInArray.toml';
+        $filename = __DIR__.'/fixtures/invalid/textInArray.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableArrayImplicit()
+    {
+        $filename = __DIR__.'/fixtures/invalid/tableArrayImplicit.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableArrayMalformedBracket()
+    {
+        $filename = __DIR__.'/fixtures/invalid/tableArrayMalformedBracket.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableArrayMalformedEmpty()
+    {
+        $filename = __DIR__.'/fixtures/invalid/tableArrayMalformedEmpty.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableNestedBracketsClose()
+    {
+        $filename = __DIR__.'/fixtures/invalid/tableNestedBracketsClose.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableNestedBracketsOpen()
+    {
+        $filename = __DIR__.'/fixtures/invalid/tableNestedBracketsOpen.toml';
+        
+        $parser = new Parser();
+        
+        $array = $parser->parse(file_get_contents($filename));
+    }
+    
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableArrayWithSomeNameOfTable()
+    {
+        $filename = __DIR__.'/fixtures/invalid/tableArrayWithSomeNameOfTable.toml';
         
         $parser = new Parser();
         
