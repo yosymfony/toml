@@ -22,7 +22,6 @@ class Parser
 {
     private $lexer = null;
     private $currentLine = 0;
-    private $currentToken = null;
     private $data = null;
     private $result = array();
     private $tableNames = array();

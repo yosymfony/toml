@@ -314,7 +314,7 @@ class TomlBuilder
         $this->addKeyToKeyList($absKey);
     }
     
-    private function addKeyTable($key, array $keyParts)
+    private function addKeyTable($key)
     {
         if(in_array($key, $this->keyListArryOfTables))
         {
@@ -354,12 +354,12 @@ class TomlBuilder
             $this->keyListArryOfTables[$key] = $counter + 1;
         }
         
-        $keyPath = $this->getArrayTablesKeyPath($key, $keyParts);
+        $keyPath = $this->getArrayTablesKeyPath($keyParts);
         $this->addKeyToKeyList($keyPath);
         $this->currentArrayOfTables = $keyPath;
     }
     
-    private function getArrayTablesKeyPath($key, array $keyParts)
+    private function getArrayTablesKeyPath(array $keyParts)
     {
         $path = $simplePath = '';
         
