@@ -79,16 +79,17 @@ You can create inline TOML string with TomlBuilder. TomBuilder used Fluent inter
             array(true, false), 
             array( new \Datetime()) ))
 
-        // Array of tables
-        ->addTables('fruit')                            // Row
+        ->addComment('Array of tables')
+        
+        ->addArrayTables('fruit')                            // Row
             ->addValue('name', 'apple')
-            ->addTables('fruit.variety')
+            ->addArrayTables('fruit.variety')
                 ->addValue('name', 'red delicious')
-            ->addTables('fruit.variety')
+            ->addArrayTables('fruit.variety')
                 ->addValue('name', 'granny smith')
-        ->addTables('fruit')                            // Row
+        ->addArrayTables('fruit')                            // Row
             ->addValue('name', 'banana')
-            ->addTables('fruit.variety')
+            ->addArrayTables('fruit.variety')
                 ->addValue('name', 'platain')
 
         ->getTomlString();    // Generate the TOML string
@@ -117,13 +118,31 @@ The result of this example:
     
     [data.datetime]
     datetime = 2013-06-10T21:12:48Z
+    
     #Related to arrays
     
     [data.array]
     simple = [1, 2, 3]
     multiple = [[1, 2], ["abc", "def"], [1.1, 1.2], [true, false], [2013-06-10T21:12:48Z]]
+    
+    # Array of tables
+    
+    [[fruit]]
+        name = "apple"
+    
+        [[fruit.variety]]
+            name = "red delicious"
+    
+        [[fruit.variety]]
+            name = "granny smith"
+    
+    [[fruit]]
+        name = "banana"
+    
+        [[fruit.variety]]
+        name = "platain"
 
-### Deprecated methods
+#### Deprecated methods
 * **addGroup**: since version 0.2. Replaced by `addTable`.
 
 Unit tests
