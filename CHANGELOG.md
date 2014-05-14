@@ -16,7 +16,7 @@ CHANGELOG
 * Added travis configuration file.
 * Fixed some issues in README.md.
 
-0.2.0 (not released)
+0.2.0 (2014-05-03)
 --------------------
 * Support to TOML 0.2.0.
 * New tests for arrays of tables.
