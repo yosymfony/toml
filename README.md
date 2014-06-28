@@ -39,7 +39,7 @@ From a file:
     print_r($array);
 
 ### TomlBuilder
-You can create inline TOML string with TomlBuilder. TomBuilder used Fluent interface for more readable code:
+You can create inline TOML string with TomlBuilder. TomlBuilder uses Fluent interface for more readable code:
 
 ```php
     use Yosymfony\Toml\TomlBuilder;
