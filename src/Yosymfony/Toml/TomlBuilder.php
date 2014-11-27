@@ -99,7 +99,7 @@ class TomlBuilder
     /**
      * Add a table
      * 
-     * @param string $key Tablename. Dot character have a speciaal meant.
+     * @param string $key Tablename. Dot character have a special meant.
      * 
      * @return TomlBuilder
      */
