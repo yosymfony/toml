@@ -8,14 +8,14 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
- 
+
 namespace Yosymfony\Toml\Exception;
- 
+
 /**
  * Exception class thrown when an error occurs during dumping.
  *
  * @author Victor Puertas <vpgugr@gmail.com>
- * 
+ *
  * @api
  */
 class DumpException extends RuntimeException

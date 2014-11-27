@@ -24,3 +24,7 @@ CHANGELOG
 * TomlBuilder: Deprecated methods addGroup.
 * Fixtures folder in tests renamed to fixtures.
 * Fixtures reorganized.
+
+0.2.1
+-----
+* CS fixes.

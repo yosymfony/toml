@@ -8,25 +8,24 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
- 
-namespace Yosymfony\Toml\Tests;
+
+namespace Yosymfony\Toml\tests;
 
 use Yosymfony\Toml\TomlBuilder;
 use Yosymfony\Toml\Toml;
-use Yosymfony\Toml\Exception\DumpException;
 
 class TomlBuilderTest extends \PHPUnit_Framework_TestCase
 {
     public function testExample()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addComment('Toml file')
             ->addTable('data.string')
                 ->addValue('name', "Toml", 'This is your name')
                 ->addValue('newline', "This string has a \n new line character.")
                 ->addValue('winPath', "C:\\Users\\nodejs\\templates")
-                ->addValue('unicode', 'unicode character: ' . json_decode('"\u03B4"'))
+                ->addValue('unicode', 'unicode character: '.json_decode('"\u03B4"'))
             ->addTable('data.bool')
                 ->addValue('t', true)
                 ->addValue('f', false)
@@ -40,28 +39,28 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
                 ->addValue('datetime', new \Datetime())
             ->addComment('Related to arrays')
             ->addTable('data.array')
-                ->addValue('simple', array(1,2,3))
-                ->addValue('multiple', array( array(1,2), array('abc', 'def'), array(1.1, 1.2), array(true, false), array( new \Datetime()) ))
+                ->addValue('simple', array(1, 2, 3))
+                ->addValue('multiple', array( array(1, 2), array('abc', 'def'), array(1.1, 1.2), array(true, false), array( new \Datetime()) ))
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
     }
-    
+
     public function testArrayEmpty()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addComment('Toml file')
             ->addValue('thevoid', array())
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
     }
-    
+
     public function testImplicitAndExplicitAfter()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addTable('a.b.c')
                 ->addValue('answer', 42)
             ->addTable('a')
@@ -70,11 +69,11 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull(Toml::Parse($result));
     }
-    
+
     public function testImplicitAndExplicitBefore()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addTable('a')
                 ->addValue('better', 43)
             ->addTable('a.b.c')
@@ -83,42 +82,42 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull(Toml::Parse($result));
     }
-    
+
     public function testTableEmpty()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addTable('a')
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
     }
-    
+
     public function testTableSubEmpty()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addTable('a')
             ->addTable('a.b')
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
     }
-    
+
     public function testTableWhitespace()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addTable('valid key')
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
     }
-    
+
     public function testStringEscapesDoubleQuote()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addValue('backspace', "This string has a \b backspace character.")
             ->addValue('tab', "This string has a \t tab character.")
             ->addValue('newline', "This string has a \n new line character.")
@@ -131,21 +130,21 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull(Toml::Parse($result));
     }
-    
+
     public function testKeySpecialChars()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addValue("~!@#$^&*()_+-`1234567890[]\|/?><.,;:'", 1)
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
     }
-    
+
     public function testStringEscapesSingleQuote()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addValue('backspace', 'This string has a \b backspace character.')
             ->addValue('tab', 'This string has a \t tab character.')
             ->addValue('newline', 'This string has a \n new line character.')
@@ -158,11 +157,11 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull(Toml::Parse($result));
     }
-    
+
     public function testArrayOfTables()
     {
         $tb = new TomlBuilder();
-        
+
         $result = $tb->addArrayTables('fruit')
                 ->addValue('name', 'apple')
             ->addArrayTables('fruit.variety')
@@ -174,7 +173,7 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
             ->addArrayTables('fruit.variety')
                 ->addValue('name', 'platain')
             ->getTomlString();
-            
-            $this->assertNotNull(Toml::Parse($result));
+
+        $this->assertNotNull(Toml::Parse($result));
     }
 }
