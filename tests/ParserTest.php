@@ -308,17 +308,28 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['answer'], 42);
     }
 
-    public function testKeySpecialChars()
+    public function testKeySpace()
     {
-        $filename = __DIR__.'/fixtures/valid/keySpecialChars.toml';
-
         $parser = new Parser();
 
         $array = $parser->parse(file_get_contents($filename));
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array["~!@#$^&*()_+-`1234567890[]\|/?><.,;:'"], 1);
+        $this->assertEquals($array["~!@$^&*()_+-`1234567890[]|/?><.,;:'"], 1);
+    }
+
+    public function testKeySpecialChars()
+    {
+        $filename = __DIR__.'/fixtures/valid/keySpecialChars.toml';
+
+        $parser = new Parser();
+
+        $array = $parser->parse('"a b" = 1');
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals($array['a b'], 1);
     }
 
     public function testKeyWithPound()
