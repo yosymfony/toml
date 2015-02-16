@@ -422,6 +422,25 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($array['neganswer'] < 0);
     }
 
+    public function testMultilineString()
+    {
+        $filename = __DIR__.'/fixtures/valid/multilineString.toml';
+
+        $parser = new Parser();
+
+        $array = $parser->parse(file_get_contents($filename));
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals($array['multiline_empty_one'], '');
+        $this->assertEquals($array['multiline_empty_two'], '');
+        $this->assertEquals($array['multiline_empty_three'], '');
+        $this->assertEquals($array['multiline_empty_four'], '');
+        $this->assertEquals($array['equivalent_one'], 'The quick brown fox jumps over the lazy dog.');
+        $this->assertEquals($array['equivalent_two'], 'The quick brown fox jumps over the lazy dog.');
+        $this->assertEquals($array['equivalent_three'], 'The quick brown fox jumps over the lazy dog.');
+    }
+
     public function testStringEscapes()
     {
         $filename = __DIR__.'/fixtures/valid/stringEscapes.toml';
