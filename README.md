@@ -1,6 +1,8 @@
 TOML parser for PHP
 ===================
 
+[![Join the chat at https://gitter.im/yosymfony/Toml](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/yosymfony/Toml?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 A PHP parser for [TOML](https://github.com/toml-lang/toml) compatible with [TOML v0.2.0](https://github.com/toml-lang/toml/releases/tag/v0.2.0).
 
 [![Build Status](https://travis-ci.org/yosymfony/Toml.png?branch=master)](https://travis-ci.org/yosymfony/Toml)
