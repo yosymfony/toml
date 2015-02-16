@@ -46,7 +46,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     {
         $parser = new Parser();
 
-        $array = $parser->parse('mixed = [[1, 2], ["a", "b"], [1.0, 2.0]]');
+        $array = $parser->parse('mixed = [[1, 2], ["a", "b"], [1.1, 2.1]]');
 
         $this->assertNotNull($array);
 
@@ -62,8 +62,23 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['mixed'][1][0], 'a');
         $this->assertEquals($array['mixed'][1][1], 'b');
 
-        $this->assertEquals($array['mixed'][2][0], 1.0);
-        $this->assertEquals($array['mixed'][2][1], 2.0);
+        $this->assertEquals($array['mixed'][2][0], 1.1);
+        $this->assertEquals($array['mixed'][2][1], 2.1);
+    }
+
+    public function testArraysNoSpaces()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('ints = [1,2,3]');
+
+        $this->assertNotNull($array);
+
+        $this->assertArrayHasKey('ints', $array);
+
+        $this->assertEquals($array['ints'][0], 1);
+        $this->assertEquals($array['ints'][1], 2);
+        $this->assertEquals($array['ints'][2], 3);
     }
 
     public function testArraysNested()
@@ -102,9 +117,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['ints'][1], 2);
         $this->assertEquals($array['ints'][2], 3);
 
-        $this->assertEquals($array['floats'][0], 1.0);
-        $this->assertEquals($array['floats'][1], 2.0);
-        $this->assertEquals($array['floats'][2], 3.0);
+        $this->assertEquals($array['floats'][0], 1.1);
+        $this->assertEquals($array['floats'][1], 2.1);
+        $this->assertEquals($array['floats'][2], 3.1);
 
         $this->assertEquals($array['strings'][0], 'a');
         $this->assertEquals($array['strings'][1], 'b');
