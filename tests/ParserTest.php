@@ -372,7 +372,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     {
         $parser = new Parser();
 
-        $array = $parser->parse('[valid key]');
+        $array = $parser->parse('["valid key"]');
 
         $this->assertNotNull($array);
 
