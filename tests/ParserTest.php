@@ -441,6 +441,51 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['equivalent_three'], 'The quick brown fox jumps over the lazy dog.');
     }
 
+    public function testRawMultilineString()
+    {
+        $filename = __DIR__.'/fixtures/valid/rawMultilineString.toml';
+
+        $parser = new Parser();
+
+        $array = $parser->parse(file_get_contents($filename));
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals($array['oneline'], "This string has a ' quote character.");
+        $this->assertEquals($array['firstnl'], "This string has a ' quote character.");
+        $this->assertEquals($array['multiline'], "This string\nhas ' a quote character\nand more than\none newline\nin it.");
+    }
+
+    public function testRawString()
+    {
+        $filename = __DIR__.'/fixtures/valid/rawString.toml';
+
+        $parser = new Parser();
+
+        $array = $parser->parse(file_get_contents($filename));
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals($array['backspace'], "This string has a \b backspace character.");
+        $this->assertEquals($array['tab'], "This string has a \t tab character.");
+        $this->assertEquals($array['newline'], "This string has a \n new line character.");
+        $this->assertEquals($array['formfeed'], "This string has a \f form feed character.");
+        $this->assertEquals($array['carriage'], "This string has a \r carriage return character.");
+        $this->assertEquals($array['slash'], "This string has a / slash character.");
+        $this->assertEquals($array['backslash'], "This string has a \\ backslash character.");
+    }
+
+    public function testStringEmpty()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('answer = ""');
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals($array['answer'], '');
+    }
+
     public function testStringEscapes()
     {
         $filename = __DIR__.'/fixtures/valid/stringEscapes.toml';
