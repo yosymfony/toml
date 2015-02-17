@@ -41,7 +41,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $parser = new Parser();
 
-        $array = $parser->parse('ints-and-floats = [1, 1.0]');
+        $array = $parser->parse('ints-and-floats = [1, 1.1]');
     }
 
     /**
@@ -153,16 +153,6 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testEmptyTable()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('[]');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
     public function testFloatNoLeadingZero()
     {
         $filename = __DIR__.'/fixtures/invalid/floatNoLeadingZero.toml';
@@ -182,6 +172,77 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
         $parser = new Parser();
 
         $array = $parser->parse(file_get_contents($filename));
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeyEmpty()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('= 1');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedExceptionMessage Keys can no longer contain '#' characters.
+     */
+    public function testKeyHash()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('a# = 1');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeyNewline()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse("a\n= 1");
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeyOpenBracket()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('[abc = 1');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeySingleOpenBracket()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('[');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeySpace()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('a b = 1');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeyStartBracket()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse("[a]\n[xyz = 5\n[b]");
     }
 
     /**
@@ -232,6 +293,36 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
         $parser = new Parser();
 
         $array = $parser->parse('no-ending-quote = "One time, at band camp');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableEmpty()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('[]');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableWhitespace()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('[invalid key]');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableWithPound()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse("[key#group]\nanswer = 42");
     }
 
     /**
