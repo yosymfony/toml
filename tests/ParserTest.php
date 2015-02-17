@@ -537,13 +537,16 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
     public function testUnicodeEscape()
     {
+        $filename = __DIR__.'/fixtures/valid/unicodeEscape.toml';
+
         $parser = new Parser();
 
-        $array = $parser->parse('answer = "\u03B4"');
+        $array = $parser->parse(file_get_contents($filename));
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['answer'], json_decode('"\u03B4"'));
+        $this->assertEquals($array['answer4'], json_decode('"\u03B4"'));
+        $this->assertEquals($array['answer8'], json_decode('"\u03B4"'));
     }
 
     public function testUnicodeLitteral()
