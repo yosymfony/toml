@@ -33,6 +33,9 @@ class Lexer
     const TOKEN_EOF = 10;
     const TOKEN_HASH = 11;
     const TOKEN_LITERAL = 12;
+    const TOKEN_BASIC_STRING = 13;
+    const TOKEN_MULTILINE_BASIC_STRING = 14;
+    const TOKEN_MULTILINE_LITERAL = 15;
 
     private static $tokensNames = array(
         'LBRACK',
@@ -48,6 +51,9 @@ class Lexer
         'EOF',
         'HASH',
         'LITERAL',
+        'BASICSTRING',
+        'MULTILINEBASICSTRING',
+        'MULTILINELITERAL',
         );
 
     private $input;
