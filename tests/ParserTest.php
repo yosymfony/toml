@@ -312,11 +312,11 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     {
         $parser = new Parser();
 
-        $array = $parser->parse(file_get_contents($filename));
+        $array = $parser->parse('"a b" = 1');
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array["~!@$^&*()_+-`1234567890[]|/?><.,;:'"], 1);
+        $this->assertEquals($array['a b'], 1);
     }
 
     public function testKeySpecialChars()

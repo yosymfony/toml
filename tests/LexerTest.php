@@ -123,6 +123,94 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
     }
 
+    public function testMultilineString()
+    {
+        $lexer = new Lexer("\"\"\"Roses are red\nViolets are blue\"\"\"");
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
+        $this->assertEquals($token->getValue(), "Roses are red\nViolets are blue");
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+    }
+
+    public function testMultilineStringBackslash()
+    {
+        $lexer = new Lexer("\"\"\"\nThe quick brown \\\n\n  fox jumps over \\\n    the lazy dog.\"\"\"");
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
+        $this->assertEquals("The quick brown fox jumps over the lazy dog.", $token->getValue());
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+    }
+
+    public function testMultilineStringBackslashStartingWithBackslash()
+    {
+        $lexer = new Lexer("\"\"\"\\\nThe quick brown \\\n\n  fox jumps over \\\n    the lazy dog.\"\"\"");
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
+        $this->assertEquals("The quick brown fox jumps over the lazy dog.", $token->getValue());
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+    }
+
+    public function testMultilineStringStartingWithNewline()
+    {
+        $lexer = new Lexer("\"\"\"\nRoses are red\nViolets are blue\"\"\"");
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
+        $this->assertEquals("Roses are red\nViolets are blue", $token->getValue());
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+
+        $token = $lexer->getToken();
+
+        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+    }
+
     public function testString()
     {
         $lexer = new Lexer('"I\'m a string. \/slash \r \u000A Jos\u0082 \"You can quote me\". Tab \t newline \n you get it."');

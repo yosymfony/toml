@@ -33,9 +33,6 @@ class Lexer
     const TOKEN_EOF = 10;
     const TOKEN_HASH = 11;
     const TOKEN_LITERAL = 12;
-    const TOKEN_BASIC_STRING = 13;
-    const TOKEN_MULTILINE_BASIC_STRING = 14;
-    const TOKEN_MULTILINE_LITERAL = 15;
 
     private static $tokensNames = array(
         'LBRACK',
@@ -51,9 +48,6 @@ class Lexer
         'EOF',
         'HASH',
         'LITERAL',
-        'BASICSTRING',
-        'MULTILINEBASICSTRING',
-        'MULTILINELITERAL',
         );
 
     private $input;
@@ -66,6 +60,7 @@ class Lexer
     private $beginQuoteOpen = false;
     private $endQuoteOpen = false;
     private $commentOpen = false;
+    private $multilineStringOpen = false;
 
     public function __construct($input)
     {
@@ -176,9 +171,20 @@ class Lexer
                     return new Token(self::TOKEN_COMMA, $this->getNemo(self::TOKEN_COMMA), $this->getCurrent());
                 case '"':
                     if (!$this->beginQuoteOpen && !$this->endQuoteOpen) {
+                        if ($this->getNext(1, 2) == '""') {
+                            $this->consume(2);
+                            $this->multilineStringOpen = true;
+                        }
                         $this->beginQuoteOpen = true;
                         $this->endQuoteOpen = true;
                     } elseif (!$this->beginQuoteOpen && $this->endQuoteOpen) {
+                        if ($this->multilineStringOpen) {
+                            if ($this->getNext(1, 2) == '""') {
+                                $this->consume(2);
+                            }
+                        }
+
+                        $this->multilineStringOpen = false;
                         $this->endQuoteOpen = false;
                     }
 
@@ -231,12 +237,12 @@ class Lexer
         }
     }
 
-    private function consume()
+    private function consume($count = 1)
     {
-        $tmpVal = $this->getNext();
+        $tmpVal = $this->getNext(1, $count);
 
         if (null !== $tmpVal) {
-            $this->position++;
+            $this->position += $count;
             $this->current = $tmpVal;
 
             return true;
@@ -270,7 +276,7 @@ class Lexer
     {
         $result = true;
 
-        if ($this->getCurrent() == "\n" || ($this->getCurrent() == '"' && $this->getBack() != '\\')) {
+        if ((!$this->multilineStringOpen && $this->getCurrent() == "\n") || ($this->getCurrent() == '"' && $this->getBack() != '\\')) {
             $result = false;
         }
 
@@ -295,7 +301,7 @@ class Lexer
 
         $pos = strpos($noSpecialCharacter, '\\');
 
-        if (false !== $pos) {
+        if (!$this->multilineStringOpen && false !== $pos) {
             $snippet = substr($noSpecialCharacter, $pos, 8);
             throw new LexerException('Invalid special character near: '.$snippet.'.');
         }
@@ -309,6 +315,12 @@ class Lexer
                 return json_decode('"'.$maches[0].'"'); // json directly support \uxxxx sintax
             },
             $result);
+
+        if ($this->multilineStringOpen) {
+            $result = ltrim($result, "\n");
+            $result = preg_replace("/\\\\[\s\n]*/", '', $result);
+        }
+
         $result = str_replace('[\\\\]', '\\', $result);
 
         return $result;
