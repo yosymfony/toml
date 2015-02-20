@@ -52,23 +52,23 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         $token = $lexer->getToken();
 
         $this->isInstanceOf('Token', '::getToken() return a Token instance');
-        $this->assertEquals($token->getType(), Lexer::TOKEN_LITERAL);
+        $this->assertEquals(Lexer::TOKEN_LITERAL, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EQUAL);
+        $this->assertEquals(Lexer::TOKEN_EQUAL, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
+        $this->assertEquals(Lexer::TOKEN_STRING, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
@@ -111,12 +111,12 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_HASH);
+        $this->assertEquals(Lexer::TOKEN_HASH, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_COMMENT);
-        $this->assertEquals($token->getValue(), ' I am a comment. Hear me roar. Roar. ');
+        $this->assertEquals(Lexer::TOKEN_COMMENT, $token->getType());
+        $this->assertEquals(' I am a comment. Hear me roar. Roar. ', $token->getValue());
 
         $token = $lexer->getToken();
 
@@ -129,20 +129,20 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
-        $this->assertEquals($token->getValue(), "Roses are red\nViolets are blue");
+        $this->assertEquals(Lexer::TOKEN_STRING, $token->getType());
+        $this->assertEquals("Roses are red\nViolets are blue", $token->getValue());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertEquals(Lexer::TOKEN_EOF, $token->getType());
     }
 
     public function testMultilineStringBackslash()
@@ -151,20 +151,20 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
+        $this->assertEquals(Lexer::TOKEN_STRING, $token->getType());
         $this->assertEquals("The quick brown fox jumps over the lazy dog.", $token->getValue());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertEquals(Lexer::TOKEN_EOF, $token->getType());
     }
 
     public function testMultilineStringBackslashStartingWithBackslash()
@@ -173,20 +173,20 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
+        $this->assertEquals(Lexer::TOKEN_STRING, $token->getType());
         $this->assertEquals("The quick brown fox jumps over the lazy dog.", $token->getValue());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertEquals(Lexer::TOKEN_EOF, $token->getType());
     }
 
     public function testMultilineStringStartingWithNewline()
