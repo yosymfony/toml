@@ -18,9 +18,19 @@ Use [Composer](http://getcomposer.org/) to install Yosyfmony Toml package:
 
 Add the following to your `composer.json` and run `composer update`.
 
-    "require": {
-        "yosymfony/toml": "0.2.x-dev"
-    }
+```json
+"require": {
+    "yosymfony/toml": "0.2.x-dev"
+}
+```
+
+Develop branch (unstable):
+
+```
+"require": {
+    "yosymfony/toml": "dev-develop"
+}
+```
 
 More informations about the package on [Packagist](https://packagist.org/packages/yosymfony/toml).
 
@@ -28,19 +38,23 @@ Usage
 -----
 You can use this package to parse TOML string inline or from a file with only one method:
 
-    use Yosymfony\Toml\Toml;
-    
-    $array = Toml::Parse('key = [1,2,3]');
-    
-    print_r($array);
+```php
+use Yosymfony\Toml\Toml;
+
+$array = Toml::Parse('key = [1,2,3]');
+
+print_r($array);
+```
 
 From a file:
 
-    use Yosymfony\Toml\Toml;
-    
-    $array = Toml::Parse('example.toml');
-    
-    print_r($array);
+```php
+use Yosymfony\Toml\Toml;
+
+$array = Toml::Parse('example.toml');
+
+print_r($array);
+```
 
 ### TomlBuilder
 You can create inline TOML string with TomlBuilder. TomlBuilder uses Fluent interface for more readable code:
