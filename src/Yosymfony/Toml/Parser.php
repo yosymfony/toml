@@ -54,7 +54,8 @@ class Parser
                     $this->processTables();         // [table] or [[array of tables]]
                     break;
                 case Lexer::TOKEN_LITERAL:
-                    $this->processKeyValue();       // key = value
+                case Lexer::TOKEN_QUOTES:
+                    $this->processKeyValue();       // key = value or "key name" = value
                     break;
                 case Lexer::TOKEN_NEWLINE:
                     $this->currentLine++;
@@ -132,9 +133,35 @@ class Parser
     private function processTable()
     {
         $key = '';
+        $quotesKey = false;
 
-        while ($this->isTokenValidForTablename($this->lexer->getToken())) {
-            $key .= $this->lexer->getCurrentToken()->getValue();
+        if (Lexer::TOKEN_QUOTES === $this->lexer->getNextToken()->getType()) {
+            $quotesKey = true;
+            $this->lexer->getToken();
+
+            if (Lexer::TOKEN_STRING !== $this->lexer->getToken()->getType()) {
+                throw new ParseException(
+                    sprintf('Syntax error: expected string. Key: %s', $key),
+                    $this->currentLine,
+                    $this->lexer->getCurrentToken()->getValue());
+            } else {
+                $key = $this->lexer->getCurrentToken()->getValue();
+            }
+        } else {
+            while ($this->isTokenValidForTablename($this->lexer->getToken())) {
+                $key .= $this->lexer->getCurrentToken()->getValue();
+            }
+        }
+
+        if ($quotesKey) {
+            if (Lexer::TOKEN_QUOTES === $this->lexer->getToken()->getType()) {
+                $this->lexer->getToken();
+            } else {
+                throw new ParseException(
+                    sprintf('Syntax error: expected quotes for closing key: %s', $key),
+                    $this->currentLine,
+                    $this->lexer->getCurrentToken()->getValue());
+            }
         }
 
         $this->setTable($key);
@@ -155,7 +182,7 @@ class Parser
             return true;
         }
 
-        return Lexer::TOKEN_LITERAL === $token->getType();
+        return Lexer::TOKEN_LITERAL === $token->getType() || Lexer::TOKEN_STRING === $token->getType();
     }
 
     private function setTable($key)
@@ -229,10 +256,28 @@ class Parser
 
     private function processKeyValue()
     {
+        $quotesKey = false;
+
+        if (Lexer::TOKEN_QUOTES === $this->lexer->getCurrentToken()->getType()) {
+            $quotesKey = true;
+            $this->lexer->getToken();
+        }
+
         $key = $this->lexer->getCurrentToken()->getValue();
 
         while ($this->isTokenValidForKey($this->lexer->getToken())) {
             $key = $key.$this->lexer->getCurrentToken()->getValue();
+        }
+
+        if ($quotesKey) {
+            if (Lexer::TOKEN_QUOTES === $this->lexer->getCurrentToken()->getType()) {
+                $this->lexer->getToken();
+            } else {
+                throw new ParseException(
+                    sprintf('Syntax error: expected quotes for closing key: %s', $key),
+                    $this->currentLine,
+                    $this->lexer->getCurrentToken()->getValue());
+            }
         }
 
         if (Lexer::TOKEN_EQUAL !== $this->lexer->getCurrentToken()->getType()) {
@@ -273,7 +318,8 @@ class Parser
     {
         return Lexer::TOKEN_EQUAL  !== $token->getType()
             && Lexer::TOKEN_NEWLINE !== $token->getType()
-            && Lexer::TOKEN_EOF !== $token->getType();
+            && Lexer::TOKEN_EOF !== $token->getType()
+            && Lexer::TOKEN_QUOTES !== $token->getType();
     }
 
     private function getStringValue()

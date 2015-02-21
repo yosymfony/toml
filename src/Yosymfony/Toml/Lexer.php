@@ -101,10 +101,20 @@ class Lexer
      */
     public function getNextToken()
     {
+        $beginQuoteOpen = $this->beginQuoteOpen;
+        $endQuoteOpen = $this->endQuoteOpen;
+        $commentOpen = $this->commentOpen;
+        $multilineStringOpen = $this->multilineStringOpen;
         $currentPosition = $this->position;
+
         $nextToken = $this->consumeToken();
         $subPositions = $this->position - $currentPosition;
         $this->goBack($subPositions);
+
+        $this->beginQuoteOpen = $beginQuoteOpen;
+        $this->endQuoteOpen = $endQuoteOpen;
+        $this->commentOpen = $commentOpen;
+        $this->multilineStringOpen = $multilineStringOpen;
 
         return $nextToken;
     }

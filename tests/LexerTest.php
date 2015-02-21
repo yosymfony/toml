@@ -25,14 +25,15 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
     public function testGetNextToken()
     {
-        $lexer = new Lexer('[[fruit]]');
-        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LBRANK);
-        $this->assertEquals($lexer->getNextToken()->getType(), Lexer::TOKEN_LBRANK);
-        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LBRANK);
-        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LITERAL);
-        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_RBRANK);
-        $this->assertEquals($lexer->getNextToken()->getType(), Lexer::TOKEN_RBRANK);
-        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_RBRANK);
+        $lexer = new Lexer('["valid key"]');
+
+        $this->assertEquals(Lexer::TOKEN_LBRANK, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getNextToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_STRING, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_RBRANK, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_EOF, $lexer->getToken()->getType());
     }
 
     public function testGetBackToken()
@@ -45,7 +46,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LITERAL);
     }
 
-    public function testTitle()
+    public function testKeyValue()
     {
         $lexer = new Lexer('title = "TOML Example"');
 
@@ -53,26 +54,11 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $this->isInstanceOf('Token', '::getToken() return a Token instance');
         $this->assertEquals(Lexer::TOKEN_LITERAL, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_EQUAL, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_STRING, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertEquals(Lexer::TOKEN_EQUAL, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_STRING, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_EOF, $lexer->getToken()->getType());
     }
 
     public function testMultipleSpaces()
@@ -82,27 +68,12 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         $token = $lexer->getToken();
 
         $this->isInstanceOf('Token', '::getToken() return a Token instance');
-        $this->assertEquals($token->getType(), Lexer::TOKEN_LITERAL);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EQUAL);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertEquals(Lexer::TOKEN_LITERAL, $token->getType());
+        $this->assertEquals(Lexer::TOKEN_EQUAL, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_STRING, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
+        $this->assertEquals(Lexer::TOKEN_EOF, $lexer->getToken()->getType());
     }
 
     public function testComment()
