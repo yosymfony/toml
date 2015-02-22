@@ -64,6 +64,10 @@ class TomlBuilder
             throw new DumpException(sprintf('The key must be a string'));
         }
 
+        if (false !== strpos($key, ' ')) {
+            $key = '"'.$key.'"';
+        }
+
         $keyPart = $this->getKeyPart($key);
 
         $this->append($keyPart);

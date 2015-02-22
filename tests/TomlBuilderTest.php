@@ -104,6 +104,16 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertNotNull(Toml::Parse($result));
     }
 
+    public function testKeyWhitespace()
+    {
+        $tb = new TomlBuilder();
+
+        $result = $tb->addValue('valid key', 2)
+            ->getTomlString();
+
+        $this->assertNotNull(Toml::Parse($result));
+    }
+
     public function testTableWhitespace()
     {
         $tb = new TomlBuilder();
