@@ -169,6 +169,13 @@ class Parser
             }
         }
 
+        if (false === $this->isValidKey($key, $quotesKey)) {
+            throw new ParseException(
+                sprintf('Syntax error: the key %s is invalid. A key without embraces can not contains white spaces', $key),
+                $this->currentLine,
+                $this->lexer->getCurrentToken()->getValue());
+        }
+
         $this->setTable($key);
 
         if (Lexer::TOKEN_RBRANK !== $this->lexer->getCurrentToken()->getType()) {
@@ -187,7 +194,7 @@ class Parser
             return true;
         }
 
-        return Lexer::TOKEN_LITERAL === $token->getType() || Lexer::TOKEN_STRING === $token->getType();
+        return Lexer::TOKEN_LITERAL === $token->getType();
     }
 
     private function setTable($key)
@@ -266,12 +273,22 @@ class Parser
         if (Lexer::TOKEN_QUOTES === $this->lexer->getCurrentToken()->getType()) {
             $quotesKey = true;
             $this->lexer->getToken();
-        }
 
-        $key = $this->lexer->getCurrentToken()->getValue();
+            if (Lexer::TOKEN_STRING !== $this->lexer->getCurrentToken()->getType()) {
+                throw new ParseException(
+                    sprintf('Syntax error: expected string. Key: %s', $this->lexer->getCurrentToken()->getValue()),
+                    $this->currentLine,
+                    $this->lexer->getCurrentToken()->getValue());
+            }
 
-        while ($this->isTokenValidForKey($this->lexer->getToken())) {
-            $key = $key.$this->lexer->getCurrentToken()->getValue();
+            $key = $this->lexer->getCurrentToken()->getValue();
+            $this->lexer->getToken();
+        } else {
+            $key = $this->lexer->getCurrentToken()->getValue();
+
+            while ($this->isTokenValidForKey($this->lexer->getToken())) {
+                $key = $key.$this->lexer->getCurrentToken()->getValue();
+            }
         }
 
         if ($quotesKey) {
@@ -287,12 +304,19 @@ class Parser
 
         if (Lexer::TOKEN_EQUAL !== $this->lexer->getCurrentToken()->getType()) {
             throw new ParseException(
-                'Syntax error: expected equal',
+                sprintf('Syntax error: expected equal near the key: %s', $key),
                 $this->currentLine,
                 $this->lexer->getCurrentToken()->getValue());
         }
 
         $key = trim($key);
+
+        if (false === $this->isValidKey($key, $quotesKey)) {
+            throw new ParseException(
+                sprintf('Syntax error: the key %s is invalid. A key without embraces can not contains white spaces', $key),
+                $this->currentLine,
+                $this->lexer->getCurrentToken()->getValue());
+        }
 
         if (array_key_exists($key, $this->data)) {
             throw new ParseException(
@@ -326,6 +350,15 @@ class Parser
             && Lexer::TOKEN_EOF !== $token->getType()
             && Lexer::TOKEN_QUOTES !== $token->getType()
             && Lexer::TOKEN_HASH !== $token->getType();
+    }
+
+    private function isValidKey($key, $quotesActived)
+    {
+        if (false === $quotesActived && false !== strpos($key, ' ')) {
+            return false;
+        }
+
+        return true;
     }
 
     private function getStringValue()

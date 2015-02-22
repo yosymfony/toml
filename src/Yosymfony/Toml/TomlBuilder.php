@@ -109,6 +109,10 @@ class TomlBuilder
 
         $addPreNewline = $this->currentLine > 0 ? true : false;
 
+        if (false !== strpos($key, ' ')) {
+            $key = '"'.$key.'"';
+        }
+
         $keyParts = explode('.', $key);
         $val = '['.$key.']';
 
