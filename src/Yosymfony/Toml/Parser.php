@@ -60,6 +60,11 @@ class Parser
                 case Lexer::TOKEN_NEWLINE:
                     $this->currentLine++;
                     break;
+                default:
+                    throw new ParseException(
+                        'Syntax error: unexpected token',
+                        $this->currentLine,
+                        $this->lexer->getCurrentToken()->getValue());
             }
 
             $this->lexer->getToken();
@@ -319,7 +324,8 @@ class Parser
         return Lexer::TOKEN_EQUAL  !== $token->getType()
             && Lexer::TOKEN_NEWLINE !== $token->getType()
             && Lexer::TOKEN_EOF !== $token->getType()
-            && Lexer::TOKEN_QUOTES !== $token->getType();
+            && Lexer::TOKEN_QUOTES !== $token->getType()
+            && Lexer::TOKEN_HASH !== $token->getType();
     }
 
     private function getStringValue()

@@ -186,7 +186,6 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
-     * @expectedExceptionMessage Keys can no longer contain '#' characters.
      */
     public function testKeyHash()
     {
