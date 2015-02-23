@@ -34,6 +34,8 @@ class Lexer
     const TOKEN_HASH = 11;
     const TOKEN_LITERAL = 12;
     const TOKEN_TRIPLE_QUOTES = 13;
+    const TOKEN_QUOTE = 14;
+    const TOKEN_TRIPLE_QUOTE = 15;
 
     private static $tokensNames = array(
         'LBRACK',
@@ -50,6 +52,8 @@ class Lexer
         'HASH',
         'LITERAL',
         'TRIPLESQUOTES',
+        'QUOTE',
+        'TRIPLEQUOTE'
         );
 
     private $input;
@@ -59,8 +63,8 @@ class Lexer
     private $backToken;
     private $inputLength = 0;
 
-    private $beginQuoteOpen = false;
-    private $endQuoteOpen = false;
+    private $beginQuotesOpen = false;
+    private $endQuotesOpen = false;
     private $commentOpen = false;
     private $multilineStringOpen = false;
 
@@ -103,8 +107,8 @@ class Lexer
      */
     public function getNextToken()
     {
-        $beginQuoteOpen = $this->beginQuoteOpen;
-        $endQuoteOpen = $this->endQuoteOpen;
+        $beginQuotesOpen = $this->beginQuotesOpen;
+        $endQuotesOpen = $this->endQuotesOpen;
         $commentOpen = $this->commentOpen;
         $multilineStringOpen = $this->multilineStringOpen;
         $currentPosition = $this->position;
@@ -113,8 +117,8 @@ class Lexer
         $subPositions = $this->position - $currentPosition;
         $this->goBack($subPositions);
 
-        $this->beginQuoteOpen = $beginQuoteOpen;
-        $this->endQuoteOpen = $endQuoteOpen;
+        $this->beginQuotesOpen = $beginQuotesOpen;
+        $this->endQuotesOpen = $endQuotesOpen;
         $this->commentOpen = $commentOpen;
         $this->multilineStringOpen = $multilineStringOpen;
 
@@ -149,7 +153,7 @@ class Lexer
 
     private function consumeToken()
     {
-        if ($this->beginQuoteOpen) {
+        if ($this->beginQuotesOpen) {
             $this->consume();
 
             return $this->getTokenString();
@@ -181,7 +185,7 @@ class Lexer
                     return new Token(self::TOKEN_HASH, $this->getNemo(self::TOKEN_HASH), $this->getCurrent());
                 case ',':
                     return new Token(self::TOKEN_COMMA, $this->getNemo(self::TOKEN_COMMA), $this->getCurrent());
-                case '"':
+                /*case '\'':
                     if (!$this->beginQuoteOpen && !$this->endQuoteOpen) {
                         if ($this->getNext(1, 2) == '""') {
                             $this->consume(2);
@@ -189,22 +193,50 @@ class Lexer
                             $this->beginQuoteOpen = true;
                             $this->endQuoteOpen = true;
 
-                            return new Token(self::TOKEN_TRIPLE_QUOTES, $this->getNemo(self::TOKEN_TRIPLE_QUOTES), '"""');
+                            return new Token(self::TOKEN_TRIPLE_QUOTE, $this->getNemo(self::TOKEN_TRIPLE_QUOTE), '\'\'\'');
                         } else {
                             $this->beginQuoteOpen = true;
                             $this->endQuoteOpen = true;
                         }
-                    } elseif (!$this->beginQuoteOpen && $this->endQuoteOpen) {
+                    } elseif (!$this->beginQuotesOpen && $this->endQuotesOpen) {
                         if ($this->multilineStringOpen) {
                             if ($this->getNext(1, 2) == '""') {
                                 $this->consume(2);
                                 $this->multilineStringOpen = false;
-                                $this->endQuoteOpen = false;
+                                $this->endQuotesOpen = false;
+
+                                return new Token(self::TOKEN_TRIPLE_QUOTE, $this->getNemo(self::TOKEN_TRIPLE_QUOTE), '\'\'\'');
+                            }
+                        } else {
+                            $this->endQuotesOpen = false;
+                        }
+                    }
+
+                    return new Token(self::TOKEN_QUOTE, $this->getNemo(self::TOKEN_QUOTE), $this->getCurrent());*/
+                case '"':
+                    if (!$this->beginQuotesOpen && !$this->endQuotesOpen) {
+                        if ($this->getNext(1, 2) == '""') {
+                            $this->consume(2);
+                            $this->multilineStringOpen = true;
+                            $this->beginQuotesOpen = true;
+                            $this->endQuotesOpen = true;
+
+                            return new Token(self::TOKEN_TRIPLE_QUOTES, $this->getNemo(self::TOKEN_TRIPLE_QUOTES), '"""');
+                        } else {
+                            $this->beginQuotesOpen = true;
+                            $this->endQuotesOpen = true;
+                        }
+                    } elseif (!$this->beginQuotesOpen && $this->endQuotesOpen) {
+                        if ($this->multilineStringOpen) {
+                            if ($this->getNext(1, 2) == '""') {
+                                $this->consume(2);
+                                $this->multilineStringOpen = false;
+                                $this->endQuotesOpen = false;
 
                                 return new Token(self::TOKEN_TRIPLE_QUOTES, $this->getNemo(self::TOKEN_TRIPLE_QUOTES), '"""');
                             }
                         } else {
-                            $this->endQuoteOpen = false;
+                            $this->endQuotesOpen = false;
                         }
                     }
 
@@ -283,7 +315,7 @@ class Lexer
             } while ($isNotTheEnd && $this->isValidForString());
         }
 
-        $this->beginQuoteOpen = false;
+        $this->beginQuotesOpen = false;
 
         if ($isNotTheEnd) {
             $this->goBack();
