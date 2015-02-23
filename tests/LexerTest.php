@@ -100,7 +100,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
+        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
@@ -109,7 +109,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
+        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
@@ -122,7 +122,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
+        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
@@ -131,7 +131,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
+        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
@@ -144,7 +144,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
+        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
@@ -153,7 +153,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $token->getType());
+        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
 
         $token = $lexer->getToken();
 
@@ -166,7 +166,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+        $this->assertEquals($token->getType(), Lexer::TOKEN_TRIPLE_QUOTES);
 
         $token = $lexer->getToken();
 
@@ -175,7 +175,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
 
         $token = $lexer->getToken();
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+        $this->assertEquals($token->getType(), Lexer::TOKEN_TRIPLE_QUOTES);
 
         $token = $lexer->getToken();
 

@@ -327,7 +327,8 @@ class Parser
 
         switch ($this->lexer->getToken()->getType()) {
             case Lexer::TOKEN_QUOTES:
-                $this->data[$key] = $this->getStringValue();
+            case Lexer::TOKEN_TRIPLE_QUOTES:
+                $this->data[$key] = $this->getStringValue($this->lexer->getCurrentToken());
                 break;
             case Lexer::TOKEN_LBRANK:
                 $this->data[$key] = $this->getArrayValue();
@@ -349,7 +350,8 @@ class Parser
             && Lexer::TOKEN_NEWLINE !== $token->getType()
             && Lexer::TOKEN_EOF !== $token->getType()
             && Lexer::TOKEN_QUOTES !== $token->getType()
-            && Lexer::TOKEN_HASH !== $token->getType();
+            && Lexer::TOKEN_HASH !== $token->getType()
+            && Lexer::TOKEN_TRIPLE_QUOTES !== $token->getType();
     }
 
     private function isValidKey($key, $quotesActived)
@@ -361,7 +363,7 @@ class Parser
         return true;
     }
 
-    private function getStringValue()
+    private function getStringValue($openToken)
     {
         $result = "";
 
@@ -374,7 +376,7 @@ class Parser
 
         $result = (string) $this->lexer->getCurrentToken()->getValue();
 
-        if (Lexer::TOKEN_QUOTES !== $this->lexer->getToken()->getType()) {
+        if ($openToken->getType() !== $this->lexer->getToken()->getType()) {
             throw new ParseException(
                 'Syntax error: expected close quotes',
                 $this->currentLine,
@@ -401,7 +403,7 @@ class Parser
                 case Lexer::TOKEN_QUOTES:
                     $lastType = 'string';
                     $dataType = $dataType == null ? $lastType : $dataType;
-                    $value = $this->getStringValue();
+                    $value = $this->getStringValue($this->lexer->getCurrentToken());
                     $result[] = $value;
                     break;
                 case Lexer::TOKEN_LBRANK:

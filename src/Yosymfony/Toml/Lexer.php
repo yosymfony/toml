@@ -33,6 +33,7 @@ class Lexer
     const TOKEN_EOF = 10;
     const TOKEN_HASH = 11;
     const TOKEN_LITERAL = 12;
+    const TOKEN_TRIPLE_QUOTES = 13;
 
     private static $tokensNames = array(
         'LBRACK',
@@ -48,6 +49,7 @@ class Lexer
         'EOF',
         'HASH',
         'LITERAL',
+        'TRIPLESQUOTES',
         );
 
     private $input;
@@ -184,18 +186,26 @@ class Lexer
                         if ($this->getNext(1, 2) == '""') {
                             $this->consume(2);
                             $this->multilineStringOpen = true;
+                            $this->beginQuoteOpen = true;
+                            $this->endQuoteOpen = true;
+
+                            return new Token(self::TOKEN_TRIPLE_QUOTES, $this->getNemo(self::TOKEN_TRIPLE_QUOTES), '"""');
+                        } else {
+                            $this->beginQuoteOpen = true;
+                            $this->endQuoteOpen = true;
                         }
-                        $this->beginQuoteOpen = true;
-                        $this->endQuoteOpen = true;
                     } elseif (!$this->beginQuoteOpen && $this->endQuoteOpen) {
                         if ($this->multilineStringOpen) {
                             if ($this->getNext(1, 2) == '""') {
                                 $this->consume(2);
-                            }
-                        }
+                                $this->multilineStringOpen = false;
+                                $this->endQuoteOpen = false;
 
-                        $this->multilineStringOpen = false;
-                        $this->endQuoteOpen = false;
+                                return new Token(self::TOKEN_TRIPLE_QUOTES, $this->getNemo(self::TOKEN_TRIPLE_QUOTES), '"""');
+                            }
+                        } else {
+                            $this->endQuoteOpen = false;
+                        }
                     }
 
                     return new Token(self::TOKEN_QUOTES, $this->getNemo(self::TOKEN_QUOTES), $this->getCurrent());
