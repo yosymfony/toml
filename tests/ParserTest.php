@@ -432,13 +432,13 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['multiline_empty_one'], '');
-        $this->assertEquals($array['multiline_empty_two'], '');
-        $this->assertEquals($array['multiline_empty_three'], '');
-        $this->assertEquals($array['multiline_empty_four'], '');
-        $this->assertEquals($array['equivalent_one'], 'The quick brown fox jumps over the lazy dog.');
-        $this->assertEquals($array['equivalent_two'], 'The quick brown fox jumps over the lazy dog.');
-        $this->assertEquals($array['equivalent_three'], 'The quick brown fox jumps over the lazy dog.');
+        $this->assertEquals('', $array['multiline_empty_one']);
+        $this->assertEquals('', $array['multiline_empty_two']);
+        $this->assertEquals('', $array['multiline_empty_three']);
+        $this->assertEquals('', $array['multiline_empty_four']);
+        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['equivalent_one']);
+        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['equivalent_two']);
+        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['equivalent_three']);
     }
 
     public function testRawMultilineString()
@@ -451,9 +451,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['oneline'], "This string has a ' quote character.");
-        $this->assertEquals($array['firstnl'], "This string has a ' quote character.");
-        $this->assertEquals($array['multiline'], "This string\nhas ' a quote character\nand more than\none newline\nin it.");
+        $this->assertEquals("This string has a ' quote character.", $array['oneline']);
+        $this->assertEquals("This string has a ' quote character.", $array['firstnl']);
+        $this->assertEquals("This string\nhas ' a quote character\nand more than\none newline\nin it.", $array['multiline']);
     }
 
     public function testRawString()
@@ -466,13 +466,13 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['backspace'], "This string has a \b backspace character.");
-        $this->assertEquals($array['tab'], "This string has a \t tab character.");
-        $this->assertEquals($array['newline'], "This string has a \n new line character.");
-        $this->assertEquals($array['formfeed'], "This string has a \f form feed character.");
-        $this->assertEquals($array['carriage'], "This string has a \r carriage return character.");
-        $this->assertEquals($array['slash'], "This string has a / slash character.");
-        $this->assertEquals($array['backslash'], "This string has a \\ backslash character.");
+        $this->assertEquals('This string has a \b backspace character.', $array['backspace']);
+        $this->assertEquals('This string has a \t tab character.', $array['tab']);
+        $this->assertEquals('This string has a \n new line character.', $array['newline']);
+        $this->assertEquals('This string has a \f form feed character.', $array['formfeed']);
+        $this->assertEquals('This string has a \r carriage return character.', $array['carriage']);
+        $this->assertEquals('This string has a \/ slash character.', $array['slash']);
+        $this->assertEquals('This string has a \\\\ backslash character.', $array['backslash']);
     }
 
     public function testStringEmpty()
@@ -502,7 +502,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['formfeed'], "This string has a \f form feed character.");
         $this->assertEquals($array['carriage'], "This string has a \r carriage return character.");
         $this->assertEquals($array['quote'], "This string has a \" quote character.");
-        $this->assertEquals($array['slash'], "This string has a / slash character.");
         $this->assertEquals($array['backslash'], "This string has a \\ backslash character.");
         $this->assertEquals($array['notunicode1'], "This string does not have a unicode \\u escape.");
         $this->assertEquals($array['notunicode2'], "This string does not have a unicode \u005Cu escape.");

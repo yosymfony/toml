@@ -53,7 +53,7 @@ class Lexer
         'LITERAL',
         'TRIPLESQUOTES',
         'QUOTE',
-        'TRIPLEQUOTE'
+        'TRIPLEQUOTE',
         );
 
     private $input;
@@ -65,6 +65,8 @@ class Lexer
 
     private $beginQuotesOpen = false;
     private $endQuotesOpen = false;
+    private $beginQuoteOpen = false;
+    private $endQuoteOpen = false;
     private $commentOpen = false;
     private $multilineStringOpen = false;
 
@@ -159,6 +161,12 @@ class Lexer
             return $this->getTokenString();
         }
 
+        if ($this->beginQuoteOpen) {
+            $this->consume();
+
+            return $this->getTokenLiteralString();
+        }
+
         if ($this->commentOpen) {
             $this->consume();
 
@@ -185,34 +193,34 @@ class Lexer
                     return new Token(self::TOKEN_HASH, $this->getNemo(self::TOKEN_HASH), $this->getCurrent());
                 case ',':
                     return new Token(self::TOKEN_COMMA, $this->getNemo(self::TOKEN_COMMA), $this->getCurrent());
-                /*case '\'':
+                case "'":
                     if (!$this->beginQuoteOpen && !$this->endQuoteOpen) {
-                        if ($this->getNext(1, 2) == '""') {
+                        if ($this->getNext(1, 2) == "''") {
                             $this->consume(2);
                             $this->multilineStringOpen = true;
                             $this->beginQuoteOpen = true;
                             $this->endQuoteOpen = true;
 
-                            return new Token(self::TOKEN_TRIPLE_QUOTE, $this->getNemo(self::TOKEN_TRIPLE_QUOTE), '\'\'\'');
+                            return new Token(self::TOKEN_TRIPLE_QUOTE, $this->getNemo(self::TOKEN_TRIPLE_QUOTE), "'''");
                         } else {
                             $this->beginQuoteOpen = true;
                             $this->endQuoteOpen = true;
                         }
-                    } elseif (!$this->beginQuotesOpen && $this->endQuotesOpen) {
+                    } elseif (!$this->beginQuoteOpen && $this->endQuoteOpen) {
                         if ($this->multilineStringOpen) {
-                            if ($this->getNext(1, 2) == '""') {
+                            if ($this->getNext(1, 2) == "''") {
                                 $this->consume(2);
                                 $this->multilineStringOpen = false;
-                                $this->endQuotesOpen = false;
+                                $this->endQuoteOpen = false;
 
-                                return new Token(self::TOKEN_TRIPLE_QUOTE, $this->getNemo(self::TOKEN_TRIPLE_QUOTE), '\'\'\'');
+                                return new Token(self::TOKEN_TRIPLE_QUOTE, $this->getNemo(self::TOKEN_TRIPLE_QUOTE), "'''");
                             }
                         } else {
-                            $this->endQuotesOpen = false;
+                            $this->endQuoteOpen = false;
                         }
                     }
 
-                    return new Token(self::TOKEN_QUOTE, $this->getNemo(self::TOKEN_QUOTE), $this->getCurrent());*/
+                    return new Token(self::TOKEN_QUOTE, $this->getNemo(self::TOKEN_QUOTE), $this->getCurrent());
                 case '"':
                     if (!$this->beginQuotesOpen && !$this->endQuotesOpen) {
                         if ($this->getNext(1, 2) == '""') {
@@ -324,11 +332,49 @@ class Lexer
         return new Token(self::TOKEN_STRING, $this->getNemo(self::TOKEN_STRING), $this->transformSpecialCharacter($buffer));
     }
 
+    private function getTokenLiteralString()
+    {
+        $buffer = '';
+        $isNotTheEnd = true;
+
+        if ($this->isValidForLiteralString()) {
+            do {
+                $buffer .= $this->getCurrent();
+                $isNotTheEnd = $this->consume();
+            } while ($isNotTheEnd && $this->isValidForLiteralString());
+        }
+
+        $buffer = ltrim($buffer, "\n");
+
+        $this->beginQuoteOpen = false;
+
+        if ($isNotTheEnd) {
+            $this->goBack();
+        }
+
+        return new Token(self::TOKEN_STRING, $this->getNemo(self::TOKEN_STRING), $buffer);
+    }
+
     private function isValidForString()
     {
         $result = true;
 
         if ((!$this->multilineStringOpen && $this->getCurrent() == "\n") || ($this->getCurrent() == '"' && $this->getBack() != '\\')) {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    private function isValidForLiteralString()
+    {
+        $result = true;
+
+        if ($this->multilineStringOpen) {
+            if ($this->getCurrent() == "'" && $this->getNext(1, 2) === "''") {
+                return false;
+            }
+        } elseif ($this->getCurrent() == "\n" || $this->getCurrent() == "'") {
             $result = false;
         }
 

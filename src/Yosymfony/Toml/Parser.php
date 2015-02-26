@@ -328,6 +328,8 @@ class Parser
         switch ($this->lexer->getToken()->getType()) {
             case Lexer::TOKEN_QUOTES:
             case Lexer::TOKEN_TRIPLE_QUOTES:
+            case Lexer::TOKEN_QUOTE:
+            case Lexer::TOKEN_TRIPLE_QUOTE:
                 $this->data[$key] = $this->getStringValue($this->lexer->getCurrentToken());
                 break;
             case Lexer::TOKEN_LBRANK:
