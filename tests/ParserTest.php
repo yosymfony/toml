@@ -332,17 +332,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['a b'], 1);
     }
 
-    public function testKeyWithPound()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('key#name = 5');
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals($array['key#name'], 5);
-    }
-
     public function testTableEmpty()
     {
         $parser = new Parser();
