@@ -533,8 +533,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['answer4'], json_decode('"\u03B4"'));
-        $this->assertEquals($array['answer8'], json_decode('"\u03B4"'));
+        $this->assertEquals(json_decode('"\u03B4"'), $array['answer4']);
+        $this->assertEquals(json_decode('"\u0000\u03B4"'), $array['answer8']);
     }
 
     public function testUnicodeLitteral()

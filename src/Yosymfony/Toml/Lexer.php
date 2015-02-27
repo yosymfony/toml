@@ -395,7 +395,8 @@ class Lexer
 
         $noSpecialCharacter = str_replace('\\\\', '', $val);
         $noSpecialCharacter = str_replace(array_keys($allowed), '', $noSpecialCharacter);
-        $noSpecialCharacter = preg_replace('/\\\\u([0-9a-fA-F]{4})|\\\\u([0-9a-fA-F]{8})/', '', $noSpecialCharacter);
+        $noSpecialCharacter = preg_replace('/\\\\U([0-9a-fA-F]{8})|/', '', $noSpecialCharacter);
+        $noSpecialCharacter = preg_replace('/\\\\u([0-9a-fA-F]{4})|/', '', $noSpecialCharacter);
 
         $pos = strpos($noSpecialCharacter, '\\');
 
@@ -408,9 +409,16 @@ class Lexer
         $result = strtr($result, $allowed);
 
         $result = preg_replace_callback(
+            '/\\\\U([0-9a-fA-F]{4})([0-9a-fA-F]{4})/',
+            function ($matches) {
+                return json_decode('"\u'.$matches[1].'\u'.$matches[2].'"');
+            },
+            $result);
+
+        $result = preg_replace_callback(
             '/\\\\u([0-9a-fA-F]{4})/',
-            function ($maches) {
-                return json_decode('"'.$maches[0].'"'); // json directly support \uxxxx sintax
+            function ($matches) {
+                return json_decode('"'.$matches[0].'"');
             },
             $result);
 
