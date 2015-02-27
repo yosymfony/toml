@@ -395,7 +395,7 @@ class Lexer
 
         $noSpecialCharacter = str_replace('\\\\', '', $val);
         $noSpecialCharacter = str_replace(array_keys($allowed), '', $noSpecialCharacter);
-        $noSpecialCharacter = preg_replace('/\\\\u([0-9a-fA-F]{4})/', '', $noSpecialCharacter);
+        $noSpecialCharacter = preg_replace('/\\\\u([0-9a-fA-F]{4})|\\\\u([0-9a-fA-F]{8})/', '', $noSpecialCharacter);
 
         $pos = strpos($noSpecialCharacter, '\\');
 
