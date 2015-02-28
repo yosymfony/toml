@@ -167,15 +167,21 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
     public function testDatetime()
     {
+        $filename = __DIR__.'/fixtures/valid/datetime.toml';
+
         $parser = new Parser();
 
-        $array = $parser->parse("bestdayever = 1987-07-05T17:45:00Z");
+        $array = $parser->parse(file_get_contents($filename));
 
         $this->assertNotNull($array);
 
         $this->assertArrayHasKey('bestdayever', $array);
+        $this->assertArrayHasKey('bestdayever2', $array);
+        $this->assertArrayHasKey('bestdayever3', $array);
 
         $this->assertTrue($array['bestdayever'] instanceof \Datetime);
+        $this->assertTrue($array['bestdayever2'] instanceof \Datetime);
+        $this->assertTrue($array['bestdayever3'] instanceof \Datetime);
     }
 
     public function testEmpty()

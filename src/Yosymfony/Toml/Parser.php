@@ -455,7 +455,7 @@ class Parser
             return (float) $token->getValue();
         }
 
-        if ($this->isLiteralISO8601($token)) {
+        if ($this->isLiteralDatetime($token)) {
             return new \Datetime($token->getValue());
         }
 
@@ -485,9 +485,9 @@ class Parser
         return preg_match('/^\-?\d+\.\d+$/', $token->getValue());
     }
 
-    private function isLiteralISO8601(Token $token)
+    private function isLiteralDatetime(Token $token)
     {
-        return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $token->getValue());
+        return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|(\.\d{6})?-\d{2}:\d{2})$/', $token->getValue());
     }
 
     private function &getLastElementRef(&$array)
