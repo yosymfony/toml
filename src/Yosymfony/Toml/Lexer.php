@@ -36,6 +36,8 @@ class Lexer
     const TOKEN_TRIPLE_QUOTES = 13;
     const TOKEN_QUOTE = 14;
     const TOKEN_TRIPLE_QUOTE = 15;
+    const TOKEN_LKEY = 16;
+    const TOKEN_RKEY = 17;
 
     private static $tokensNames = array(
         'LBRACK',
@@ -54,6 +56,8 @@ class Lexer
         'TRIPLESQUOTES',
         'QUOTE',
         'TRIPLEQUOTE',
+        'LKEY',
+        'RKEY',
         );
 
     private $input;
@@ -179,6 +183,10 @@ class Lexer
                 case "\t":
                 case "\r":
                     continue;
+                case '{':
+                    return new Token(self::TOKEN_LKEY, $this->getNemo(self::TOKEN_LKEY), $this->getCurrent());
+                case '}':
+                    return new Token(self::TOKEN_LKEY, $this->getNemo(self::TOKEN_LKEY), $this->getCurrent());
                 case "\n":
                     return new Token(self::TOKEN_NEWLINE, $this->getNemo(self::TOKEN_NEWLINE), '');
                 case '[':

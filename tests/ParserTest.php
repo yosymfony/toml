@@ -338,6 +338,43 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['a b'], 1);
     }
 
+    public function testInlineTable()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('name = { first = "Tom", last = "Preston-Werner" }');
+
+        $this->assertNotNull($array);
+
+        $this->assertTrue(is_array($array['name']));
+
+        $this->assertEquals('Tom', $array['name']['first']);
+        $this->assertEquals('Preston-Werner', $array['name']['last']);
+    }
+
+    public function testInlineTableEmpty()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('name = {}');
+
+        $this->assertNotNull($array);
+
+        $this->assertTrue(is_array($array['name']));
+    }
+
+    public function testInlineTableOneElement()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('name = { first = "Tom" }');
+
+        $this->assertNotNull($array);
+
+        $this->assertTrue(is_array($array['name']));
+        $this->assertEquals('Tom', $array['name']['first']);
+    }
+
     public function testTableEmpty()
     {
         $parser = new Parser();

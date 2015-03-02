@@ -27,6 +27,7 @@ class Parser
     private $tableNames = array();
     private $arrayTableNames = array();
     private $invalidArrayTablesName = array();
+    private $inlineTableOpen = false;
 
     public function __construct()
     {
@@ -59,7 +60,34 @@ class Parser
                     break;
                 case Lexer::TOKEN_NEWLINE:
                     $this->currentLine++;
+
+                    if (true === $this->inlineTableOpen) {
+                        throw new ParseException(
+                            'Syntax error: unexpected newline inside a inline table',
+                            $this->currentLine,
+                            $this->lexer->getCurrentToken()->getValue());
+                    }
+
                     break;
+                case Lexer::TOKEN_LKEY:
+                    if (false === $this->inlineTableOpen) {
+                        throw new ParseException(
+                            'Syntax error: unexpected token',
+                            $this->currentLine,
+                            $this->lexer->getCurrentToken()->getValue());
+                    }
+
+                    $this->inlineTableOpen = false;
+                    break;
+                case Lexer::TOKEN_COMMA:
+                    if ($this->inlineTableOpen) {
+                        break;
+                    } else {
+                        throw new ParseException(
+                            'Syntax error: unexpected token',
+                            $this->currentLine,
+                            $this->lexer->getCurrentToken()->getValue());
+                    }
                 default:
                     throw new ParseException(
                         'Syntax error: unexpected token',
@@ -133,6 +161,12 @@ class Parser
                 $this->currentLine,
                 $this->lexer->getCurrentToken()->getValue());
         }
+    }
+
+    private function processInlineTable($key)
+    {
+        $this->inlineTableOpen = true;
+        $this->setTable($key);
     }
 
     private function processTable()
@@ -332,6 +366,9 @@ class Parser
             case Lexer::TOKEN_TRIPLE_QUOTE:
                 $this->data[$key] = $this->getStringValue($this->lexer->getCurrentToken());
                 break;
+            case Lexer::TOKEN_LKEY:
+                    $this->processInlineTable($key);
+                    break;
             case Lexer::TOKEN_LBRANK:
                 $this->data[$key] = $this->getArrayValue();
                 break;

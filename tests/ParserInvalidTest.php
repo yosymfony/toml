@@ -107,6 +107,18 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
+    public function testInlineTableWithNewline()
+    {
+        $filename = __DIR__.'/fixtures/invalid/inlineTableNewline.toml';
+
+        $parser = new Parser();
+
+        $array = $parser->parse(file_get_contents($filename));
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
     public function testDuplicateKeyTable()
     {
         $filename = __DIR__.'/fixtures/invalid/duplicateKeyTable.toml';
