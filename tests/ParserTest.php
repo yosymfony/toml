@@ -350,12 +350,16 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue(is_array($array['name']));
         $this->assertTrue(is_array($array['point']));
+        $this->assertTrue(is_array($array['strings']));
 
         $this->assertEquals('Tom', $array['name']['first']);
         $this->assertEquals('Preston-Werner', $array['name']['last']);
 
         $this->assertEquals(1, $array['point']['x']);
         $this->assertEquals(2, $array['point']['y']);
+
+        $this->assertEquals("Roses are red\nViolets are blue", $array['strings']['key1']);
+        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['strings']['key2']);
     }
 
     public function testInlineTableEmpty()
