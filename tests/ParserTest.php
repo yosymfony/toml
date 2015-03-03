@@ -331,25 +331,31 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $parser = new Parser();
 
-        $array = $parser->parse('"a b" = 1');
+        $array = $parser->parse(file_get_contents($filename));
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['a b'], 1);
+        $this->assertEquals($array['~!@$^&*()_+-`1234567890[]|/?><.,;:\''], 1);
     }
 
     public function testInlineTable()
     {
+        $filename = __DIR__.'/fixtures/valid/inlineTable.toml';
+
         $parser = new Parser();
 
-        $array = $parser->parse('name = { first = "Tom", last = "Preston-Werner" }');
+        $array = $parser->parse(file_get_contents($filename));
 
         $this->assertNotNull($array);
 
         $this->assertTrue(is_array($array['name']));
+        $this->assertTrue(is_array($array['point']));
 
         $this->assertEquals('Tom', $array['name']['first']);
         $this->assertEquals('Preston-Werner', $array['name']['last']);
+
+        $this->assertEquals(1, $array['point']['x']);
+        $this->assertEquals(2, $array['point']['y']);
     }
 
     public function testInlineTableEmpty()

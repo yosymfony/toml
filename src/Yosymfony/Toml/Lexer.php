@@ -186,7 +186,7 @@ class Lexer
                 case '{':
                     return new Token(self::TOKEN_LKEY, $this->getNemo(self::TOKEN_LKEY), $this->getCurrent());
                 case '}':
-                    return new Token(self::TOKEN_LKEY, $this->getNemo(self::TOKEN_LKEY), $this->getCurrent());
+                    return new Token(self::TOKEN_RKEY, $this->getNemo(self::TOKEN_RKEY), $this->getCurrent());
                 case "\n":
                     return new Token(self::TOKEN_NEWLINE, $this->getNemo(self::TOKEN_NEWLINE), '');
                 case '[':
@@ -488,6 +488,8 @@ class Lexer
             case ']':
             case '=':
             case ',':
+            case '{':
+            case '}':
                 return false;
         }
 

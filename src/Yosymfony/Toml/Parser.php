@@ -69,7 +69,7 @@ class Parser
                     }
 
                     break;
-                case Lexer::TOKEN_LKEY:
+                case Lexer::TOKEN_RKEY:
                     if (false === $this->inlineTableOpen) {
                         throw new ParseException(
                             'Syntax error: unexpected token',
