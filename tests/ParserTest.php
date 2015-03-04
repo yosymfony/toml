@@ -289,7 +289,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['a']['b']['c']['answer'], 42);
     }
 
-    public function testImplicitInteger()
+    public function testInteger()
     {
         $filename = __DIR__.'/fixtures/valid/integer.toml';
 
@@ -299,8 +299,10 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['answer'], 42);
-        $this->assertEquals($array['neganswer'], -42);
+        $this->assertEquals(42, $array['answer']);
+        $this->assertEquals(-42, $array['neganswer']);
+        $this->assertEquals(90, $array['positive']);
+        $this->assertEquals(12345, $array['underscore']);
     }
 
     public function testKeyEqualsNoSpace()

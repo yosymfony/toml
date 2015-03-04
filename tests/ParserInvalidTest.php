@@ -361,6 +361,47 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
+    public function testTextIntegerLeadingZeros()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('answer = 042');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTextIntegerLeadingUnderscore()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('answer = _42');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTextIntegerFinalUnderscore()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('answer = 42_');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTextIntegerLeadingZerosWithUnderscore()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('answer = 0_42');
+        print_r($array);
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
     public function testTextAfterTable()
     {
         $parser = new Parser();

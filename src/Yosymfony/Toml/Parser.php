@@ -485,7 +485,7 @@ class Parser
         }
 
         if ($this->isLiteralInteger($token)) {
-            return (int) $token->getValue();
+            return $this->getInteger($token);
         }
 
         if ($this->isLiteralFloat($token)) {
@@ -514,7 +514,7 @@ class Parser
 
     private function isLiteralInteger(Token $token)
     {
-        return  preg_match('/^\-?\d*?$/', $token->getValue());
+        return preg_match('/^[+-]?(\d_?)+$/', $token->getValue());
     }
 
     private function isLiteralFloat(Token $token)
@@ -547,6 +547,23 @@ class Parser
         }
 
         return false;
+    }
+
+    private function getInteger(Token $token)
+    {
+        $value = $token->getValue();
+
+        if (preg_match('/([^\d]_[^\d])|(_$)/', $value)) {
+            throw new ParseException('Invalid integer: underscore must be surrounded by at least one digit', $this->currentLine, $token->getValue());
+        }
+
+        $value = str_replace('_', '', $value);
+
+        if (preg_match('/^0\d+/', $value)) {
+            throw new ParseException('Invalid integer: leading zeros are not allowed', $this->currentLine, $token->getValue());
+        }
+
+        return (int) $value;
     }
 
     private function addInvalidArrayTablesName(array $tablenameParts)
