@@ -489,7 +489,7 @@ class Parser
         }
 
         if ($this->isLiteralFloat($token)) {
-            return (float) $token->getValue();
+            return $this->getFloat($token);
         }
 
         if ($this->isLiteralDatetime($token)) {
@@ -519,7 +519,7 @@ class Parser
 
     private function isLiteralFloat(Token $token)
     {
-        return preg_match('/^\-?\d+\.\d+$/', $token->getValue());
+        return preg_match('/^[+-]?(((\d_?)+[\.](\d_?)+)|(((\d_?)+[\.]?(\d_?)*)[eE][+-]?(\d_?)+))$/', $token->getValue());
     }
 
     private function isLiteralDatetime(Token $token)
@@ -554,16 +554,33 @@ class Parser
         $value = $token->getValue();
 
         if (preg_match('/([^\d]_[^\d])|(_$)/', $value)) {
-            throw new ParseException('Invalid integer: underscore must be surrounded by at least one digit', $this->currentLine, $token->getValue());
+            throw new ParseException('Invalid integer number: underscore must be surrounded by at least one digit', $this->currentLine, $token->getValue());
         }
 
         $value = str_replace('_', '', $value);
 
         if (preg_match('/^0\d+/', $value)) {
-            throw new ParseException('Invalid integer: leading zeros are not allowed', $this->currentLine, $token->getValue());
+            throw new ParseException('Invalid integer number: leading zeros are not allowed', $this->currentLine, $token->getValue());
         }
 
         return (int) $value;
+    }
+
+    private function getFloat(Token $token)
+    {
+        $value = $token->getValue();
+
+        if (preg_match('/([^\d]_[^\d])|_[eE]|[eE]_|(_$)/', $value)) {
+            throw new ParseException('Invalid float number: underscore must be surrounded by at least one digit', $this->currentLine, $token->getValue());
+        }
+
+        $value = str_replace('_', '', $value);
+
+        if (preg_match('/^0\d+/', $value)) {
+            throw new ParseException('Invalid float number: leading zeros are not allowed', $this->currentLine, $token->getValue());
+        }
+
+        return (float) $value;
     }
 
     private function addInvalidArrayTablesName(array $tablenameParts)

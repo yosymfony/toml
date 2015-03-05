@@ -189,6 +189,36 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
+    public function testFloatLeadingUnderscore()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('number = _1.01');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testFloatFinalUnderscore()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('number = 1.01_');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testFloatUnderscorePrefixE()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('number = 1_e6');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
     public function testKeyEmpty()
     {
         $parser = new Parser();

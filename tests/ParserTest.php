@@ -227,11 +227,14 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertArrayHasKey('pi', $array);
-        $this->assertArrayHasKey('negpi', $array);
-
-        $this->assertEquals($array['pi'], 3.14);
-        $this->assertEquals($array['negpi'], -3.14);
+        $this->assertEquals(3.14, $array['pi']);
+        $this->assertEquals(-3.14, $array['negpi']);
+        $this->assertEquals(1.01, $array['positive']);
+        $this->assertEquals(4.9999999999999996E+22, $array['exponent1']);
+        $this->assertEquals(1000000.0, $array['exponent2']);
+        $this->assertEquals(-0.02, $array['exponent3']);
+        $this->assertEquals(6.6259999999999998E-34, $array['exponent4']);
+        $this->assertEquals(6.6259999999999998E-34, $array['underscore']);
     }
 
     public function testImplicitAndExplicitAfter()
