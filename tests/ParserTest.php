@@ -543,17 +543,17 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['backspace'], "This string has a \b backspace character.");
-        $this->assertEquals($array['tab'], "This string has a \t tab character.");
-        $this->assertEquals($array['newline'], "This string has a \n new line character.");
-        $this->assertEquals($array['formfeed'], "This string has a \f form feed character.");
-        $this->assertEquals($array['carriage'], "This string has a \r carriage return character.");
-        $this->assertEquals($array['quote'], "This string has a \" quote character.");
-        $this->assertEquals($array['backslash'], "This string has a \\ backslash character.");
-        $this->assertEquals($array['notunicode1'], "This string does not have a unicode \\u escape.");
-        $this->assertEquals($array['notunicode2'], "This string does not have a unicode \u005Cu escape.");
-        $this->assertEquals($array['notunicode3'], "This string does not have a unicode \\u0075 escape.");
-        $this->assertEquals($array['notunicode4'], "This string does not have a unicode \\\u0075 escape.");
+        $this->assertEquals("This string has a \b backspace character.", $array['backspace']);
+        $this->assertEquals("This string has a \t tab character.", $array['tab']);
+        $this->assertEquals("This string has a \n new line character.", $array['newline']);
+        $this->assertEquals("This string has a \f form feed character.", $array['formfeed']);
+        $this->assertEquals("This string has a \r carriage return character.", $array['carriage']);
+        $this->assertEquals("This string has a \" quote character.", $array['quote']);
+        $this->assertEquals("This string has a \\ backslash character.", $array['backslash']);
+        $this->assertEquals("This string does not have a unicode \\u escape.", $array['notunicode1']);
+        $this->assertEquals('This string does not have a unicode \u005Cu escape.',$array['notunicode2']);
+        $this->assertEquals("This string does not have a unicode \\u0075 escape.", $array['notunicode3']);
+        $this->assertEquals("This string does not have a unicode \\\u0075 escape.", $array['notunicode4']);
     }
 
     public function testStringSimple()
