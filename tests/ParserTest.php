@@ -353,10 +353,6 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertTrue(is_array($array['name']));
-        $this->assertTrue(is_array($array['point']));
-        $this->assertTrue(is_array($array['strings']));
-
         $this->assertEquals('Tom', $array['name']['first']);
         $this->assertEquals('Preston-Werner', $array['name']['last']);
 
@@ -365,6 +361,12 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals("Roses are red\nViolets are blue", $array['strings']['key1']);
         $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['strings']['key2']);
+
+        $this->assertEquals(1, $array['inline']['x']);
+        $this->assertEquals(2, $array['inline']['y']['a']);
+        $this->assertEquals('my value', $array['inline']['y']['b.deep']);
+
+        $this->assertEquals(1, $array['another']['number']);
     }
 
     public function testInlineTableEmpty()

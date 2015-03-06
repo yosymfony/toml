@@ -27,7 +27,8 @@ class Parser
     private $tableNames = array();
     private $arrayTableNames = array();
     private $invalidArrayTablesName = array();
-    private $inlineTableOpen = false;
+    private $inlineTableCounter = 0;
+    private $inlineTableNameStack = array();
 
     public function __construct()
     {
@@ -61,7 +62,7 @@ class Parser
                 case Lexer::TOKEN_NEWLINE:
                     $this->currentLine++;
 
-                    if (true === $this->inlineTableOpen) {
+                    if ($this->inlineTableCounter > 0) {
                         throw new ParseException(
                             'Syntax error: unexpected newline inside a inline table',
                             $this->currentLine,
@@ -70,17 +71,17 @@ class Parser
 
                     break;
                 case Lexer::TOKEN_RKEY:
-                    if (false === $this->inlineTableOpen) {
+                    if (0 === $this->inlineTableCounter) {
                         throw new ParseException(
                             'Syntax error: unexpected token',
                             $this->currentLine,
                             $this->lexer->getCurrentToken()->getValue());
                     }
 
-                    $this->inlineTableOpen = false;
+                    $this->inlineTableCounter--;array_pop($this->inlineTableNameStack);
                     break;
                 case Lexer::TOKEN_COMMA:
-                    if ($this->inlineTableOpen) {
+                    if ($this->inlineTableCounter > 0) {
                         break;
                     } else {
                         throw new ParseException(
@@ -165,7 +166,12 @@ class Parser
 
     private function processInlineTable($key)
     {
-        $this->inlineTableOpen = true;
+        $this->inlineTableCounter++;
+
+        array_push($this->inlineTableNameStack, $key);
+
+        $key = implode('.', $this->inlineTableNameStack);
+
         $this->setTable($key);
     }
 
