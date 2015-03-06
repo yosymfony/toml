@@ -417,16 +417,28 @@ class Lexer
         $result = strtr($result, $allowed);
 
         $result = preg_replace_callback(
-            '/\\\\U([0-9a-fA-F]{4})([0-9a-fA-F]{4})/',
+            '/\\\U([0-9a-fA-F]{4})([0-9a-fA-F]{4})/',
             function ($matches) {
-                return json_decode('"\u'.$matches[1].'\u'.$matches[2].'"');
+                $decoded = json_decode('"\u'.$matches[1].'\u'.$matches[2].'"');
+
+                if (preg_match('/[u\\\\]/', $decoded) > 0) {
+                    return $matches[0];
+                }
+
+                return $decoded;
             },
             $result);
 
         $result = preg_replace_callback(
-            '/\\\\u([0-9a-fA-F]{4})/',
+            '/\\\u([0-9a-fA-F]{4})/',
             function ($matches) {
-                return json_decode('"'.$matches[0].'"');
+                $decoded = json_decode('"'.$matches[0].'"');
+
+                if (preg_match('/[u\\\\]/', $decoded) > 0) {
+                    return $matches[0];
+                }
+
+                return $decoded;
             },
             $result);
 
