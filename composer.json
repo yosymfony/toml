@@ -1,6 +1,6 @@
 {
     "name": "yosymfony/toml",
-    "description": "A PHP parser for TOML compatible with specification 0.2.0",
+    "description": "A PHP parser for TOML compatible with specification 0.4.0",
     "type": "library",
     "keywords": ["toml", "parser", "mojombo"],
     "homepage": "http://github.com/yosymfony/toml",
@@ -20,7 +20,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "0.2-dev"
+            "dev-master": "0.3-dev"
         }
     }
 }
