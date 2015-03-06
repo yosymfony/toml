@@ -20,7 +20,7 @@ Add the following to your `composer.json` and run `composer update`.
 
 ```json
 "require": {
-    "yosymfony/toml": "0.2.x-dev"
+    "yosymfony/toml": "0.3.x-dev"
 }
 ```
 
