@@ -145,6 +145,17 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
+    public function testInvalidKey()
+    {
+        $tb = new TomlBuilder();
+
+        $result = $tb->addValue('value#1', '2')
+            ->getTomlString();
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     */
     public function testNullKey()
     {
         $tb = new TomlBuilder();

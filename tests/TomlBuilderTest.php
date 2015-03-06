@@ -145,7 +145,7 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
 
-        $result = $tb->addValue("~!@#$^&*()_+-`1234567890[]\|/?><.,;:'", 1)
+        $result = $tb->addValue("~!@$^&*()_+-`1234567890[]|/?><.,;:'", 1)
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));

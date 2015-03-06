@@ -551,7 +551,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("This string has a \" quote character.", $array['quote']);
         $this->assertEquals("This string has a \\ backslash character.", $array['backslash']);
         $this->assertEquals("This string does not have a unicode \\u escape.", $array['notunicode1']);
-        $this->assertEquals('This string does not have a unicode \u005Cu escape.',$array['notunicode2']);
+        $this->assertEquals('This string does not have a unicode \u005Cu escape.', $array['notunicode2']);
         $this->assertEquals("This string does not have a unicode \\u0075 escape.", $array['notunicode3']);
         $this->assertEquals("This string does not have a unicode \\\u0075 escape.", $array['notunicode4']);
     }
