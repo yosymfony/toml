@@ -33,6 +33,11 @@ class Lexer
     const TOKEN_EOF = 10;
     const TOKEN_HASH = 11;
     const TOKEN_LITERAL = 12;
+    const TOKEN_TRIPLE_QUOTES = 13;
+    const TOKEN_QUOTE = 14;
+    const TOKEN_TRIPLE_QUOTE = 15;
+    const TOKEN_LKEY = 16;
+    const TOKEN_RKEY = 17;
 
     private static $tokensNames = array(
         'LBRACK',
@@ -48,6 +53,11 @@ class Lexer
         'EOF',
         'HASH',
         'LITERAL',
+        'TRIPLESQUOTES',
+        'QUOTE',
+        'TRIPLEQUOTE',
+        'LKEY',
+        'RKEY',
         );
 
     private $input;
@@ -57,9 +67,12 @@ class Lexer
     private $backToken;
     private $inputLength = 0;
 
+    private $beginQuotesOpen = false;
+    private $endQuotesOpen = false;
     private $beginQuoteOpen = false;
     private $endQuoteOpen = false;
     private $commentOpen = false;
+    private $multilineStringOpen = false;
 
     public function __construct($input)
     {
@@ -100,10 +113,20 @@ class Lexer
      */
     public function getNextToken()
     {
+        $beginQuotesOpen = $this->beginQuotesOpen;
+        $endQuotesOpen = $this->endQuotesOpen;
+        $commentOpen = $this->commentOpen;
+        $multilineStringOpen = $this->multilineStringOpen;
         $currentPosition = $this->position;
+
         $nextToken = $this->consumeToken();
         $subPositions = $this->position - $currentPosition;
         $this->goBack($subPositions);
+
+        $this->beginQuotesOpen = $beginQuotesOpen;
+        $this->endQuotesOpen = $endQuotesOpen;
+        $this->commentOpen = $commentOpen;
+        $this->multilineStringOpen = $multilineStringOpen;
 
         return $nextToken;
     }
@@ -136,10 +159,16 @@ class Lexer
 
     private function consumeToken()
     {
-        if ($this->beginQuoteOpen) {
+        if ($this->beginQuotesOpen) {
             $this->consume();
 
             return $this->getTokenString();
+        }
+
+        if ($this->beginQuoteOpen) {
+            $this->consume();
+
+            return $this->getTokenLiteralString();
         }
 
         if ($this->commentOpen) {
@@ -154,6 +183,10 @@ class Lexer
                 case "\t":
                 case "\r":
                     continue;
+                case '{':
+                    return new Token(self::TOKEN_LKEY, $this->getNemo(self::TOKEN_LKEY), $this->getCurrent());
+                case '}':
+                    return new Token(self::TOKEN_RKEY, $this->getNemo(self::TOKEN_RKEY), $this->getCurrent());
                 case "\n":
                     return new Token(self::TOKEN_NEWLINE, $this->getNemo(self::TOKEN_NEWLINE), '');
                 case '[':
@@ -168,12 +201,59 @@ class Lexer
                     return new Token(self::TOKEN_HASH, $this->getNemo(self::TOKEN_HASH), $this->getCurrent());
                 case ',':
                     return new Token(self::TOKEN_COMMA, $this->getNemo(self::TOKEN_COMMA), $this->getCurrent());
-                case '"':
+                case "'":
                     if (!$this->beginQuoteOpen && !$this->endQuoteOpen) {
-                        $this->beginQuoteOpen = true;
-                        $this->endQuoteOpen = true;
+                        if ($this->getNext(1, 2) == "''") {
+                            $this->consume(2);
+                            $this->multilineStringOpen = true;
+                            $this->beginQuoteOpen = true;
+                            $this->endQuoteOpen = true;
+
+                            return new Token(self::TOKEN_TRIPLE_QUOTE, $this->getNemo(self::TOKEN_TRIPLE_QUOTE), "'''");
+                        } else {
+                            $this->beginQuoteOpen = true;
+                            $this->endQuoteOpen = true;
+                        }
                     } elseif (!$this->beginQuoteOpen && $this->endQuoteOpen) {
-                        $this->endQuoteOpen = false;
+                        if ($this->multilineStringOpen) {
+                            if ($this->getNext(1, 2) == "''") {
+                                $this->consume(2);
+                                $this->multilineStringOpen = false;
+                                $this->endQuoteOpen = false;
+
+                                return new Token(self::TOKEN_TRIPLE_QUOTE, $this->getNemo(self::TOKEN_TRIPLE_QUOTE), "'''");
+                            }
+                        } else {
+                            $this->endQuoteOpen = false;
+                        }
+                    }
+
+                    return new Token(self::TOKEN_QUOTE, $this->getNemo(self::TOKEN_QUOTE), $this->getCurrent());
+                case '"':
+                    if (!$this->beginQuotesOpen && !$this->endQuotesOpen) {
+                        if ($this->getNext(1, 2) == '""') {
+                            $this->consume(2);
+                            $this->multilineStringOpen = true;
+                            $this->beginQuotesOpen = true;
+                            $this->endQuotesOpen = true;
+
+                            return new Token(self::TOKEN_TRIPLE_QUOTES, $this->getNemo(self::TOKEN_TRIPLE_QUOTES), '"""');
+                        } else {
+                            $this->beginQuotesOpen = true;
+                            $this->endQuotesOpen = true;
+                        }
+                    } elseif (!$this->beginQuotesOpen && $this->endQuotesOpen) {
+                        if ($this->multilineStringOpen) {
+                            if ($this->getNext(1, 2) == '""') {
+                                $this->consume(2);
+                                $this->multilineStringOpen = false;
+                                $this->endQuotesOpen = false;
+
+                                return new Token(self::TOKEN_TRIPLE_QUOTES, $this->getNemo(self::TOKEN_TRIPLE_QUOTES), '"""');
+                            }
+                        } else {
+                            $this->endQuotesOpen = false;
+                        }
                     }
 
                     return new Token(self::TOKEN_QUOTES, $this->getNemo(self::TOKEN_QUOTES), $this->getCurrent());
@@ -225,12 +305,12 @@ class Lexer
         }
     }
 
-    private function consume()
+    private function consume($count = 1)
     {
-        $tmpVal = $this->getNext();
+        $tmpVal = $this->getNext(1, $count);
 
         if (null !== $tmpVal) {
-            $this->position++;
+            $this->position += $count;
             $this->current = $tmpVal;
 
             return true;
@@ -251,7 +331,7 @@ class Lexer
             } while ($isNotTheEnd && $this->isValidForString());
         }
 
-        $this->beginQuoteOpen = false;
+        $this->beginQuotesOpen = false;
 
         if ($isNotTheEnd) {
             $this->goBack();
@@ -260,11 +340,49 @@ class Lexer
         return new Token(self::TOKEN_STRING, $this->getNemo(self::TOKEN_STRING), $this->transformSpecialCharacter($buffer));
     }
 
+    private function getTokenLiteralString()
+    {
+        $buffer = '';
+        $isNotTheEnd = true;
+
+        if ($this->isValidForLiteralString()) {
+            do {
+                $buffer .= $this->getCurrent();
+                $isNotTheEnd = $this->consume();
+            } while ($isNotTheEnd && $this->isValidForLiteralString());
+        }
+
+        $buffer = ltrim($buffer, "\n");
+
+        $this->beginQuoteOpen = false;
+
+        if ($isNotTheEnd) {
+            $this->goBack();
+        }
+
+        return new Token(self::TOKEN_STRING, $this->getNemo(self::TOKEN_STRING), $buffer);
+    }
+
     private function isValidForString()
     {
         $result = true;
 
-        if ($this->getCurrent() == "\n" || ($this->getCurrent() == '"' && $this->getBack() != '\\')) {
+        if ((!$this->multilineStringOpen && $this->getCurrent() == "\n") || ($this->getCurrent() == '"' && $this->getBack() != '\\')) {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    private function isValidForLiteralString()
+    {
+        $result = true;
+
+        if ($this->multilineStringOpen) {
+            if ($this->getCurrent() == "'" && $this->getNext(1, 2) === "''") {
+                return false;
+            }
+        } elseif ($this->getCurrent() == "\n" || $this->getCurrent() == "'") {
             $result = false;
         }
 
@@ -285,11 +403,12 @@ class Lexer
 
         $noSpecialCharacter = str_replace('\\\\', '', $val);
         $noSpecialCharacter = str_replace(array_keys($allowed), '', $noSpecialCharacter);
-        $noSpecialCharacter = preg_replace('/\\\\u([0-9a-fA-F]{4})/', '', $noSpecialCharacter);
+        $noSpecialCharacter = preg_replace('/\\\\U([0-9a-fA-F]{8})|/', '', $noSpecialCharacter);
+        $noSpecialCharacter = preg_replace('/\\\\u([0-9a-fA-F]{4})|/', '', $noSpecialCharacter);
 
         $pos = strpos($noSpecialCharacter, '\\');
 
-        if (false !== $pos) {
+        if (!$this->multilineStringOpen && false !== $pos) {
             $snippet = substr($noSpecialCharacter, $pos, 8);
             throw new LexerException('Invalid special character near: '.$snippet.'.');
         }
@@ -298,11 +417,36 @@ class Lexer
         $result = strtr($result, $allowed);
 
         $result = preg_replace_callback(
-            '/\\\\u([0-9a-fA-F]{4})/',
-            function ($maches) {
-                return json_decode('"'.$maches[0].'"'); // json directly support \uxxxx sintax
+            '/\\\U([0-9a-fA-F]{4})([0-9a-fA-F]{4})/',
+            function ($matches) {
+                $decoded = json_decode('"\u'.$matches[1].'\u'.$matches[2].'"');
+
+                if (preg_match('/[u\\\\]/', $decoded) > 0) {
+                    return $matches[0];
+                }
+
+                return $decoded;
             },
             $result);
+
+        $result = preg_replace_callback(
+            '/\\\u([0-9a-fA-F]{4})/',
+            function ($matches) {
+                $decoded = json_decode('"'.$matches[0].'"');
+
+                if (preg_match('/[u\\\\]/', $decoded) > 0) {
+                    return $matches[0];
+                }
+
+                return $decoded;
+            },
+            $result);
+
+        if ($this->multilineStringOpen) {
+            $result = ltrim($result, "\n");
+            $result = preg_replace("/\\\\[\s\n]*/", '', $result);
+        }
+
         $result = str_replace('[\\\\]', '\\', $result);
 
         return $result;
@@ -356,6 +500,8 @@ class Lexer
             case ']':
             case '=':
             case ',':
+            case '{':
+            case '}':
                 return false;
         }
 

@@ -41,7 +41,7 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $parser = new Parser();
 
-        $array = $parser->parse('ints-and-floats = [1, 1.0]');
+        $array = $parser->parse('ints-and-floats = [1, 1.1]');
     }
 
     /**
@@ -107,6 +107,18 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
+    public function testInlineTableWithNewline()
+    {
+        $filename = __DIR__.'/fixtures/invalid/inlineTableNewline.toml';
+
+        $parser = new Parser();
+
+        $array = $parser->parse(file_get_contents($filename));
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
     public function testDuplicateKeyTable()
     {
         $filename = __DIR__.'/fixtures/invalid/duplicateKeyTable.toml';
@@ -153,16 +165,6 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testEmptyTable()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('[]');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
     public function testFloatNoLeadingZero()
     {
         $filename = __DIR__.'/fixtures/invalid/floatNoLeadingZero.toml';
@@ -182,6 +184,116 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
         $parser = new Parser();
 
         $array = $parser->parse(file_get_contents($filename));
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testFloatLeadingUnderscore()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('number = _1.01');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testFloatFinalUnderscore()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('number = 1.01_');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testFloatUnderscorePrefixE()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('number = 1_e6');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testFloatUnderscoreSufixE()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('number = 1e_6');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeyEmpty()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('= 1');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeyHash()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('a# = 1');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeyNewline()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse("a\n= 1");
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeyOpenBracket()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('[abc = 1');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeySingleOpenBracket()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('[');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeySpace()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('a b = 1');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testKeyStartBracket()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse("[a]\n[xyz = 5\n[b]");
     }
 
     /**
@@ -237,6 +349,36 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
+    public function testTableEmpty()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('[]');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableWhitespace()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('[invalid key]');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTableWithPound()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse("[key#group]\nanswer = 42");
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
     public function testTextAfterArrayEntries()
     {
         $filename = __DIR__.'/fixtures/invalid/textAfterArrayEntries.toml';
@@ -254,6 +396,47 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
         $parser = new Parser();
 
         $array = $parser->parse('answer = 42 the ultimate answer?');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTextIntegerLeadingZeros()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('answer = 042');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTextIntegerLeadingUnderscore()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('answer = _42');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTextIntegerFinalUnderscore()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('answer = 42_');
+    }
+
+    /**
+     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     */
+    public function testTextIntegerLeadingZerosWithUnderscore()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('answer = 0_42');
+        print_r($array);
     }
 
     /**

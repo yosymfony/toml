@@ -46,7 +46,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     {
         $parser = new Parser();
 
-        $array = $parser->parse('mixed = [[1, 2], ["a", "b"], [1.0, 2.0]]');
+        $array = $parser->parse('mixed = [[1, 2], ["a", "b"], [1.1, 2.1]]');
 
         $this->assertNotNull($array);
 
@@ -62,8 +62,23 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['mixed'][1][0], 'a');
         $this->assertEquals($array['mixed'][1][1], 'b');
 
-        $this->assertEquals($array['mixed'][2][0], 1.0);
-        $this->assertEquals($array['mixed'][2][1], 2.0);
+        $this->assertEquals($array['mixed'][2][0], 1.1);
+        $this->assertEquals($array['mixed'][2][1], 2.1);
+    }
+
+    public function testArraysNoSpaces()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('ints = [1,2,3]');
+
+        $this->assertNotNull($array);
+
+        $this->assertArrayHasKey('ints', $array);
+
+        $this->assertEquals($array['ints'][0], 1);
+        $this->assertEquals($array['ints'][1], 2);
+        $this->assertEquals($array['ints'][2], 3);
     }
 
     public function testArraysNested()
@@ -102,9 +117,9 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['ints'][1], 2);
         $this->assertEquals($array['ints'][2], 3);
 
-        $this->assertEquals($array['floats'][0], 1.0);
-        $this->assertEquals($array['floats'][1], 2.0);
-        $this->assertEquals($array['floats'][2], 3.0);
+        $this->assertEquals($array['floats'][0], 1.1);
+        $this->assertEquals($array['floats'][1], 2.1);
+        $this->assertEquals($array['floats'][2], 3.1);
 
         $this->assertEquals($array['strings'][0], 'a');
         $this->assertEquals($array['strings'][1], 'b');
@@ -152,15 +167,21 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
     public function testDatetime()
     {
+        $filename = __DIR__.'/fixtures/valid/datetime.toml';
+
         $parser = new Parser();
 
-        $array = $parser->parse("bestdayever = 1987-07-05T17:45:00Z");
+        $array = $parser->parse(file_get_contents($filename));
 
         $this->assertNotNull($array);
 
         $this->assertArrayHasKey('bestdayever', $array);
+        $this->assertArrayHasKey('bestdayever2', $array);
+        $this->assertArrayHasKey('bestdayever3', $array);
 
         $this->assertTrue($array['bestdayever'] instanceof \Datetime);
+        $this->assertTrue($array['bestdayever2'] instanceof \Datetime);
+        $this->assertTrue($array['bestdayever3'] instanceof \Datetime);
     }
 
     public function testEmpty()
@@ -206,11 +227,14 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertArrayHasKey('pi', $array);
-        $this->assertArrayHasKey('negpi', $array);
-
-        $this->assertEquals($array['pi'], 3.14);
-        $this->assertEquals($array['negpi'], -3.14);
+        $this->assertEquals(3.14, $array['pi']);
+        $this->assertEquals(-3.14, $array['negpi']);
+        $this->assertEquals(1.01, $array['positive']);
+        $this->assertEquals(4.9999999999999996E+22, $array['exponent1']);
+        $this->assertEquals(1000000.0, $array['exponent2']);
+        $this->assertEquals(-0.02, $array['exponent3']);
+        $this->assertEquals(6.6259999999999998E-34, $array['exponent4']);
+        $this->assertEquals(6.6259999999999998E-34, $array['underscore']);
     }
 
     public function testImplicitAndExplicitAfter()
@@ -268,7 +292,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['a']['b']['c']['answer'], 42);
     }
 
-    public function testImplicitInteger()
+    public function testInteger()
     {
         $filename = __DIR__.'/fixtures/valid/integer.toml';
 
@@ -278,8 +302,10 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['answer'], 42);
-        $this->assertEquals($array['neganswer'], -42);
+        $this->assertEquals(42, $array['answer']);
+        $this->assertEquals(-42, $array['neganswer']);
+        $this->assertEquals(90, $array['positive']);
+        $this->assertEquals(12345, $array['underscore']);
     }
 
     public function testKeyEqualsNoSpace()
@@ -293,6 +319,17 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['answer'], 42);
     }
 
+    public function testKeySpace()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('"a b" = 1');
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals($array['a b'], 1);
+    }
+
     public function testKeySpecialChars()
     {
         $filename = __DIR__.'/fixtures/valid/keySpecialChars.toml';
@@ -303,18 +340,56 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array["~!@#$^&*()_+-`1234567890[]\|/?><.,;:'"], 1);
+        $this->assertEquals($array['~!@$^&*()_+-`1234567890[]|/?><.,;:\''], 1);
     }
 
-    public function testKeyWithPound()
+    public function testInlineTable()
     {
+        $filename = __DIR__.'/fixtures/valid/inlineTable.toml';
+
         $parser = new Parser();
 
-        $array = $parser->parse('key#name = 5');
+        $array = $parser->parse(file_get_contents($filename));
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['key#name'], 5);
+        $this->assertEquals('Tom', $array['name']['first']);
+        $this->assertEquals('Preston-Werner', $array['name']['last']);
+
+        $this->assertEquals(1, $array['point']['x']);
+        $this->assertEquals(2, $array['point']['y']);
+
+        $this->assertEquals("Roses are red\nViolets are blue", $array['strings']['key1']);
+        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['strings']['key2']);
+
+        $this->assertEquals(1, $array['inline']['x']);
+        $this->assertEquals(2, $array['inline']['y']['a']);
+        $this->assertEquals('my value', $array['inline']['y']['b.deep']);
+
+        $this->assertEquals(1, $array['another']['number']);
+    }
+
+    public function testInlineTableEmpty()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('name = {}');
+
+        $this->assertNotNull($array);
+
+        $this->assertTrue(is_array($array['name']));
+    }
+
+    public function testInlineTableOneElement()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('name = { first = "Tom" }');
+
+        $this->assertNotNull($array);
+
+        $this->assertTrue(is_array($array['name']));
+        $this->assertEquals('Tom', $array['name']['first']);
     }
 
     public function testTableEmpty()
@@ -346,7 +421,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     {
         $parser = new Parser();
 
-        $array = $parser->parse('[valid key]');
+        $array = $parser->parse('["valid key"]');
 
         $this->assertNotNull($array);
 
@@ -396,6 +471,70 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($array['neganswer'] < 0);
     }
 
+    public function testMultilineString()
+    {
+        $filename = __DIR__.'/fixtures/valid/multilineString.toml';
+
+        $parser = new Parser();
+
+        $array = $parser->parse(file_get_contents($filename));
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals('', $array['multiline_empty_one']);
+        $this->assertEquals('', $array['multiline_empty_two']);
+        $this->assertEquals('', $array['multiline_empty_three']);
+        $this->assertEquals('', $array['multiline_empty_four']);
+        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['equivalent_one']);
+        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['equivalent_two']);
+        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['equivalent_three']);
+    }
+
+    public function testRawMultilineString()
+    {
+        $filename = __DIR__.'/fixtures/valid/rawMultilineString.toml';
+
+        $parser = new Parser();
+
+        $array = $parser->parse(file_get_contents($filename));
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals("This string has a ' quote character.", $array['oneline']);
+        $this->assertEquals("This string has a ' quote character.", $array['firstnl']);
+        $this->assertEquals("This string\nhas ' a quote character\nand more than\none newline\nin it.", $array['multiline']);
+    }
+
+    public function testRawString()
+    {
+        $filename = __DIR__.'/fixtures/valid/rawString.toml';
+
+        $parser = new Parser();
+
+        $array = $parser->parse(file_get_contents($filename));
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals('This string has a \b backspace character.', $array['backspace']);
+        $this->assertEquals('This string has a \t tab character.', $array['tab']);
+        $this->assertEquals('This string has a \n new line character.', $array['newline']);
+        $this->assertEquals('This string has a \f form feed character.', $array['formfeed']);
+        $this->assertEquals('This string has a \r carriage return character.', $array['carriage']);
+        $this->assertEquals('This string has a \/ slash character.', $array['slash']);
+        $this->assertEquals('This string has a \\\\ backslash character.', $array['backslash']);
+    }
+
+    public function testStringEmpty()
+    {
+        $parser = new Parser();
+
+        $array = $parser->parse('answer = ""');
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals($array['answer'], '');
+    }
+
     public function testStringEscapes()
     {
         $filename = __DIR__.'/fixtures/valid/stringEscapes.toml';
@@ -406,14 +545,17 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['backspace'], "This string has a \b backspace character.");
-        $this->assertEquals($array['tab'], "This string has a \t tab character.");
-        $this->assertEquals($array['newline'], "This string has a \n new line character.");
-        $this->assertEquals($array['formfeed'], "This string has a \f form feed character.");
-        $this->assertEquals($array['carriage'], "This string has a \r carriage return character.");
-        $this->assertEquals($array['quote'], "This string has a \" quote character.");
-        $this->assertEquals($array['slash'], "This string has a / slash character.");
-        $this->assertEquals($array['backslash'], "This string has a \\ backslash character.");
+        $this->assertEquals("This string has a \b backspace character.", $array['backspace']);
+        $this->assertEquals("This string has a \t tab character.", $array['tab']);
+        $this->assertEquals("This string has a \n new line character.", $array['newline']);
+        $this->assertEquals("This string has a \f form feed character.", $array['formfeed']);
+        $this->assertEquals("This string has a \r carriage return character.", $array['carriage']);
+        $this->assertEquals("This string has a \" quote character.", $array['quote']);
+        $this->assertEquals("This string has a \\ backslash character.", $array['backslash']);
+        $this->assertEquals("This string does not have a unicode \\u escape.", $array['notunicode1']);
+        $this->assertEquals('This string does not have a unicode \u005Cu escape.', $array['notunicode2']);
+        $this->assertEquals("This string does not have a unicode \\u0075 escape.", $array['notunicode3']);
+        $this->assertEquals("This string does not have a unicode \\\u0075 escape.", $array['notunicode4']);
     }
 
     public function testStringSimple()
@@ -443,13 +585,16 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
     public function testUnicodeEscape()
     {
+        $filename = __DIR__.'/fixtures/valid/unicodeEscape.toml';
+
         $parser = new Parser();
 
-        $array = $parser->parse('answer = "\u03B4"');
+        $array = $parser->parse(file_get_contents($filename));
 
         $this->assertNotNull($array);
 
-        $this->assertEquals($array['answer'], json_decode('"\u03B4"'));
+        $this->assertEquals(json_decode('"\u03B4"'), $array['answer4']);
+        $this->assertEquals(json_decode('"\u0000\u03B4"'), $array['answer8']);
     }
 
     public function testUnicodeLitteral()

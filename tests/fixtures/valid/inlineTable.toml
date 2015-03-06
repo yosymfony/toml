@@ -1,0 +1,12 @@
+name = { first = "Tom", last = "Preston-Werner" }
+point = { x = 1, y = 2 }
+strings = { key1 = """
+Roses are red
+Violets are blue""", key2 = """
+The quick brown \
+
+
+  fox jumps over \
+    the lazy dog.""" }
+inline = { x = 1, y = { a = 2, "b.deep" = 'my value' } }
+another = {number = 1}

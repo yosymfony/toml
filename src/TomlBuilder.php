@@ -61,7 +61,15 @@ class TomlBuilder
     public function addValue($key, $val, $comment = null)
     {
         if (false === is_string($key)) {
-            throw new DumpException(sprintf('The key must be a string'));
+            throw new DumpException(sprintf('The key must be a string.'));
+        }
+
+        if (strpos($key, '#')) {
+            throw new DumpException(sprintf('Character "#" is not valid for the key.'));
+        }
+
+        if (false !== strpos($key, ' ')) {
+            $key = '"'.$key.'"';
         }
 
         $keyPart = $this->getKeyPart($key);
@@ -108,6 +116,10 @@ class TomlBuilder
         }
 
         $addPreNewline = $this->currentLine > 0 ? true : false;
+
+        if (false !== strpos($key, ' ')) {
+            $key = '"'.$key.'"';
+        }
 
         $keyParts = explode('.', $key);
         $val = '['.$key.']';

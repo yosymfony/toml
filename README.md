@@ -1,11 +1,15 @@
 TOML parser for PHP
 ===================
 
-A PHP parser for [TOML](https://github.com/toml-lang/toml) compatible with [TOML v0.2.0](https://github.com/toml-lang/toml/releases/tag/v0.2.0).
+A PHP parser for [TOML](https://github.com/toml-lang/toml) compatible with [TOML v0.4.0](https://github.com/toml-lang/toml/releases/tag/v0.4.0).
 
-[![Build Status](https://travis-ci.org/yosymfony/Toml.png?branch=master)](https://travis-ci.org/yosymfony/Toml)
+[![Build Status](https://travis-ci.org/yosymfony/Toml.png?branch=develop)](https://travis-ci.org/yosymfony/Toml)
 [![Latest Stable Version](https://poser.pugx.org/yosymfony/toml/v/stable.png)](https://packagist.org/packages/yosymfony/toml)
 [![Total Downloads](https://poser.pugx.org/yosymfony/toml/downloads.png)](https://packagist.org/packages/yosymfony/toml)
+
+Support:
+
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/yosymfony/Toml?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Installation
 ------------
@@ -14,9 +18,19 @@ Use [Composer](http://getcomposer.org/) to install Yosyfmony Toml package:
 
 Add the following to your `composer.json` and run `composer update`.
 
-    "require": {
-        "yosymfony/toml": "0.2.x-dev"
-    }
+```json
+"require": {
+    "yosymfony/toml": "0.3.x-dev"
+}
+```
+
+Develop branch (unstable):
+
+```
+"require": {
+    "yosymfony/toml": "dev-develop"
+}
+```
 
 More informations about the package on [Packagist](https://packagist.org/packages/yosymfony/toml).
 
@@ -24,19 +38,23 @@ Usage
 -----
 You can use this package to parse TOML string inline or from a file with only one method:
 
-    use Yosymfony\Toml\Toml;
-    
-    $array = Toml::Parse('key = [1,2,3]');
-    
-    print_r($array);
+```php
+use Yosymfony\Toml\Toml;
+
+$array = Toml::Parse('key = [1,2,3]');
+
+print_r($array);
+```
 
 From a file:
 
-    use Yosymfony\Toml\Toml;
-    
-    $array = Toml::Parse('example.toml');
-    
-    print_r($array);
+```php
+use Yosymfony\Toml\Toml;
+
+$array = Toml::Parse('example.toml');
+
+print_r($array);
+```
 
 ### TomlBuilder
 You can create inline TOML string with TomlBuilder. TomlBuilder uses Fluent interface for more readable code:

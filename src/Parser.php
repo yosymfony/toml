@@ -27,6 +27,8 @@ class Parser
     private $tableNames = array();
     private $arrayTableNames = array();
     private $invalidArrayTablesName = array();
+    private $inlineTableCounter = 0;
+    private $inlineTableNameStack = array();
 
     public function __construct()
     {
@@ -54,11 +56,44 @@ class Parser
                     $this->processTables();         // [table] or [[array of tables]]
                     break;
                 case Lexer::TOKEN_LITERAL:
-                    $this->processKeyValue();       // key = value
+                case Lexer::TOKEN_QUOTES:
+                    $this->processKeyValue();       // key = value or "key name" = value
                     break;
                 case Lexer::TOKEN_NEWLINE:
                     $this->currentLine++;
+
+                    if ($this->inlineTableCounter > 0) {
+                        throw new ParseException(
+                            'Syntax error: unexpected newline inside a inline table',
+                            $this->currentLine,
+                            $this->lexer->getCurrentToken()->getValue());
+                    }
+
                     break;
+                case Lexer::TOKEN_RKEY:
+                    if (0 === $this->inlineTableCounter) {
+                        throw new ParseException(
+                            'Syntax error: unexpected token',
+                            $this->currentLine,
+                            $this->lexer->getCurrentToken()->getValue());
+                    }
+
+                    $this->inlineTableCounter--;array_pop($this->inlineTableNameStack);
+                    break;
+                case Lexer::TOKEN_COMMA:
+                    if ($this->inlineTableCounter > 0) {
+                        break;
+                    } else {
+                        throw new ParseException(
+                            'Syntax error: unexpected token',
+                            $this->currentLine,
+                            $this->lexer->getCurrentToken()->getValue());
+                    }
+                default:
+                    throw new ParseException(
+                        'Syntax error: unexpected token',
+                        $this->currentLine,
+                        $this->lexer->getCurrentToken()->getValue());
             }
 
             $this->lexer->getToken();
@@ -129,12 +164,56 @@ class Parser
         }
     }
 
+    private function processInlineTable($key)
+    {
+        $this->inlineTableCounter++;
+
+        array_push($this->inlineTableNameStack, $key);
+
+        $key = implode('.', $this->inlineTableNameStack);
+
+        $this->setTable($key);
+    }
+
     private function processTable()
     {
         $key = '';
+        $quotesKey = false;
 
-        while ($this->isTokenValidForTablename($this->lexer->getToken())) {
-            $key .= $this->lexer->getCurrentToken()->getValue();
+        if (Lexer::TOKEN_QUOTES === $this->lexer->getNextToken()->getType()) {
+            $quotesKey = true;
+            $this->lexer->getToken();
+
+            if (Lexer::TOKEN_STRING !== $this->lexer->getToken()->getType()) {
+                throw new ParseException(
+                    sprintf('Syntax error: expected string. Key: %s', $key),
+                    $this->currentLine,
+                    $this->lexer->getCurrentToken()->getValue());
+            } else {
+                $key = $this->lexer->getCurrentToken()->getValue();
+            }
+        } else {
+            while ($this->isTokenValidForTablename($this->lexer->getToken())) {
+                $key .= $this->lexer->getCurrentToken()->getValue();
+            }
+        }
+
+        if ($quotesKey) {
+            if (Lexer::TOKEN_QUOTES === $this->lexer->getToken()->getType()) {
+                $this->lexer->getToken();
+            } else {
+                throw new ParseException(
+                    sprintf('Syntax error: expected quotes for closing key: %s', $key),
+                    $this->currentLine,
+                    $this->lexer->getCurrentToken()->getValue());
+            }
+        }
+
+        if (false === $this->isValidKey($key, $quotesKey)) {
+            throw new ParseException(
+                sprintf('Syntax error: the key %s is invalid. A key without embraces can not contains white spaces', $key),
+                $this->currentLine,
+                $this->lexer->getCurrentToken()->getValue());
         }
 
         $this->setTable($key);
@@ -149,12 +228,6 @@ class Parser
 
     private function isTokenValidForTablename(Token $token)
     {
-        if (Lexer::TOKEN_HASH === $token->getType()) {
-            $this->lexer->setCommentOpen(false);
-
-            return true;
-        }
-
         return Lexer::TOKEN_LITERAL === $token->getType();
     }
 
@@ -229,20 +302,55 @@ class Parser
 
     private function processKeyValue()
     {
-        $key = $this->lexer->getCurrentToken()->getValue();
+        $quotesKey = false;
 
-        while ($this->isTokenValidForKey($this->lexer->getToken())) {
-            $key = $key.$this->lexer->getCurrentToken()->getValue();
+        if (Lexer::TOKEN_QUOTES === $this->lexer->getCurrentToken()->getType()) {
+            $quotesKey = true;
+            $this->lexer->getToken();
+
+            if (Lexer::TOKEN_STRING !== $this->lexer->getCurrentToken()->getType()) {
+                throw new ParseException(
+                    sprintf('Syntax error: expected string. Key: %s', $this->lexer->getCurrentToken()->getValue()),
+                    $this->currentLine,
+                    $this->lexer->getCurrentToken()->getValue());
+            }
+
+            $key = $this->lexer->getCurrentToken()->getValue();
+            $this->lexer->getToken();
+        } else {
+            $key = $this->lexer->getCurrentToken()->getValue();
+
+            while ($this->isTokenValidForKey($this->lexer->getToken())) {
+                $key = $key.$this->lexer->getCurrentToken()->getValue();
+            }
+        }
+
+        if ($quotesKey) {
+            if (Lexer::TOKEN_QUOTES === $this->lexer->getCurrentToken()->getType()) {
+                $this->lexer->getToken();
+            } else {
+                throw new ParseException(
+                    sprintf('Syntax error: expected quotes for closing key: %s', $key),
+                    $this->currentLine,
+                    $this->lexer->getCurrentToken()->getValue());
+            }
         }
 
         if (Lexer::TOKEN_EQUAL !== $this->lexer->getCurrentToken()->getType()) {
             throw new ParseException(
-                'Syntax error: expected equal',
+                sprintf('Syntax error: expected equal near the key: %s', $key),
                 $this->currentLine,
                 $this->lexer->getCurrentToken()->getValue());
         }
 
         $key = trim($key);
+
+        if (false === $this->isValidKey($key, $quotesKey)) {
+            throw new ParseException(
+                sprintf('Syntax error: the key %s is invalid. A key without embraces can not contains white spaces', $key),
+                $this->currentLine,
+                $this->lexer->getCurrentToken()->getValue());
+        }
 
         if (array_key_exists($key, $this->data)) {
             throw new ParseException(
@@ -253,8 +361,14 @@ class Parser
 
         switch ($this->lexer->getToken()->getType()) {
             case Lexer::TOKEN_QUOTES:
-                $this->data[$key] = $this->getStringValue();
+            case Lexer::TOKEN_TRIPLE_QUOTES:
+            case Lexer::TOKEN_QUOTE:
+            case Lexer::TOKEN_TRIPLE_QUOTE:
+                $this->data[$key] = $this->getStringValue($this->lexer->getCurrentToken());
                 break;
+            case Lexer::TOKEN_LKEY:
+                    $this->processInlineTable($key);
+                    break;
             case Lexer::TOKEN_LBRANK:
                 $this->data[$key] = $this->getArrayValue();
                 break;
@@ -273,10 +387,22 @@ class Parser
     {
         return Lexer::TOKEN_EQUAL  !== $token->getType()
             && Lexer::TOKEN_NEWLINE !== $token->getType()
-            && Lexer::TOKEN_EOF !== $token->getType();
+            && Lexer::TOKEN_EOF !== $token->getType()
+            && Lexer::TOKEN_QUOTES !== $token->getType()
+            && Lexer::TOKEN_HASH !== $token->getType()
+            && Lexer::TOKEN_TRIPLE_QUOTES !== $token->getType();
     }
 
-    private function getStringValue()
+    private function isValidKey($key, $quotesActived)
+    {
+        if (false === $quotesActived && false !== strpos($key, ' ')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function getStringValue($openToken)
     {
         $result = "";
 
@@ -289,7 +415,7 @@ class Parser
 
         $result = (string) $this->lexer->getCurrentToken()->getValue();
 
-        if (Lexer::TOKEN_QUOTES !== $this->lexer->getToken()->getType()) {
+        if ($openToken->getType() !== $this->lexer->getToken()->getType()) {
             throw new ParseException(
                 'Syntax error: expected close quotes',
                 $this->currentLine,
@@ -316,7 +442,7 @@ class Parser
                 case Lexer::TOKEN_QUOTES:
                     $lastType = 'string';
                     $dataType = $dataType == null ? $lastType : $dataType;
-                    $value = $this->getStringValue();
+                    $value = $this->getStringValue($this->lexer->getCurrentToken());
                     $result[] = $value;
                     break;
                 case Lexer::TOKEN_LBRANK:
@@ -359,14 +485,14 @@ class Parser
         }
 
         if ($this->isLiteralInteger($token)) {
-            return (int) $token->getValue();
+            return $this->getInteger($token);
         }
 
         if ($this->isLiteralFloat($token)) {
-            return (float) $token->getValue();
+            return $this->getFloat($token);
         }
 
-        if ($this->isLiteralISO8601($token)) {
+        if ($this->isLiteralDatetime($token)) {
             return new \Datetime($token->getValue());
         }
 
@@ -388,17 +514,17 @@ class Parser
 
     private function isLiteralInteger(Token $token)
     {
-        return  preg_match('/^\-?\d*?$/', $token->getValue());
+        return preg_match('/^[+-]?(\d_?)+$/', $token->getValue());
     }
 
     private function isLiteralFloat(Token $token)
     {
-        return preg_match('/^\-?\d+\.\d+$/', $token->getValue());
+        return preg_match('/^[+-]?(((\d_?)+[\.](\d_?)+)|(((\d_?)+[\.]?(\d_?)*)[eE][+-]?(\d_?)+))$/', $token->getValue());
     }
 
-    private function isLiteralISO8601(Token $token)
+    private function isLiteralDatetime(Token $token)
     {
-        return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $token->getValue());
+        return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|(\.\d{6})?-\d{2}:\d{2})$/', $token->getValue());
     }
 
     private function &getLastElementRef(&$array)
@@ -421,6 +547,40 @@ class Parser
         }
 
         return false;
+    }
+
+    private function getInteger(Token $token)
+    {
+        $value = $token->getValue();
+
+        if (preg_match('/([^\d]_[^\d])|(_$)/', $value)) {
+            throw new ParseException('Invalid integer number: underscore must be surrounded by at least one digit', $this->currentLine, $token->getValue());
+        }
+
+        $value = str_replace('_', '', $value);
+
+        if (preg_match('/^0\d+/', $value)) {
+            throw new ParseException('Invalid integer number: leading zeros are not allowed', $this->currentLine, $token->getValue());
+        }
+
+        return (int) $value;
+    }
+
+    private function getFloat(Token $token)
+    {
+        $value = $token->getValue();
+
+        if (preg_match('/([^\d]_[^\d])|_[eE]|[eE]_|(_$)/', $value)) {
+            throw new ParseException('Invalid float number: underscore must be surrounded by at least one digit', $this->currentLine, $token->getValue());
+        }
+
+        $value = str_replace('_', '', $value);
+
+        if (preg_match('/^0\d+/', $value)) {
+            throw new ParseException('Invalid float number: leading zeros are not allowed', $this->currentLine, $token->getValue());
+        }
+
+        return (float) $value;
     }
 
     private function addInvalidArrayTablesName(array $tablenameParts)
