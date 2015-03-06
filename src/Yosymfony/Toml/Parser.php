@@ -222,12 +222,6 @@ class Parser
 
     private function isTokenValidForTablename(Token $token)
     {
-        if (Lexer::TOKEN_HASH === $token->getType()) {
-            $this->lexer->setCommentOpen(false);
-
-            return true;
-        }
-
         return Lexer::TOKEN_LITERAL === $token->getType();
     }
 
