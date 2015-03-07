@@ -214,6 +214,10 @@ class TomlBuilder
 
     private function dumpString($val)
     {
+        if (0 === strpos($val, '@')) {
+            return "'".preg_replace('/@/', '', $val, 1)."'";
+        }
+
         $normalized = $this->normalizeString($val);
 
         if (false === $this->isStringValid($normalized)) {
@@ -257,7 +261,7 @@ class TomlBuilder
 
     private function dumpDatetime($val)
     {
-        return $val->format('Y-m-d\TH:i:s\Z'); // Only full zulu form
+        return $val->format('Y-m-d\TH:i:s\Z'); // ZULU form
     }
 
     private function dumpInteger($val)
@@ -418,6 +422,7 @@ class TomlBuilder
 
         $noSpecialCharacter = str_replace($allowed, '', $val);
         $noSpecialCharacter = preg_replace('/\\\\u([0-9a-fA-F]{4})/', '', $noSpecialCharacter);
+        $noSpecialCharacter = preg_replace('/\\\\u([0-9a-fA-F]{8})/', '', $noSpecialCharacter);
 
         $pos = strpos($noSpecialCharacter, '\\');
 

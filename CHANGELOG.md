@@ -1,8 +1,11 @@
 CHANGELOG
 =========
+0.3.1 (2015-03-07)
+------------------
+* Added support to literal strings in TomlBuilder.
 
-0.3.0
------
+0.3.0 (2015-03-06)
+------------------
 * Support for TOML 0.4.0.
 * CS fixes.
 

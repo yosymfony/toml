@@ -141,6 +141,34 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertNotNull(Toml::Parse($result));
     }
 
+    public function testKeyLiteralString()
+    {
+        $tb = new TomlBuilder();
+
+        $result = $tb->addValue('regex', "@<\i\c*\s*>")
+            ->getTomlString();
+
+        $array = Toml::Parse($result);
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals('<\i\c*\s*>', $array['regex']);
+    }
+
+    public function testKeyLiteralStringEscapingAt()
+    {
+        $tb = new TomlBuilder();
+
+        $result = $tb->addValue('regex', "@@<\i\c*\s*>")
+            ->getTomlString();
+
+        $array = Toml::Parse($result);
+
+        $this->assertNotNull($array);
+
+        $this->assertEquals('@<\i\c*\s*>', $array['regex']);
+    }
+
     public function testKeySpecialChars()
     {
         $tb = new TomlBuilder();
