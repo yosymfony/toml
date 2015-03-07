@@ -215,7 +215,7 @@ class TomlBuilder
     private function dumpString($val)
     {
         if (0 === strpos($val, '@')) {
-            return "'".ltrim($val, '@')."'";
+            return "'".preg_replace('/@/', '', $val, 1)."'";
         }
 
         $normalized = $this->normalizeString($val);
