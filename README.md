@@ -69,6 +69,7 @@ You can create inline TOML string with TomlBuilder. TomlBuilder uses Fluent inte
         ->addValue('name', "Toml", 'This is your name')
         ->addValue('newline', "This string has a \n new line character.")
         ->addValue('winPath', "C:\\Users\\nodejs\\templates")
+        ->addValue('literal', '@<\i\c*\s*>') // literals starts with '@'.
         ->addValue('unicode', 'unicode character: ' . json_decode('"\u03B4"'))
 
         ->addTable('data.bool')
@@ -120,6 +121,7 @@ The result of this example:
     name = "Toml" #This is your name
     newline = "This string has a \n new line character."
     winPath = "C:\\Users\\nodejs\\templates"
+    literal = '<\i\c*\s*>'
     unicode = "unicode character: δ"
     
     [data.bool]
