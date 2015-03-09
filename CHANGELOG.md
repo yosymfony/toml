@@ -1,5 +1,9 @@
 CHANGELOG
 =========
+0.3.2 (2015-03-07)
+------------------
+* Fixed Issue #9: Only double-quoted strings work in arrays, contrary to spec.
+
 0.3.1 (2015-03-07)
 ------------------
 * Added support to literal strings in TomlBuilder.

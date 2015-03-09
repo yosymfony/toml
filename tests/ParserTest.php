@@ -113,17 +113,25 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('strings', $array);
         $this->assertArrayHasKey('dates', $array);
 
-        $this->assertEquals($array['ints'][0], 1);
-        $this->assertEquals($array['ints'][1], 2);
-        $this->assertEquals($array['ints'][2], 3);
+        $this->assertEquals(1, $array['ints'][0]);
+        $this->assertEquals(2, $array['ints'][1]);
+        $this->assertEquals(3, $array['ints'][2]);
 
-        $this->assertEquals($array['floats'][0], 1.1);
-        $this->assertEquals($array['floats'][1], 2.1);
-        $this->assertEquals($array['floats'][2], 3.1);
+        $this->assertEquals(1.1, $array['floats'][0]);
+        $this->assertEquals(2.1, $array['floats'][1]);
+        $this->assertEquals(3.1, $array['floats'][2]);
 
-        $this->assertEquals($array['strings'][0], 'a');
-        $this->assertEquals($array['strings'][1], 'b');
-        $this->assertEquals($array['strings'][2], 'c');
+        $this->assertEquals('a', $array['strings'][0]);
+        $this->assertEquals('b', $array['strings'][1]);
+        $this->assertEquals('c', $array['strings'][2]);
+
+        $this->assertEquals('all', $array['allStrings'][0]);
+        $this->assertEquals('strings', $array['allStrings'][1]);
+        $this->assertEquals('are the same', $array['allStrings'][2]);
+        $this->assertEquals('type', $array['allStrings'][3]);
+
+        $this->assertEquals('all', $array['MultilineBasicString'][0]);
+        $this->assertEquals("Roses are red\nViolets are blue", $array['MultilineBasicString'][1]);
 
         $this->assertTrue($array['dates'][0] instanceof \Datetime);
         $this->assertTrue($array['dates'][1] instanceof \Datetime);
@@ -143,8 +151,8 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('t', $array);
         $this->assertArrayHasKey('t', $array);
 
-        $this->assertEquals($array['t'], true);
-        $this->assertEquals($array['f'], false);
+        $this->assertEquals(true, $array['t']);
+        $this->assertEquals(false, $array['f']);
     }
 
     public function testCommentsEverywhere()

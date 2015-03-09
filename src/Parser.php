@@ -440,6 +440,9 @@ class Parser
                     }
                     break;
                 case Lexer::TOKEN_QUOTES:
+                case Lexer::TOKEN_TRIPLE_QUOTES:
+                case Lexer::TOKEN_QUOTE:
+                case Lexer::TOKEN_TRIPLE_QUOTE:
                     $lastType = 'string';
                     $dataType = $dataType == null ? $lastType : $dataType;
                     $value = $this->getStringValue($this->lexer->getCurrentToken());
