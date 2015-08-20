@@ -30,8 +30,8 @@ class ParseException extends RuntimeException
      * Constructor.
      *
      * @param string    $message    The error message
-     * @param integer   $parsedLine The line where the error occurred
-     * @param integer   $snippet    The snippet of code near the problem
+     * @param int       $parsedLine The line where the error occurred
+     * @param int       $snippet    The snippet of code near the problem
      * @param string    $parsedFile The file name where the error occurred
      * @param Exception $previous   The previous exception
      */
@@ -96,7 +96,7 @@ class ParseException extends RuntimeException
     /**
      * Gets the line where the error occurred.
      *
-     * @return integer The file line
+     * @return int The file line
      */
     public function getParsedLine()
     {
@@ -106,7 +106,7 @@ class ParseException extends RuntimeException
     /**
      * Sets the line where the error occurred.
      *
-     * @param integer $parsedLine The file line
+     * @param int $parsedLine The file line
      */
     public function setParsedLine($parsedLine)
     {

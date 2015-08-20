@@ -81,7 +81,7 @@ class Lexer
     }
 
     /**
-     * Get token from Toml string
+     * Get token from Toml string.
      *
      * @return Token
      *
@@ -96,7 +96,7 @@ class Lexer
     }
 
     /**
-     * Get the current token of the stream
+     * Get the current token of the stream.
      *
      * @return Token or null
      */
@@ -143,7 +143,7 @@ class Lexer
     }
 
     /**
-     * Set the Comment Open status
+     * Set the Comment Open status.
      *
      * @param bool $value
      */
@@ -510,6 +510,6 @@ class Lexer
 
     private function getNemo($type)
     {
-        return Lexer::$tokensNames[$type];
+        return self::$tokensNames[$type];
     }
 }
