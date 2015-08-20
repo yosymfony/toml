@@ -12,7 +12,7 @@
 namespace Yosymfony\Toml;
 
 /**
- * Token of Toml
+ * Token of Toml.
  *
  * @author Victor Puertas <vpgugr@vpgugr.com>
  */

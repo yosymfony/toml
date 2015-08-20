@@ -436,6 +436,20 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(is_array($array['valid key']));
     }
 
+    public function testTableQuotedName()
+    {
+        $filename = __DIR__.'/fixtures/valid/tableQuotedName.toml';
+
+        $parser = new Parser();
+
+        $array = $parser->parse(file_get_contents($filename));
+
+        $this->assertNotNull($array);
+
+        $this->assertTrue(is_array($array['dog']));
+        $this->assertTrue(is_array($array['dog']['tater.man']));
+    }
+
     public function testTableWithPound()
     {
         $filename = __DIR__.'/fixtures/valid/tableWithPound.toml';

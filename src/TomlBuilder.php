@@ -40,9 +40,9 @@ class TomlBuilder
     protected $currentKey = null;
 
     /**
-     * Constructor
+     * Constructor.
      *
-     * @param integer $indent The amount of spaces to use for indentation of nested nodes.
+     * @param int $indent The amount of spaces to use for indentation of nested nodes.
      */
     public function __constructor($indent = 4)
     {
@@ -50,7 +50,7 @@ class TomlBuilder
     }
 
     /**
-     * Add a key-value
+     * Add a key-value.
      *
      * @param string $key
      * @param mixed  $val
@@ -103,7 +103,7 @@ class TomlBuilder
     }
 
     /**
-     * Add a table
+     * Add a table.
      *
      * @param string $key Tablename. Dot character have a special meant.
      *
@@ -165,7 +165,7 @@ class TomlBuilder
     }
 
     /**
-     * Add a comment line
+     * Add a comment line.
      *
      * @param string $comment
      *
@@ -183,7 +183,7 @@ class TomlBuilder
     }
 
     /**
-     * Get the TOML string
+     * Get the TOML string.
      *
      * @return string
      */
@@ -240,7 +240,7 @@ class TomlBuilder
         $lastType = null;
 
         foreach ($val as $item) {
-            $lastType =  gettype($item);
+            $lastType = gettype($item);
             $dataType = $dataType == null ? $lastType : $dataType;
 
             if ($lastType != $dataType) {
@@ -287,7 +287,7 @@ class TomlBuilder
     {
         if ($addPreNewline) {
             $this->output .= "\n";
-            $this->currentLine ++;
+            $this->currentLine++;
         }
 
         if ($addIndentation) {
@@ -298,7 +298,7 @@ class TomlBuilder
 
         if ($addPostNewline) {
             $this->output .= "\n";
-            $this->currentLine ++;
+            $this->currentLine++;
         }
     }
 
@@ -436,14 +436,14 @@ class TomlBuilder
     private function normalizeString($val)
     {
         $allowed = array(
-            "\\" => '\\\\',
+            '\\' => '\\\\',
             "\b" => '\\b',
             "\t" => '\\t',
             "\n" => '\\n',
             "\f" => '\\f',
             "\r" => '\\r',
-            "\"" => '\\"',
-            '/'  => '\\/',
+            '"' => '\\"',
+            '/' => '\\/',
         );
 
         $normalized = str_replace(array_keys($allowed), $allowed, $val);

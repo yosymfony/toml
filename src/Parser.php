@@ -180,40 +180,35 @@ class Parser
         $key = '';
         $quotesKey = false;
 
-        if (Lexer::TOKEN_QUOTES === $this->lexer->getNextToken()->getType()) {
-            $quotesKey = true;
-            $this->lexer->getToken();
+        while ($this->isTokenValidForTablename($this->lexer->getToken()) == true) {
+            if (Lexer::TOKEN_QUOTES === $this->lexer->getCurrentToken()->getType()) {
+                if (Lexer::TOKEN_STRING !== $this->lexer->getToken()->getType()) {
+                    throw new ParseException(
+                        sprintf('Syntax error: expected string. Key: %s', $key),
+                        $this->currentLine,
+                        $this->lexer->getCurrentToken()->getValue());
+                }
 
-            if (Lexer::TOKEN_STRING !== $this->lexer->getToken()->getType()) {
-                throw new ParseException(
-                    sprintf('Syntax error: expected string. Key: %s', $key),
-                    $this->currentLine,
-                    $this->lexer->getCurrentToken()->getValue());
+                $key .= str_replace('.', '/./', $this->lexer->getCurrentToken()->getValue());
+
+                if (Lexer::TOKEN_QUOTES !== $this->lexer->getToken()->getType()) {
+                    throw new ParseException(
+                        sprintf('Syntax error: expected quotes for closing key: %s', $key),
+                        $this->currentLine,
+                        $this->lexer->getCurrentToken()->getValue());
+                }
             } else {
-                $key = $this->lexer->getCurrentToken()->getValue();
-            }
-        } else {
-            while ($this->isTokenValidForTablename($this->lexer->getToken())) {
-                $key .= $this->lexer->getCurrentToken()->getValue();
-            }
-        }
+                $subkey = $this->lexer->getCurrentToken()->getValue();
 
-        if ($quotesKey) {
-            if (Lexer::TOKEN_QUOTES === $this->lexer->getToken()->getType()) {
-                $this->lexer->getToken();
-            } else {
-                throw new ParseException(
-                    sprintf('Syntax error: expected quotes for closing key: %s', $key),
-                    $this->currentLine,
-                    $this->lexer->getCurrentToken()->getValue());
-            }
-        }
+                if (false === $this->isValidKey($subkey, false)) {
+                    throw new ParseException(
+                        sprintf('Syntax error: the key %s is invalid. A key without embraces can not contains white spaces', $key),
+                        $this->currentLine,
+                        $subkey);
+                }
 
-        if (false === $this->isValidKey($key, $quotesKey)) {
-            throw new ParseException(
-                sprintf('Syntax error: the key %s is invalid. A key without embraces can not contains white spaces', $key),
-                $this->currentLine,
-                $this->lexer->getCurrentToken()->getValue());
+                $key .= $subkey;
+            }
         }
 
         $this->setTable($key);
@@ -228,12 +223,12 @@ class Parser
 
     private function isTokenValidForTablename(Token $token)
     {
-        return Lexer::TOKEN_LITERAL === $token->getType();
+        return Lexer::TOKEN_LITERAL === $token->getType() || Lexer::TOKEN_QUOTES === $token->getType();
     }
 
     private function setTable($key)
     {
-        $nameParts = explode('.', $key);
+        $nameParts = preg_split('/(?<=[^\/])[.](?<![\/])/', $key);
         $this->data = &$this->result;
 
         if (in_array($key, $this->tableNames) || in_array($key, $this->arrayTableNames)) {
@@ -245,6 +240,8 @@ class Parser
         $this->tableNames[] = $key;
 
         foreach ($nameParts as $namePart) {
+            $namePart = str_replace('/./', '.', $namePart);
+
             if (0 == strlen($namePart)) {
                 throw new ParseException('The name of the table must not be empty', $this->currentLine, $key);
             }
@@ -404,7 +401,7 @@ class Parser
 
     private function getStringValue($openToken)
     {
-        $result = "";
+        $result = '';
 
         if (Lexer::TOKEN_STRING !== $this->lexer->getToken()->getType()) {
             throw new ParseException(
@@ -455,7 +452,7 @@ class Parser
                     break;
                 case Lexer::TOKEN_LITERAL:
                     $value = $this->getLiteralValue();
-                    $lastType =  gettype($value);
+                    $lastType = gettype($value);
                     $dataType = $dataType == null ? $lastType : $dataType;
                     $result[] = $value;
                     break;
