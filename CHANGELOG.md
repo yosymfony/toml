@@ -1,8 +1,12 @@
 CHANGELOG
 =========
+0.3.3 (2015-08-24)
+------------------
+* Fixed bug #10: Cannot parse quote (") in table name.
+
 0.3.2 (2015-03-07)
 ------------------
-* Fixed Issue #9: Only double-quoted strings work in arrays, contrary to spec.
+* Fixed issue #9: Only double-quoted strings work in arrays, contrary to spec.
 
 0.3.1 (2015-03-07)
 ------------------
@@ -31,7 +35,6 @@ CHANGELOG
 
 0.1.0 (2013-05-12)
 ------------------
-
 * Initial release.
 * Support for TOML 0.1.0.
 * BurntSushi test suite included.
