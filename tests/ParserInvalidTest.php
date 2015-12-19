@@ -87,16 +87,6 @@ class ParserInvalidTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\ParseException
      */
-    public function testDatetimeMalformedNoZ()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('no-z = 1987-07-05T17:45:00');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
     public function testDatetimeMalformedWithMilli()
     {
         $parser = new Parser();
