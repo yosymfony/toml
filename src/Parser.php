@@ -524,7 +524,7 @@ class Parser
 
     private function isLiteralDatetime(Token $token)
     {
-        return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|(\.\d{6})?-\d{2}:\d{2})$/', $token->getValue());
+        return preg_match('/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(Z|(\.\d{6})?-\d{2}:\d{2}))?$/', $token->getValue());
     }
 
     private function &getLastElementRef(&$array)

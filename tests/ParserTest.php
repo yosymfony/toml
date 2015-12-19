@@ -185,11 +185,12 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertArrayHasKey('bestdayever', $array);
         $this->assertArrayHasKey('bestdayever2', $array);
-        $this->assertArrayHasKey('bestdayever3', $array);
+        $this->assertArrayHasKey('bestdayever4', $array);
 
         $this->assertTrue($array['bestdayever'] instanceof \Datetime);
         $this->assertTrue($array['bestdayever2'] instanceof \Datetime);
         $this->assertTrue($array['bestdayever3'] instanceof \Datetime);
+        $this->assertTrue($array['bestdayever4'] instanceof \Datetime);
     }
 
     public function testEmpty()
