@@ -20,15 +20,7 @@ Add the following to your `composer.json` and run `composer update`.
 
 ```json
 "require": {
-    "yosymfony/toml": "0.3.x-dev"
-}
-```
-
-Develop branch (unstable):
-
-```
-"require": {
-    "yosymfony/toml": "dev-develop"
+    "yosymfony/toml": "0.4.x-dev"
 }
 ```
 
@@ -163,6 +155,7 @@ The result of this example:
         name = "platain"
 
 #### Deprecated methods
+
 * **addGroup**: since version 0.2. Replaced by `addTable`.
 
 Unit tests
