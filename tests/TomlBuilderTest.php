@@ -22,9 +22,9 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $result = $tb->addComment('Toml file')
             ->addTable('data.string')
-                ->addValue('name', "Toml", 'This is your name')
+                ->addValue('name', 'Toml', 'This is your name')
                 ->addValue('newline', "This string has a \n new line character.")
-                ->addValue('winPath', "C:\\Users\\nodejs\\templates")
+                ->addValue('winPath', 'C:\\Users\\nodejs\\templates')
                 ->addValue('unicode', 'unicode character: '.json_decode('"\u03B4"'))
             ->addTable('data.bool')
                 ->addValue('t', true)
@@ -40,7 +40,7 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
             ->addComment('Related to arrays')
             ->addTable('data.array')
                 ->addValue('simple', array(1, 2, 3))
-                ->addValue('multiple', array( array(1, 2), array('abc', 'def'), array(1.1, 1.2), array(true, false), array( new \Datetime()) ))
+                ->addValue('multiple', array(array(1, 2), array('abc', 'def'), array(1.1, 1.2), array(true, false), array(new \Datetime())))
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
@@ -133,9 +133,9 @@ class TomlBuilderTest extends \PHPUnit_Framework_TestCase
             ->addValue('newline', "This string has a \n new line character.")
             ->addValue('formfeed', "This string has a \f form feed character.")
             ->addValue('carriage', "This string has a \r carriage return character.")
-            ->addValue('quote', "This string has a \" quote character.")
+            ->addValue('quote', 'This string has a " quote character.')
             ->addValue('slash', "This string has a \/ slash character.")
-            ->addValue('backslash', "This string has a \\ backslash character.")
+            ->addValue('backslash', 'This string has a \\ backslash character.')
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));

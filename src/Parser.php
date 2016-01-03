@@ -78,7 +78,7 @@ class Parser
                             $this->lexer->getCurrentToken()->getValue());
                     }
 
-                    $this->inlineTableCounter--;array_pop($this->inlineTableNameStack);
+                    --$this->inlineTableCounter;array_pop($this->inlineTableNameStack);
                     break;
                 case Lexer::TOKEN_COMMA:
                     if ($this->inlineTableCounter > 0) {
@@ -166,7 +166,7 @@ class Parser
 
     private function processInlineTable($key)
     {
-        $this->inlineTableCounter++;
+        ++$this->inlineTableCounter;
 
         array_push($this->inlineTableNameStack, $key);
 
@@ -524,7 +524,7 @@ class Parser
 
     private function isLiteralDatetime(Token $token)
     {
-        return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|(\.\d{6})?-\d{2}:\d{2})$/', $token->getValue());
+        return preg_match('/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{6})?(Z|-\d{2}:\d{2})?)?$/', $token->getValue());
     }
 
     private function &getLastElementRef(&$array)

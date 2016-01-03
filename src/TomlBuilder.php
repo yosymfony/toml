@@ -287,7 +287,7 @@ class TomlBuilder
     {
         if ($addPreNewline) {
             $this->output .= "\n";
-            $this->currentLine++;
+            ++$this->currentLine;
         }
 
         if ($addIndentation) {
@@ -298,7 +298,7 @@ class TomlBuilder
 
         if ($addPostNewline) {
             $this->output .= "\n";
-            $this->currentLine++;
+            ++$this->currentLine;
         }
     }
 

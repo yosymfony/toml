@@ -12,8 +12,6 @@
 namespace Yosymfony\Toml\tests;
 
 use Yosymfony\Toml\TomlBuilder;
-use Yosymfony\Toml\Toml;
-use Yosymfony\Toml\Exception\DumpException;
 
 class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
 {
@@ -24,7 +22,7 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
 
-        $result = $tb->addValue('arrays-and-ints', array(1, array("Arrays are not integers.")))
+        $result = $tb->addValue('arrays-and-ints', array(1, array('Arrays are not integers.')))
             ->getTomlString();
     }
 
@@ -46,7 +44,7 @@ class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
     {
         $tb = new TomlBuilder();
 
-        $result = $tb->addValue('arrays-and-ints', array("hi", 42))
+        $result = $tb->addValue('arrays-and-ints', array('hi', 42))
             ->getTomlString();
     }
 
