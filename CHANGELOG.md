@@ -1,5 +1,9 @@
 CHANGELOG
 =========
+0.4.0
+-----
+* Better support for dates as specified in the latest TOML spec. See PR #11.
+
 0.3.3 (2015-08-24)
 ------------------
 * Fixed bug #10: Cannot parse quote (") in table name.
