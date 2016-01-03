@@ -3,6 +3,7 @@ CHANGELOG
 0.4.0
 -----
 * Better support for dates as specified in the latest TOML spec. See PR #11.
+* Added support for PHP 7 on Travis CI.
 
 0.3.3 (2015-08-24)
 ------------------
