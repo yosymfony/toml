@@ -202,7 +202,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     {
         $parser = new Parser();
 
-        $array = $parser->parse("");
+        $array = $parser->parse('');
 
         $this->assertNull($array);
     }
@@ -222,7 +222,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('numtheory', $array);
 
         $this->assertTrue($array['best-day-ever'] instanceof \Datetime);
-        $this->assertEquals("", $array['emptyName']);
+        $this->assertEquals('', $array['emptyName']);
         $this->assertTrue(is_array($array['numtheory']));
 
         $this->assertEquals($array['numtheory']['boring'], false);
@@ -578,11 +578,11 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("This string has a \n new line character.", $array['newline']);
         $this->assertEquals("This string has a \f form feed character.", $array['formfeed']);
         $this->assertEquals("This string has a \r carriage return character.", $array['carriage']);
-        $this->assertEquals("This string has a \" quote character.", $array['quote']);
-        $this->assertEquals("This string has a \\ backslash character.", $array['backslash']);
-        $this->assertEquals("This string does not have a unicode \\u escape.", $array['notunicode1']);
+        $this->assertEquals('This string has a " quote character.', $array['quote']);
+        $this->assertEquals('This string has a \\ backslash character.', $array['backslash']);
+        $this->assertEquals('This string does not have a unicode \\u escape.', $array['notunicode1']);
         $this->assertEquals('This string does not have a unicode \u005Cu escape.', $array['notunicode2']);
-        $this->assertEquals("This string does not have a unicode \\u0075 escape.", $array['notunicode3']);
+        $this->assertEquals('This string does not have a unicode \\u0075 escape.', $array['notunicode3']);
         $this->assertEquals("This string does not have a unicode \\\u0075 escape.", $array['notunicode4']);
     }
 

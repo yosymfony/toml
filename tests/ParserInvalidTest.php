@@ -13,7 +13,6 @@ namespace Yosymfony\Toml\tests;
 
 use Yosymfony\Toml\Parser;
 use Yosymfony\Toml\Toml;
-use Yosymfony\Toml\Exception\ParseException;
 
 /*
  * Tests based on toml-test from BurntSushi

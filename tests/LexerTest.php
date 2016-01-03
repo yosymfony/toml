@@ -127,7 +127,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         $token = $lexer->getToken();
 
         $this->assertEquals(Lexer::TOKEN_STRING, $token->getType());
-        $this->assertEquals("The quick brown fox jumps over the lazy dog.", $token->getValue());
+        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $token->getValue());
 
         $token = $lexer->getToken();
 
@@ -149,7 +149,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         $token = $lexer->getToken();
 
         $this->assertEquals(Lexer::TOKEN_STRING, $token->getType());
-        $this->assertEquals("The quick brown fox jumps over the lazy dog.", $token->getValue());
+        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $token->getValue());
 
         $token = $lexer->getToken();
 
@@ -193,7 +193,7 @@ class LexerTest extends \PHPUnit_Framework_TestCase
         $token = $lexer->getToken();
 
         $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
-        $this->assertEquals($token->getValue(), "I'm a string. /slash \r ".json_decode('"\u000A"')." Jos".json_decode('"\u0082"')." \"You can quote me\". Tab \t newline \n you get it.");
+        $this->assertEquals($token->getValue(), "I'm a string. /slash \r ".json_decode('"\u000A"').' Jos'.json_decode('"\u0082"')." \"You can quote me\". Tab \t newline \n you get it.");
 
         $token = $lexer->getToken();
 
