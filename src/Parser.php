@@ -78,7 +78,7 @@ class Parser
                             $this->lexer->getCurrentToken()->getValue());
                     }
 
-                    $this->inlineTableCounter--;array_pop($this->inlineTableNameStack);
+                    --$this->inlineTableCounter;array_pop($this->inlineTableNameStack);
                     break;
                 case Lexer::TOKEN_COMMA:
                     if ($this->inlineTableCounter > 0) {
@@ -166,7 +166,7 @@ class Parser
 
     private function processInlineTable($key)
     {
-        $this->inlineTableCounter++;
+        ++$this->inlineTableCounter;
 
         array_push($this->inlineTableNameStack, $key);
 
