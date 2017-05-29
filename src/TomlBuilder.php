@@ -192,6 +192,55 @@ class TomlBuilder
         return $this->output;
     }
 
+    /**
+     * Build toml file from given array.
+     *
+     * @param array $data
+     * @param string $parent
+     */
+    public function fromArray(array $data, $parent = '') {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                if ($this->hasStringKeys($value)) {
+                    // Plain table...
+                    $key = $parent !== '' ? "$parent.$key" : $key;
+                    $this->addTable($key);
+                    $this->fromArray($value, $key);
+                } elseif ($this->onlyArrays($value)) {
+                    $this->processArrayOfArrays($value, $key);
+                } else {
+                    // Plain array.
+                    $this->addValue($key, $value);
+                }
+            } else {
+                // Simple key/value.
+                $this->addValue($key, $value);
+            }
+        }
+    }
+
+    private function hasStringKeys(array $array) {
+        return count(array_filter(array_keys($array), 'is_string')) > 0;
+    }
+
+    private function onlyArrays(array $array) {
+        return count(array_filter(array_values($array), 'is_array')) == count($array);
+    }
+
+    protected function processArrayOfArrays($values, $parent)
+    {
+        foreach ($values as $value) {
+            $this->addArrayTables($parent);
+            foreach ($value as $key => $val) {
+                if (is_array($val)) {
+                    $this->processArrayOfArrays($val, "$parent.$key");
+                } else {
+                    $this->addValue($key, $val);
+                }
+            }
+        }
+    }
+
     private function dumpValue($val)
     {
         switch (true) {
