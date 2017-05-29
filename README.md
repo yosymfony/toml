@@ -166,4 +166,4 @@ You can run the unit tests with the following command:
 
     $ cd your-path/vendor/yosymfony/toml
     $ composer.phar install --dev
-    $ phpunit
+    $ vendor/bin/phpunit
