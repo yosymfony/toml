@@ -154,6 +154,11 @@ The result of this example:
         [[fruit.variety]]
         name = "platain"
 
+Write generated TOML to a file:
+```php
+$tb->saveToFile('/tmp/my.toml');
+```
+
 #### Deprecated methods
 
 * **addGroup**: since version 0.2. Replaced by `addTable`.
