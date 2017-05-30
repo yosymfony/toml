@@ -42,11 +42,15 @@ class TomlBuilder
     /**
      * Constructor.
      *
+     * @param array $data An array of data to build a TOML file from.
      * @param int $indent The amount of spaces to use for indentation of nested nodes.
      */
-    public function __constructor($indent = 4)
+    public function __construct(array $data = [], $indent = 4)
     {
         $this->prefix = $indent ? str_repeat(' ', $indent) : '';
+        if (!empty($data)) {
+            $this->fromArray($data);
+        }
     }
 
     /**
