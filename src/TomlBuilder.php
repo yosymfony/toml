@@ -522,7 +522,6 @@ class TomlBuilder
             "\f" => '\\f',
             "\r" => '\\r',
             '"' => '\\"',
-            '/' => '\\/',
         );
 
         $normalized = str_replace(array_keys($allowed), $allowed, $val);
