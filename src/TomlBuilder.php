@@ -197,6 +197,32 @@ class TomlBuilder
     }
 
     /**
+     * Write a Toml file.
+     *
+     * @param $filePath
+     *
+     * @throws DumpException
+     */
+    public function saveToFile($filePath)
+    {
+        $handle = @fopen($filePath, 'w');
+        if ($handle === false) {
+            throw new DumpException(sprintf('Cannot open file "%s" for writing.', $filePath));
+        }
+
+        $bytesWritten = @fwrite($handle, $this->getTomlString());
+        if ($bytesWritten === false) {
+            fclose($handle);
+            throw new DumpException(sprintf('Cannot write to file "%s".', $filePath));
+        }
+
+        $closed = @fclose($handle);
+        if ($closed === false) {
+            throw new DumpException(sprintf('Cannot close file handle for "%s".', $filePath));
+        }
+    }
+
+    /**
      * Build toml file from given array.
      *
      * @param array $data
