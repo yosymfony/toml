@@ -42,11 +42,15 @@ class TomlBuilder
     /**
      * Constructor.
      *
+     * @param array $data An array of data to build a TOML file from.
      * @param int $indent The amount of spaces to use for indentation of nested nodes.
      */
-    public function __constructor($indent = 4)
+    public function __construct(array $data = array(), $indent = 4)
     {
         $this->prefix = $indent ? str_repeat(' ', $indent) : '';
+        if (!empty($data)) {
+            $this->fromArray($data);
+        }
     }
 
     /**
@@ -190,6 +194,81 @@ class TomlBuilder
     public function getTomlString()
     {
         return $this->output;
+    }
+
+    /**
+     * Write a Toml file.
+     *
+     * @param $filePath
+     *
+     * @throws DumpException
+     */
+    public function saveToFile($filePath)
+    {
+        $handle = @fopen($filePath, 'w');
+        if ($handle === false) {
+            throw new DumpException(sprintf('Cannot open file "%s" for writing.', $filePath));
+        }
+
+        $bytesWritten = @fwrite($handle, $this->getTomlString());
+        if ($bytesWritten === false) {
+            fclose($handle);
+            throw new DumpException(sprintf('Cannot write to file "%s".', $filePath));
+        }
+
+        $closed = @fclose($handle);
+        if ($closed === false) {
+            throw new DumpException(sprintf('Cannot close file handle for "%s".', $filePath));
+        }
+    }
+
+    /**
+     * Build toml file from given array.
+     *
+     * @param array $data
+     * @param string $parent
+     */
+    public function fromArray(array $data, $parent = '') {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                if ($this->hasStringKeys($value)) {
+                    // Plain table...
+                    $key = $parent !== '' ? "$parent.$key" : $key;
+                    $this->addTable($key);
+                    $this->fromArray($value, $key);
+                } elseif ($this->onlyArrays($value)) {
+                    $this->processArrayOfArrays($value, $key);
+                } else {
+                    // Plain array.
+                    $this->addValue($key, $value);
+                }
+            } else {
+                // Simple key/value.
+                $this->addValue($key, $value);
+            }
+        }
+    }
+
+    private function hasStringKeys(array $array) {
+        return count(array_filter(array_keys($array), 'is_string')) > 0;
+    }
+
+    private function onlyArrays(array $array) {
+        return count(array_filter(array_values($array), 'is_array')) == count($array);
+    }
+
+    protected function processArrayOfArrays($values, $parent)
+    {
+        foreach ($values as $value) {
+            $this->addArrayTables($parent);
+            foreach ($value as $key => $val) {
+                if (is_array($val)) {
+                    $this->processArrayOfArrays($val, "$parent.$key");
+                } else {
+                    $this->addValue($key, $val);
+                }
+            }
+        }
     }
 
     private function dumpValue($val)
@@ -443,7 +522,6 @@ class TomlBuilder
             "\f" => '\\f',
             "\r" => '\\r',
             '"' => '\\"',
-            '/' => '\\/',
         );
 
         $normalized = str_replace(array_keys($allowed), $allowed, $val);

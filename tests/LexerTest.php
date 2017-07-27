@@ -11,10 +11,10 @@
 
 namespace Yosymfony\Toml\tests;
 
+use PHPUnit\Framework\TestCase;
 use Yosymfony\Toml\Lexer;
-use Yosymfony\Toml\Token;
 
-class LexerTest extends \PHPUnit_Framework_TestCase
+class LexerTest extends TestCase
 {
     public function testGetToken()
     {

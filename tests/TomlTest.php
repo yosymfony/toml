@@ -11,9 +11,10 @@
 
 namespace Yosymfony\Toml\tests;
 
+use PHPUnit\Framework\TestCase;
 use Yosymfony\Toml\Toml;
 
-class TomlTest extends \PHPUnit_Framework_TestCase
+class TomlTest extends TestCase
 {
     public function testFile()
     {

@@ -11,8 +11,8 @@
 
 namespace Yosymfony\Toml\tests;
 
+use PHPUnit\Framework\TestCase;
 use Yosymfony\Toml\Parser;
-use Yosymfony\Toml\Toml;
 
 /*
  * Tests based on toml-test from BurntSushi
@@ -21,7 +21,7 @@ use Yosymfony\Toml\Toml;
 
  * @see https://github.com/BurntSushi/toml-test/tree/master/tests/valid
  */
-class ParserTest extends \PHPUnit_Framework_TestCase
+class ParserTest extends TestCase
 {
     public function testArrayEmpty()
     {
