@@ -40,7 +40,10 @@ class Toml
     {
         $file = '';
 
-        if (is_file($input)) {
+        // strval() && str_replace() of NULL char (\0) here to prevent weird PHP
+        // error "PHP Warning:  is_file() expects parameter 1 to be a valid
+        // path, string given".
+        if (is_file(strval(str_replace("\0", "", $input)))) {
             if (!is_readable($input)) {
                 throw new ParseException(sprintf('Unable to parse "%s" as the file is not readable.', $input));
             }
