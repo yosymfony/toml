@@ -11,422 +11,289 @@
 
 namespace Yosymfony\Toml\tests;
 
+use PHPUnit\Framework\TestCase;
 use Yosymfony\Toml\Lexer;
-use Yosymfony\Toml\Token;
 
-class LexerTest extends \PHPUnit_Framework_TestCase
+class LexerTest extends TestCase
 {
-    public function testGetToken()
-    {
-        $lexer = new Lexer('title = "TOML Example"');
+    private $lexer;
 
-        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LITERAL);
+    public function setUp()
+    {
+        $this->lexer = new Lexer();
     }
 
-    public function testGetNextToken()
+    public function testTokenizeMustRecognizeEqualToken()
     {
-        $lexer = new Lexer('["valid key"]');
+        $ts = $this->lexer->tokenize('=');
 
-        $this->assertEquals(Lexer::TOKEN_LBRANK, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getNextToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_STRING, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_RBRANK, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_EOF, $lexer->getToken()->getType());
+        $this->assertTrue($ts->isNext('T_EQUAL'));
     }
 
-    public function testGetBackToken()
+    public function testTokenizeMustRecognizeBooleanTokenWhenThereIsATrueValue()
     {
-        $lexer = new Lexer('[[fruit]]');
-        $lexer->getToken();
-        $lexer->getToken();
+        $ts = $this->lexer->tokenize('true');
 
-        $this->assertEquals($lexer->getBackToken()->getType(), Lexer::TOKEN_LBRANK);
-        $this->assertEquals($lexer->getToken()->getType(), Lexer::TOKEN_LITERAL);
+        $this->assertTrue($ts->isNext('T_BOOLEAN'));
     }
 
-    public function testKeyValue()
+    public function testTokenizeMustRecognizeBooleanTokenWhenThereIsAFalseValue()
     {
-        $lexer = new Lexer('title = "TOML Example"');
+        $ts = $this->lexer->tokenize('false');
 
-        $token = $lexer->getToken();
-
-        $this->isInstanceOf('Token', '::getToken() return a Token instance');
-        $this->assertEquals(Lexer::TOKEN_LITERAL, $token->getType());
-        $this->assertEquals(Lexer::TOKEN_EQUAL, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_STRING, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_EOF, $lexer->getToken()->getType());
+        $this->assertTrue($ts->isNext('T_BOOLEAN'));
     }
 
-    public function testMultipleSpaces()
+    public function testTokenizeMustRecognizeUnquotedKeyToken()
     {
-        $lexer = new Lexer('title   =   "TOML Example"');
+        $ts = $this->lexer->tokenize('title');
 
-        $token = $lexer->getToken();
-
-        $this->isInstanceOf('Token', '::getToken() return a Token instance');
-        $this->assertEquals(Lexer::TOKEN_LITERAL, $token->getType());
-        $this->assertEquals(Lexer::TOKEN_EQUAL, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_STRING, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_QUOTES, $lexer->getToken()->getType());
-        $this->assertEquals(Lexer::TOKEN_EOF, $lexer->getToken()->getType());
+        $this->assertTrue($ts->isNext('T_UNQUOTED_KEY'));
     }
 
-    public function testComment()
+    public function testTokenizeMustRecognizeIntegerTokenWhenThereIsAPositiveNumber()
     {
-        $lexer = new Lexer('# I am a comment. Hear me roar. Roar. ');
+        $ts = $this->lexer->tokenize('25');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_HASH, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_COMMENT, $token->getType());
-        $this->assertEquals(' I am a comment. Hear me roar. Roar. ', $token->getValue());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertTrue($ts->isNext('T_INTEGER'));
     }
 
-    public function testMultilineString()
+    public function testTokenizeMustRecognizeIntegerTokenWhenThereIsANegativeNumber()
     {
-        $lexer = new Lexer("\"\"\"Roses are red\nViolets are blue\"\"\"");
+        $ts = $this->lexer->tokenize('-25');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_STRING, $token->getType());
-        $this->assertEquals("Roses are red\nViolets are blue", $token->getValue());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_EOF, $token->getType());
+        $this->assertTrue($ts->isNext('T_INTEGER'));
     }
 
-    public function testMultilineStringBackslash()
+    public function testTokenizeMustRecognizeIntegerTokenWhenThereIsNumberWithUnderscoreSeparator()
     {
-        $lexer = new Lexer("\"\"\"\nThe quick brown \\\n\n  fox jumps over \\\n    the lazy dog.\"\"\"");
+        $ts = $this->lexer->tokenize('2_5');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_STRING, $token->getType());
-        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $token->getValue());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_EOF, $token->getType());
+        $this->assertTrue($ts->isNext('T_INTEGER'));
     }
 
-    public function testMultilineStringBackslashStartingWithBackslash()
+    public function testTokenizeMustRecognizeFloatTokenWhenThereIsAFloatNumber()
     {
-        $lexer = new Lexer("\"\"\"\\\nThe quick brown \\\n\n  fox jumps over \\\n    the lazy dog.\"\"\"");
+        $ts = $this->lexer->tokenize('2.5');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_STRING, $token->getType());
-        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $token->getValue());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_TRIPLE_QUOTES, $token->getType());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals(Lexer::TOKEN_EOF, $token->getType());
+        $this->assertTrue($ts->isNext('T_FLOAT'));
     }
 
-    public function testMultilineStringStartingWithNewline()
+    public function testTokenizeMustRecognizeFloatTokenWhenThereIsAFloatNumberWithUnderscoreSeparator()
     {
-        $lexer = new Lexer("\"\"\"\nRoses are red\nViolets are blue\"\"\"");
+        $ts = $this->lexer->tokenize('9_224_617.445_991_228_313');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_TRIPLE_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
-        $this->assertEquals("Roses are red\nViolets are blue", $token->getValue());
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_TRIPLE_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertTrue($ts->isNext('T_FLOAT'));
     }
 
-    public function testString()
+    public function testTokenizeMustRecognizeFloatTokenWhenThereIsANegativeFloatNumber()
     {
-        $lexer = new Lexer('"I\'m a string. \/slash \r \u000A Jos\u0082 \"You can quote me\". Tab \t newline \n you get it."');
+        $ts = $this->lexer->tokenize('-2.5');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
-        $this->assertEquals($token->getValue(), "I'm a string. /slash \r ".json_decode('"\u000A"').' Jos'.json_decode('"\u0082"')." \"You can quote me\". Tab \t newline \n you get it.");
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertTrue($ts->isNext('T_FLOAT'));
     }
 
-    public function testStringUnicodeSyntax()
+    public function testTokenizeMustRecognizeFloatTokenWhenThereIsANumberWithExponent()
     {
-        $lexer = new Lexer('"Jos\u0082"');
+        $ts = $this->lexer->tokenize('5e+22');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
-        $this->assertEquals($token->getValue(), 'Jos'.json_decode('"\u0082"'));
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertTrue($ts->isNext('T_FLOAT'));
     }
 
-    public function testStringPath()
+    public function testTokenizeMustRecognizeFloatTokenWhenThereIsANumberWithExponentAndUnderscoreSeparator()
     {
-        $lexer = new Lexer('"C:\\\\Users\\\\nodejs\\\\templates"');
+        $ts = $this->lexer->tokenize('1e1_000');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
-        $this->assertEquals($token->getValue(), 'C:\\Users\\nodejs\\templates');
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertTrue($ts->isNext('T_FLOAT'));
     }
 
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\LexerException
-     */
-    public function testStringBadPath()
+    public function testTokenizeMustRecognizeFloatTokenWhenThereIsAFloatNumberWithExponent()
     {
-        $lexer = new Lexer('"C:\Users\nodejs\templates"');
+        $ts = $this->lexer->tokenize('6.626e-34');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNext('T_FLOAT'));
     }
 
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\LexerException
-     */
-    public function testStringUnicodeSyntaxBad()
+    public function testTokenizeMustRecognizeDataTimeTokenWhenThereIsRfc3339Datetime()
     {
-        $lexer = new Lexer('"Jos\u8"');
+        $ts = $this->lexer->tokenize('1979-05-27T07:32:00Z');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->fail('An excepted LexerException has not been raised.');
+        $this->assertTrue($ts->isNext('T_DATE_TIME'));
     }
 
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\LexerException
-     */
-    public function testStringUnicodeSyntaxBadHexValue()
+    public function testTokenizeMustRecognizeDataTimeTokenWhenThereIsRfc3339DatetimeWithOffset()
     {
-        $lexer = new Lexer('"Jos\u008Z"');
+        $ts = $this->lexer->tokenize('1979-05-27T00:32:00-07:00');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->fail('An excepted LexerException has not been raised.');
+        $this->assertTrue($ts->isNext('T_DATE_TIME'));
     }
 
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\LexerException
-     */
-    public function testStringInvalidSpecialCharacter()
+    public function testTokenizeMustRecognizeDataTimeTokenWhenThereIsRfc3339DatetimeWithOffsetSecondFraction()
     {
-        $lexer = new Lexer('"Invalid\a"');
+        $ts = $this->lexer->tokenize('1979-05-27T00:32:00.999999-07:00');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
-
-        $token = $lexer->getToken();
-
-        $this->fail('An excepted LexerException has not been raised.');
+        $this->assertTrue($ts->isNext('T_DATE_TIME'));
     }
 
-    public function testNegativeInteger()
+    public function testTokenizeMustRecognizeQuotationMark()
     {
-        $lexer = new Lexer('-23');
+        $ts = $this->lexer->tokenize('"');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_LITERAL);
-        $this->assertEquals($token->getValue(), '-23');
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertTrue($ts->isNext('T_QUOTATION_MARK'));
     }
 
-    public function testNegativeFloat()
+    public function testTokenizeMustRecognize3QuotationMark()
     {
-        $lexer = new Lexer('-0.01');
+        $ts = $this->lexer->tokenize('"""');
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_LITERAL);
-        $this->assertEquals($token->getValue(), '-0.01');
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertTrue($ts->isNextSequence(['T_3_QUOTATION_MARK', 'T_EOS']));
     }
 
-    public function testDateTimeFloat()
+    public function testTokenizeMustRecognizeApostrophe()
     {
-        $lexer = new Lexer('1979-05-27T07:32:00Z');
+        $ts = $this->lexer->tokenize("'");
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_LITERAL);
-        $this->assertEquals($token->getValue(), '1979-05-27T07:32:00Z');
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertTrue($ts->isNext('T_APOSTROPHE'));
     }
 
-    public function testArray()
+    public function testTokenizeMustRecognize3Apostrophe()
     {
-        $lexer = new Lexer('[ 1, 2 ]');
+        $ts = $this->lexer->tokenize("'''");
 
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_LBRANK);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_LITERAL);
-        $this->assertEquals($token->getValue(), '1');
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_COMMA);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_LITERAL);
-        $this->assertEquals($token->getValue(), '2');
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_RBRANK);
-
-        $token = $lexer->getToken();
-
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+        $this->assertTrue($ts->isNext('T_3_APOSTROPHE'));
     }
 
-    public function testArrayStrings()
+    public function testTokenizeMustRecognizeEscapedCharacterWhenThereIsBackspace()
     {
-        $lexer = new Lexer('[ "red", "yellow" ]');
+        $ts = $this->lexer->tokenize('\b');
 
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNext('T_ESCAPED_CHARACTER'));
+    }
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_LBRANK);
+    public function testTokenizeMustRecognizeEscapedCharacterWhenThereIsTab()
+    {
+        $ts = $this->lexer->tokenize('\t');
 
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNext('T_ESCAPED_CHARACTER'));
+    }
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+    public function testTokenizeMustRecognizeEscapedCharacterWhenThereIsLinefeed()
+    {
+        $ts = $this->lexer->tokenize('\n');
 
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNext('T_ESCAPED_CHARACTER'));
+    }
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
-        $this->assertEquals($token->getValue(), 'red');
+    public function testTokenizeMustRecognizeEscapedCharacterWhenThereIsFormfeed()
+    {
+        $ts = $this->lexer->tokenize('\f');
 
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNext('T_ESCAPED_CHARACTER'));
+    }
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+    public function testTokenizeMustRecognizeEscapedCharacterWhenThereIsCarriageReturn()
+    {
+        $ts = $this->lexer->tokenize('\r');
 
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNext('T_ESCAPED_CHARACTER'));
+    }
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_COMMA);
+    public function testTokenizeMustRecognizeEscapedCharacterWhenThereIsQuote()
+    {
+        $ts = $this->lexer->tokenize('\"');
 
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNext('T_ESCAPED_CHARACTER'));
+    }
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+    public function testTokenizeMustRecognizeEscapedCharacterWhenThereIsBackslash()
+    {
+        $ts = $this->lexer->tokenize('\\\\');
 
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNext('T_ESCAPED_CHARACTER'));
+    }
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_STRING);
-        $this->assertEquals($token->getValue(), 'yellow');
+    public function testTokenizeMustRecognizeEscapedCharacterWhenThereIsUnicodeUsingFourCharacters()
+    {
+        $ts = $this->lexer->tokenize('\u00E9');
 
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNext('T_ESCAPED_CHARACTER'));
+    }
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_QUOTES);
+    public function testTokenizeMustRecognizeEscapedCharacterWhenThereIsUnicodeUsingEightCharacters()
+    {
+        $ts = $this->lexer->tokenize('\U00E90000');
 
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNext('T_ESCAPED_CHARACTER'));
+    }
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_RBRANK);
+    public function testTokenizeMustRecognizeBasicUnescapedString()
+    {
+        $ts = $this->lexer->tokenize('@text');
 
-        $token = $lexer->getToken();
+        $this->assertTrue($ts->isNextSequence([
+            'T_BASIC_UNESCAPED',
+            'T_EOS'
+        ]));
+    }
 
-        $this->assertEquals($token->getType(), Lexer::TOKEN_EOF);
+    public function testTokenizeMustRecognizeHash()
+    {
+        $ts = $this->lexer->tokenize('#');
+
+        $this->assertTrue($ts->isNext('T_HASH'));
+    }
+
+    public function testTokenizeMustRecognizeEscape()
+    {
+        $ts = $this->lexer->tokenize('\\');
+
+        $this->assertTrue($ts->isNextSequence(['T_ESCAPE', 'T_EOS']));
+    }
+
+    public function testTokenizeMustRecognizeEscapeAndEscapedCharacter()
+    {
+        $ts = $this->lexer->tokenize('\\ \b');
+
+        $this->assertTrue($ts->isNextSequence([
+            'T_ESCAPE',
+            'T_SPACE',
+            'T_ESCAPED_CHARACTER',
+            'T_EOS'
+        ]));
+    }
+
+    public function testTokenizeMustRecognizeLeftSquareBraket()
+    {
+        $ts = $this->lexer->tokenize('[');
+
+        $this->assertTrue($ts->isNext('T_LEFT_SQUARE_BRAKET'));
+    }
+
+    public function testTokenizeMustRecognizeRightSquareBraket()
+    {
+        $ts = $this->lexer->tokenize(']');
+
+        $this->assertTrue($ts->isNext('T_RIGHT_SQUARE_BRAKET'));
+    }
+
+    public function testTokenizeMustRecognizeDot()
+    {
+        $ts = $this->lexer->tokenize('.');
+
+        $this->assertTrue($ts->isNext('T_DOT'));
+    }
+
+    public function testTokenizeMustRecognizeLeftCurlyBrace()
+    {
+        $ts = $this->lexer->tokenize('{');
+
+        $this->assertTrue($ts->isNext('T_LEFT_CURLY_BRACE'));
+    }
+
+    public function testTokenizeMustRecognizeRightCurlyBrace()
+    {
+        $ts = $this->lexer->tokenize('}');
+
+        $this->assertTrue($ts->isNext('T_RIGHT_CURLY_BRACE'));
     }
 }

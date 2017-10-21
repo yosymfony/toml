@@ -49,7 +49,7 @@ class Toml
             $input = file_get_contents($input);
         }
 
-        $parser = new Parser();
+        $parser = new Parser(new Lexer());
 
         try {
             return $parser->parse($input);

@@ -11,157 +11,786 @@
 
 namespace Yosymfony\Toml\tests;
 
+use PHPUnit\Framework\TestCase;
 use Yosymfony\Toml\Parser;
-use Yosymfony\Toml\Toml;
+use Yosymfony\Toml\Lexer;
 
-/*
- * Tests based on toml-test from BurntSushi
- *
- * @author Victor Puertas <vpgugr@gmail.com>
-
- * @see https://github.com/BurntSushi/toml-test/tree/master/tests/valid
- */
-class ParserTest extends \PHPUnit_Framework_TestCase
+class ParserTest extends TestCase
 {
+    private $parser;
+
+    public function setUp()
+    {
+        $this->parser = new Parser(new Lexer());
+    }
+
+    public function tearDown()
+    {
+        $this->parser = null;
+    }
+
+    public function testParseMustReturnAnEmptyArrayWhenEmptyInput()
+    {
+        $array = $this->parser->parse('');
+
+        $this->assertEquals([], $array);
+    }
+
+    public function testParseMustParseBooleans()
+    {
+        $toml = <<<'toml'
+        t = true
+        f = false
+toml;
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            't' => true,
+            'f' => false,
+        ], $array);
+    }
+
+    public function testParseMustParseIntegers()
+    {
+        $toml = <<<'toml'
+        answer = 42
+        neganswer = -42
+        positive = +90
+        underscore = 1_2_3_4_5
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'answer' => 42,
+            'neganswer' => -42,
+            'positive' => 90,
+            'underscore' => 12345,
+        ], $array);
+    }
+
+    public function testParseMustParseLongIntegers()
+    {
+        $toml = <<<'toml'
+        answer = 9223372036854775807
+        neganswer = -9223372036854775808
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'answer' => 9223372036854775807,
+            'neganswer' => -9223372036854775808,
+        ], $array);
+    }
+
+    public function testParseMustParseFloats()
+    {
+        $toml = <<<'toml'
+        pi = 3.14
+        negpi = -3.14
+        positive = +1.01
+        exponent1 = 5e+22
+        exponent2 = 1e6
+        exponent3 = -2E-2
+        exponent4 = 6.626e-34
+        underscore = 6.6_26e-3_4
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'pi' => 3.14,
+            'negpi' => -3.14,
+            'positive' => 1.01,
+            'exponent1' => 4.9999999999999996E+22,
+            'exponent2' => 1000000.0,
+            'exponent3' => -0.02,
+            'exponent4' => 6.6259999999999998E-34,
+            'underscore' => 6.6259999999999998E-34,
+        ], $array);
+    }
+
+    public function testParseMustParseLongFloats()
+    {
+        $toml = <<<'toml'
+        longpi = 3.141592653589793
+        neglongpi = -3.141592653589793
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'longpi' => 3.141592653589793,
+            'neglongpi' => -3.141592653589793
+        ], $array);
+    }
+
+    public function testParseMustParseBasicStringsWithASimpleString()
+    {
+        $array = $this->parser->parse('answer = "You are not drinking enough whisky."');
+
+        $this->assertEquals([
+            'answer' => 'You are not drinking enough whisky.',
+        ], $array);
+    }
+
+    public function testParseMustParseAnEmptyString()
+    {
+        $array = $this->parser->parse('answer = ""');
+
+        $this->assertEquals([
+            'answer' => '',
+        ], $array);
+    }
+
+    public function testParseMustParseStringsWithEscapedCharacters() : void
+    {
+        $toml = <<<'toml'
+        backspace = "This string has a \b backspace character."
+        tab = "This string has a \t tab character."
+        newline = "This string has a \n new line character."
+        formfeed = "This string has a \f form feed character."
+        carriage = "This string has a \r carriage return character."
+        quote = "This string has a \" quote character."
+        backslash = "This string has a \\ backslash character."
+        notunicode1 = "This string does not have a unicode \\u escape."
+        notunicode2 = "This string does not have a unicode \\u0075 escape."
+toml;
+
+        $array = $this->parser->parse($toml);
+        $this->assertEquals([
+            'backspace' => "This string has a \b backspace character.",
+            'tab' => "This string has a \t tab character.",
+            'newline' => "This string has a \n new line character.",
+            'formfeed' => "This string has a \f form feed character.",
+            'carriage' => "This string has a \r carriage return character.",
+            'quote' => 'This string has a " quote character.',
+            'backslash' => 'This string has a \\ backslash character.',
+            'notunicode1' => 'This string does not have a unicode \\u escape.',
+            'notunicode2' => 'This string does not have a unicode \\u0075 escape.',
+        ], $array);
+    }
+
+    public function testParseMustParseStringsWithPound()
+    {
+        $toml = <<<'toml'
+        pound = "We see no # comments here."
+        poundcomment = "But there are # some comments here." # Did I # mess you up?
+toml;
+
+        $array = $this->parser->parse($toml);
+        $this->assertEquals([
+            'pound' => 'We see no # comments here.',
+            'poundcomment' => 'But there are # some comments here.'
+        ], $array);
+    }
+
+    public function testParseMustParseWithUnicodeCharacterEscaped()
+    {
+        $toml = <<<'toml'
+        answer4 = "\u03B4"
+        answer8 = "\U000003B4"
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'answer4' => json_decode('"\u03B4"'),
+            'answer8' => json_decode('"\u0000\u03B4"'),
+        ], $array);
+    }
+
+    public function testParseMustParseStringWithALiteralUnicodeCharacter()
+    {
+        $array = $this->parser->parse('answer = "δ"');
+
+        $this->assertEquals([
+            'answer' => 'δ',
+        ], $array);
+    }
+
+    public function testParseMustParseMultilineStrings()
+    {
+        $toml = <<<'toml'
+        multiline_empty_one = """"""
+        multiline_empty_two = """
+"""
+        multiline_empty_three = """\
+    """
+        multiline_empty_four = """\
+           \
+           \
+           """
+
+        equivalent_one = "The quick brown fox jumps over the lazy dog."
+        equivalent_two = """
+The quick brown \
+
+
+          fox jumps over \
+            the lazy dog."""
+
+        equivalent_three = """\
+               The quick brown \
+               fox jumps over \
+               the lazy dog.\
+               """
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'multiline_empty_one' => '',
+            'multiline_empty_two' => '',
+            'multiline_empty_three' => '',
+            'multiline_empty_four' => '',
+            'equivalent_one' => 'The quick brown fox jumps over the lazy dog.',
+            'equivalent_two' => 'The quick brown fox jumps over the lazy dog.',
+            'equivalent_three' => 'The quick brown fox jumps over the lazy dog.',
+        ], $array);
+    }
+
+    public function testParseMustParseLiteralStrings()
+    {
+        $toml = <<<'toml'
+        backspace = 'This string has a \b backspace character.'
+        tab = 'This string has a \t tab character.'
+        newline = 'This string has a \n new line character.'
+        formfeed = 'This string has a \f form feed character.'
+        carriage = 'This string has a \r carriage return character.'
+        slash = 'This string has a \/ slash character.'
+        backslash = 'This string has a \\ backslash character.'
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'backspace' => 'This string has a \b backspace character.',
+            'tab' => 'This string has a \t tab character.',
+            'newline' => 'This string has a \n new line character.',
+            'formfeed' => 'This string has a \f form feed character.',
+            'carriage' => 'This string has a \r carriage return character.',
+            'slash' => 'This string has a \/ slash character.',
+            'backslash' => 'This string has a \\\\ backslash character.',
+        ], $array);
+    }
+
+    public function testParseMustParseMultilineLiteralStrings()
+    {
+        $toml = <<<'toml'
+        oneline = '''This string has a ' quote character.'''
+        firstnl = '''
+This string has a ' quote character.'''
+multiline = '''
+This string
+has ' a quote character
+and more than
+one newline
+in it.'''
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'oneline' => "This string has a ' quote character.",
+            'firstnl' => "This string has a ' quote character.",
+            'multiline' => "This string\nhas ' a quote character\nand more than\none newline\nin it.",
+        ], $array);
+    }
+
+    public function testDatetime()
+    {
+        $toml = <<<'toml'
+        bestdayever = 1987-07-05T17:45:00Z
+        bestdayever2 = 1979-05-27T00:32:00-07:00
+        bestdayever3 = 1979-05-27T00:32:00.999999-07:00
+        bestdayever4 = 1979-05-27T07:32:00
+        bestdayever5 = 1979-05-27T00:32:00.999999
+        bestdayever6 = 1979-05-27
+
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'bestdayever' => new \Datetime('1987-07-05T17:45:00Z'),
+            'bestdayever2' => new \Datetime('1979-05-27T00:32:00-07:00'),
+            'bestdayever3' => new \Datetime('1979-05-27T00:32:00.999999-07:00'),
+            'bestdayever4' => new \Datetime('1979-05-27T07:32:00'),
+            'bestdayever5' => new \Datetime('1979-05-27T00:32:00.999999'),
+            'bestdayever6' => new \Datetime('1979-05-27'),
+        ], $array);
+    }
+
+    public function testParseMustParseArraysWithNoSpaces()
+    {
+        $array = $this->parser->parse('ints = [1,2,3]');
+
+        $this->assertEquals([
+            'ints' => [1,2,3],
+        ], $array);
+    }
+
+    public function testParseMustParseHeterogeneousArrays()
+    {
+        $array = $this->parser->parse('mixed = [[1, 2], ["a", "b"], [1.1, 2.1]]');
+
+        $this->assertEquals([
+            'mixed' => [
+                [1,2],
+                ['a', 'b'],
+                [1.1, 2.1],
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseArraysNested()
+    {
+        $array = $this->parser->parse('nest = [["a"], ["b"]]');
+
+        $this->assertEquals([
+            'nest' => [
+                ['a'],
+                ['b']
+            ],
+        ], $array);
+    }
+
     public function testArrayEmpty()
     {
-        date_default_timezone_set('UTC');
+        $array = $this->parser->parse('thevoid = [[[[[]]]]]');
 
-        $parser = new Parser();
+        $this->assertEquals([
+            'thevoid' => [
+                [
+                    [
+                        [
+                            [],
+                        ],
+                    ],
+                ],
+            ],
+        ], $array);
+    }
 
-        $array = $parser->parse('thevoid = [[[[[]]]]]');
+    public function testParseMustParseArrays()
+    {
+        $toml = <<<'toml'
+        ints = [1, 2, 3]
+        floats = [1.1, 2.1, 3.1]
+        strings = ["a", "b", "c"]
+        allStrings = ["all", 'strings', """are the same""", '''type''']
+        MultilineBasicString = ["all", """
+Roses are red
+Violets are blue""",]
+        dates = [
+          1987-07-05T17:45:00Z,
+          1979-05-27T07:32:00Z,
+          2006-06-01T11:00:00Z,
+        ]
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'ints' => [1, 2, 3],
+            'floats' => [1.1, 2.1, 3.1],
+            'strings' => ['a', 'b', 'c'],
+            'allStrings' => ['all', 'strings', 'are the same', 'type'],
+            'MultilineBasicString' => [
+                'all',
+                "Roses are red\nViolets are blue",
+            ],
+            'dates' => [
+                new \DateTime('1987-07-05T17:45:00Z'),
+                new \DateTime('1979-05-27T07:32:00Z'),
+                new \DateTime('2006-06-01T11:00:00Z'),
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseAKeyWithoutNameSpacesAroundEqualSign()
+    {
+        $array = $this->parser->parse('answer=42');
+
+        $this->assertEquals([
+            'answer' => 42,
+        ], $array);
+    }
+
+    public function testParseMustParseKeyWithSpace()
+    {
+        $array = $this->parser->parse('"a b" = 1');
 
         $this->assertNotNull($array);
 
-        $this->assertArrayHasKey('thevoid', $array);
-
-        $this->assertTrue(is_array($array['thevoid']));
-        $this->assertTrue(is_array($array['thevoid'][0]));
-        $this->assertTrue(is_array($array['thevoid'][0][0]));
-        $this->assertTrue(is_array($array['thevoid'][0][0][0]));
-        $this->assertTrue(is_array($array['thevoid'][0][0][0][0]));
+        $this->assertEquals([
+            'a b' => 1,
+        ], $array);
     }
 
-    public function testArraysHeterogeneous()
+    public function testParseMustParseKeyWithSpecialCharacters()
     {
-        $parser = new Parser();
+        $array = $this->parser->parse('"~!@$^&*()_+-`1234567890[]|/?><.,;:\'" = 1');
 
-        $array = $parser->parse('mixed = [[1, 2], ["a", "b"], [1.1, 2.1]]');
-
-        $this->assertNotNull($array);
-
-        $this->assertArrayHasKey('mixed', $array);
-
-        $this->assertTrue(is_array($array['mixed'][0]));
-        $this->assertTrue(is_array($array['mixed'][1]));
-        $this->assertTrue(is_array($array['mixed'][2]));
-
-        $this->assertEquals($array['mixed'][0][0], 1);
-        $this->assertEquals($array['mixed'][0][1], 2);
-
-        $this->assertEquals($array['mixed'][1][0], 'a');
-        $this->assertEquals($array['mixed'][1][1], 'b');
-
-        $this->assertEquals($array['mixed'][2][0], 1.1);
-        $this->assertEquals($array['mixed'][2][1], 2.1);
+        $this->assertEquals([
+            '~!@$^&*()_+-`1234567890[]|/?><.,;:\'' => 1,
+        ], $array);
     }
 
-    public function testArraysNoSpaces()
+    public function testParseMustParseAnEmptyTable()
     {
-        $parser = new Parser();
+        $array = $this->parser->parse('[a]');
 
-        $array = $parser->parse('ints = [1,2,3]');
-
-        $this->assertNotNull($array);
-
-        $this->assertArrayHasKey('ints', $array);
-
-        $this->assertEquals($array['ints'][0], 1);
-        $this->assertEquals($array['ints'][1], 2);
-        $this->assertEquals($array['ints'][2], 3);
+        $this->assertEquals([
+            'a' => [],
+        ], $array);
     }
 
-    public function testArraysNested()
+    public function testParseMustParseATableWithAWhiteSpaceInTheName()
     {
-        $parser = new Parser();
+        $array = $this->parser->parse('["valid key"]');
 
-        $array = $parser->parse('nest = [["a"], ["b"]]');
-
-        $this->assertNotNull($array);
-
-        $this->assertArrayHasKey('nest', $array);
-
-        $this->assertTrue(is_array($array['nest'][0]));
-        $this->assertTrue(is_array($array['nest'][1]));
-
-        $this->assertEquals($array['nest'][0][0], 'a');
-        $this->assertEquals($array['nest'][1][0], 'b');
+        $this->assertEquals([
+            'valid key' => [],
+        ], $array);
     }
 
-    public function testArrays()
+    public function testParseMustParseATableAQuotedName()
     {
-        $filename = __DIR__.'/fixtures/valid/arrays.toml';
+        $toml = <<<'toml'
+        [dog."tater.man"]
+        type = "pug"
+toml;
 
-        $parser = new Parser();
+        $array = $this->parser->parse($toml);
 
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertArrayHasKey('ints', $array);
-        $this->assertArrayHasKey('floats', $array);
-        $this->assertArrayHasKey('strings', $array);
-        $this->assertArrayHasKey('dates', $array);
-
-        $this->assertEquals(1, $array['ints'][0]);
-        $this->assertEquals(2, $array['ints'][1]);
-        $this->assertEquals(3, $array['ints'][2]);
-
-        $this->assertEquals(1.1, $array['floats'][0]);
-        $this->assertEquals(2.1, $array['floats'][1]);
-        $this->assertEquals(3.1, $array['floats'][2]);
-
-        $this->assertEquals('a', $array['strings'][0]);
-        $this->assertEquals('b', $array['strings'][1]);
-        $this->assertEquals('c', $array['strings'][2]);
-
-        $this->assertEquals('all', $array['allStrings'][0]);
-        $this->assertEquals('strings', $array['allStrings'][1]);
-        $this->assertEquals('are the same', $array['allStrings'][2]);
-        $this->assertEquals('type', $array['allStrings'][3]);
-
-        $this->assertEquals('all', $array['MultilineBasicString'][0]);
-        $this->assertEquals("Roses are red\nViolets are blue", $array['MultilineBasicString'][1]);
-
-        $this->assertTrue($array['dates'][0] instanceof \Datetime);
-        $this->assertTrue($array['dates'][1] instanceof \Datetime);
-        $this->assertTrue($array['dates'][2] instanceof \Datetime);
+        $this->assertEquals([
+            'dog' => [
+                'tater.man' => [
+                    'type' => 'pug',
+                ],
+            ],
+        ], $array);
     }
 
-    public function testBool()
+    public function testParseMustParseATableWithAPoundInTheName()
     {
-        $filename = __DIR__.'/fixtures/valid/bool.toml';
+        $toml = <<<'toml'
+        ["key#group"]
+        answer = 42
+toml;
 
-        $parser = new Parser();
+        $array = $this->parser->parse($toml);
 
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertArrayHasKey('t', $array);
-        $this->assertArrayHasKey('t', $array);
-
-        $this->assertEquals(true, $array['t']);
-        $this->assertEquals(false, $array['f']);
+        $this->assertEquals([
+            'key#group' => [
+                'answer' => 42,
+            ],
+        ], $array);
     }
 
-    public function testCommentsEverywhere()
+    public function testParseMustParseATableAndASubtableEmpties()
     {
-        $filename = __DIR__.'/fixtures/valid/commentsEverywhere.toml';
+        $toml = <<<'toml'
+        [a]
+        [a.b]
+toml;
+        $array = $this->parser->parse($toml);
 
-        $parser = new Parser();
+        $this->assertEquals([
+            'a' => [
+                'b' => [],
+            ],
+        ], $array);
+    }
 
-        $array = $parser->parse(file_get_contents($filename));
+    public function testParseMustParseATableWithImplicitGroups()
+    {
+        $toml = <<<'toml'
+        [a.b.c]
+        answer = 42
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'a' => [
+                'b' => [
+                    'c' => [
+                        'answer' => 42,
+                    ],
+                ],
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseAImplicitAndExplicitAfterTable()
+    {
+        $toml = <<<'toml'
+        [a.b.c]
+        answer = 42
+
+        [a]
+        better = 43
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'a' => [
+                'better' => 43,
+                'b' =>  [
+                    'c' => [
+                        'answer' => 42,
+                    ],
+                ],
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseImplicitAndExplicitTableBefore()
+    {
+        $toml = <<<'toml'
+        [a]
+        better = 43
+
+        [a.b.c]
+        answer = 42
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'a' => [
+                'better' => 43,
+                'b' =>  [
+                    'c' => [
+                        'answer' => 42,
+                    ],
+                ],
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseInlineTableEmpty()
+    {
+        $array = $this->parser->parse('name = {}');
+
+        $this->assertEquals([
+            'name' => [],
+        ], $array);
+    }
+
+    public function testParseMustParseInlineTableOneElement()
+    {
+        $array = $this->parser->parse('name = { first = "Tom" }');
+
+        $this->assertEquals([
+            'name' => [
+                'first' => 'Tom'
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseInlineTableExamples()
+    {
+        $toml = <<<'toml'
+name = { first = "Tom", last = "Preston-Werner" }
+point = { x = 1, y = 2 }
+strings = { key1 = """
+Roses are red
+Violets are blue""", key2 = """
+The quick brown \
+
+
+  fox jumps over \
+    the lazy dog.""" }
+inline = { x = 1, y = { a = 2, "b.deep" = 'my value' } }
+another = {number = 1}
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'name' => [
+                'first' => 'Tom',
+                'last' => 'Preston-Werner',
+            ],
+            'point' => [
+                'x' => 1,
+                'y' => 2,
+            ],
+            'strings' => [
+                'key1' => "Roses are red\nViolets are blue",
+                'key2' => 'The quick brown fox jumps over the lazy dog.',
+            ],
+            'inline' => [
+                'x' => 1,
+                'y' => [
+                    'a' => 2,
+                    'b.deep' => 'my value',
+                ],
+            ],
+            'another' => [
+                'number' => 1,
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseTableArrayImplicit()
+    {
+        $toml = <<<'toml'
+        [[albums.songs]]
+        name = "Glory Days"
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'albums' => [
+                [
+                    'songs' => [
+                        [
+                            'name' => 'Glory Days'
+                        ],
+                    ],
+                ],
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseTableArrayOne()
+    {
+        $toml = <<<'toml'
+        [[people]]
+        first_name = "Bruce"
+        last_name = "Springsteen"
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'people' => [
+                [
+                    'first_name' => 'Bruce',
+                    'last_name' => 'Springsteen',
+                ],
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseTableArrayMany()
+    {
+        $toml = <<<'toml'
+        [[people]]
+        first_name = "Bruce"
+        last_name = "Springsteen"
+
+        [[people]]
+        first_name = "Eric"
+        last_name = "Clapton"
+
+        [[people]]
+        first_name = "Bob"
+        last_name = "Seger"
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'people' => [
+                [
+                    'first_name' => 'Bruce',
+                    'last_name' => 'Springsteen',
+                ],
+                [
+                    'first_name' => 'Eric',
+                    'last_name' => 'Clapton',
+                ],
+                [
+                    'first_name' => 'Bob',
+                    'last_name' => 'Seger',
+                ],
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseTableArrayNest()
+    {
+        $toml = <<<'toml'
+        [[albums]]
+        name = "Born to Run"
+
+          [[albums.songs]]
+          name = "Jungleland"
+
+          [[albums.songs]]
+          name = "Meeting Across the River"
+
+        [[albums]]
+        name = "Born in the USA"
+
+          [[albums.songs]]
+          name = "Glory Days"
+
+          [[albums.songs]]
+          name = "Dancing in the Dark"
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'albums' => [
+                [
+                    'name' => 'Born to Run',
+                    'songs' => [
+                        ['name' => 'Jungleland'],
+                        ['name' => 'Meeting Across the River'],
+                    ],
+                ],
+                [
+                    'name' => 'Born in the USA',
+                    'songs' => [
+                        ['name' => 'Glory Days'],
+                        ['name' => 'Dancing in the Dark'],
+                    ],
+                ],
+            ],
+        ], $array);
+    }
+
+    public function testParseMustParseCommentsEverywhere()
+    {
+        $toml = <<<'toml'
+        # Top comment.
+          # Top comment.
+        # Top comment.
+
+        # [no-extraneous-groups-please]
+
+        [group] # Comment
+        answer = 42 # Comment
+        # no-extraneous-keys-please = 999
+        # Inbetween comment.
+        more = [ # Comment
+          # What about multiple # comments?
+          # Can you handle it?
+          #
+                  # Evil.
+        # Evil.
+          42, 42, # Comments within arrays are fun.
+          # What about multiple # comments?
+          # Can you handle it?
+          #
+                  # Evil.
+        # Evil.
+        # ] Did I fool you?
+        ] # Hopefully not.
+toml;
+
+        $array = $this->parser->parse($toml);
 
         $this->assertNotNull($array);
 
@@ -173,535 +802,26 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($array['group']['more'][1], 42);
     }
 
-    public function testDatetime()
+    public function testParseMustParseASimpleExample()
     {
-        $filename = __DIR__.'/fixtures/valid/datetime.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertArrayHasKey('bestdayever', $array);
-        $this->assertArrayHasKey('bestdayever2', $array);
-        $this->assertArrayHasKey('bestdayever3', $array);
-        $this->assertArrayHasKey('bestdayever4', $array);
-        $this->assertArrayHasKey('bestdayever5', $array);
-        $this->assertArrayHasKey('bestdayever6', $array);
-
-        $this->assertTrue($array['bestdayever'] instanceof \Datetime);
-        $this->assertTrue($array['bestdayever2'] instanceof \Datetime);
-        $this->assertTrue($array['bestdayever3'] instanceof \Datetime);
-        $this->assertTrue($array['bestdayever4'] instanceof \Datetime);
-        $this->assertTrue($array['bestdayever5'] instanceof \Datetime);
-        $this->assertTrue($array['bestdayever6'] instanceof \Datetime);
-    }
-
-    public function testEmpty()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('');
-
-        $this->assertNull($array);
-    }
-
-    public function testExample()
-    {
-        $filename = __DIR__.'/fixtures/valid/example.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertArrayHasKey('best-day-ever', $array);
-        $this->assertArrayHasKey('emptyName', $array);
-        $this->assertArrayHasKey('numtheory', $array);
-
-        $this->assertTrue($array['best-day-ever'] instanceof \Datetime);
-        $this->assertEquals('', $array['emptyName']);
-        $this->assertTrue(is_array($array['numtheory']));
-
-        $this->assertEquals($array['numtheory']['boring'], false);
-        $this->assertEquals($array['numtheory']['perfection'][0], 6);
-        $this->assertEquals($array['numtheory']['perfection'][1], 28);
-        $this->assertEquals($array['numtheory']['perfection'][2], 496);
-    }
-
-    public function testFloat()
-    {
-        $filename = __DIR__.'/fixtures/valid/float.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals(3.14, $array['pi']);
-        $this->assertEquals(-3.14, $array['negpi']);
-        $this->assertEquals(1.01, $array['positive']);
-        $this->assertEquals(4.9999999999999996E+22, $array['exponent1']);
-        $this->assertEquals(1000000.0, $array['exponent2']);
-        $this->assertEquals(-0.02, $array['exponent3']);
-        $this->assertEquals(6.6259999999999998E-34, $array['exponent4']);
-        $this->assertEquals(6.6259999999999998E-34, $array['underscore']);
-    }
-
-    public function testImplicitAndExplicitAfter()
-    {
-        $filename = __DIR__.'/fixtures/valid/implicitAndExplicitAfter.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertArrayHasKey('a', $array);
-        $this->assertArrayHasKey('b', $array['a']);
-        $this->assertArrayHasKey('c', $array['a']['b']);
-        $this->assertArrayHasKey('better', $array['a']);
-
-        $this->assertEquals($array['a']['b']['c']['answer'], 42);
-        $this->assertEquals($array['a']['better'], 43);
-    }
-
-    public function testImplicitAndExplicitBefore()
-    {
-        $filename = __DIR__.'/fixtures/valid/implicitAndExplicitBefore.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertArrayHasKey('a', $array);
-        $this->assertArrayHasKey('b', $array['a']);
-        $this->assertArrayHasKey('c', $array['a']['b']);
-        $this->assertArrayHasKey('better', $array['a']);
-
-        $this->assertEquals($array['a']['b']['c']['answer'], 42);
-        $this->assertEquals($array['a']['better'], 43);
-    }
-
-    public function testImplicitGroups()
-    {
-        $filename = __DIR__.'/fixtures/valid/implicitGroups.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertArrayHasKey('a', $array);
-        $this->assertArrayHasKey('b', $array['a']);
-        $this->assertArrayHasKey('c', $array['a']['b']);
-
-        $this->assertEquals($array['a']['b']['c']['answer'], 42);
-    }
-
-    public function testInteger()
-    {
-        $filename = __DIR__.'/fixtures/valid/integer.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals(42, $array['answer']);
-        $this->assertEquals(-42, $array['neganswer']);
-        $this->assertEquals(90, $array['positive']);
-        $this->assertEquals(12345, $array['underscore']);
-    }
-
-    public function testKeyEqualsNoSpace()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('answer=42');
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals($array['answer'], 42);
-    }
-
-    public function testKeySpace()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('"a b" = 1');
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals($array['a b'], 1);
-    }
-
-    public function testKeySpecialChars()
-    {
-        $filename = __DIR__.'/fixtures/valid/keySpecialChars.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals($array['~!@$^&*()_+-`1234567890[]|/?><.,;:\''], 1);
-    }
-
-    public function testInlineTable()
-    {
-        $filename = __DIR__.'/fixtures/valid/inlineTable.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals('Tom', $array['name']['first']);
-        $this->assertEquals('Preston-Werner', $array['name']['last']);
-
-        $this->assertEquals(1, $array['point']['x']);
-        $this->assertEquals(2, $array['point']['y']);
-
-        $this->assertEquals("Roses are red\nViolets are blue", $array['strings']['key1']);
-        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['strings']['key2']);
-
-        $this->assertEquals(1, $array['inline']['x']);
-        $this->assertEquals(2, $array['inline']['y']['a']);
-        $this->assertEquals('my value', $array['inline']['y']['b.deep']);
-
-        $this->assertEquals(1, $array['another']['number']);
-    }
-
-    public function testInlineTableEmpty()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('name = {}');
-
-        $this->assertNotNull($array);
-
-        $this->assertTrue(is_array($array['name']));
-    }
-
-    public function testInlineTableOneElement()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('name = { first = "Tom" }');
-
-        $this->assertNotNull($array);
-
-        $this->assertTrue(is_array($array['name']));
-        $this->assertEquals('Tom', $array['name']['first']);
-    }
-
-    public function testTableEmpty()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('[a]');
-
-        $this->assertNotNull($array);
-
-        $this->assertTrue(is_array($array['a']));
-    }
-
-    public function testTableSubEmpty()
-    {
-        $filename = __DIR__.'/fixtures/valid/tableSubEmpty.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertTrue(is_array($array['a']));
-        $this->assertTrue(is_array($array['a']['b']));
-    }
-
-    public function testTableWhiteSpace()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('["valid key"]');
-
-        $this->assertNotNull($array);
-
-        $this->assertTrue(is_array($array['valid key']));
-    }
-
-    public function testTableQuotedName()
-    {
-        $filename = __DIR__.'/fixtures/valid/tableQuotedName.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertTrue(is_array($array['dog']));
-        $this->assertTrue(is_array($array['dog']['tater.man']));
-    }
-
-    public function testTableWithPound()
-    {
-        $filename = __DIR__.'/fixtures/valid/tableWithPound.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertTrue(is_array($array['key#group']));
-
-        $this->assertEquals($array['key#group']['answer'], 42);
-    }
-
-    public function testLongFloat()
-    {
-        $filename = __DIR__.'/fixtures/valid/longFloat.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals($array['longpi'], 3.141592653589793);
-        $this->assertEquals($array['neglongpi'], -3.141592653589793);
-    }
-
-    public function testLongInteger()
-    {
-        $filename = __DIR__.'/fixtures/valid/longInteger.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertTrue($array['answer'] > 0);
-        $this->assertTrue($array['neganswer'] < 0);
-    }
-
-    public function testMultilineString()
-    {
-        $filename = __DIR__.'/fixtures/valid/multilineString.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals('', $array['multiline_empty_one']);
-        $this->assertEquals('', $array['multiline_empty_two']);
-        $this->assertEquals('', $array['multiline_empty_three']);
-        $this->assertEquals('', $array['multiline_empty_four']);
-        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['equivalent_one']);
-        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['equivalent_two']);
-        $this->assertEquals('The quick brown fox jumps over the lazy dog.', $array['equivalent_three']);
-    }
-
-    public function testRawMultilineString()
-    {
-        $filename = __DIR__.'/fixtures/valid/rawMultilineString.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals("This string has a ' quote character.", $array['oneline']);
-        $this->assertEquals("This string has a ' quote character.", $array['firstnl']);
-        $this->assertEquals("This string\nhas ' a quote character\nand more than\none newline\nin it.", $array['multiline']);
-    }
-
-    public function testRawString()
-    {
-        $filename = __DIR__.'/fixtures/valid/rawString.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals('This string has a \b backspace character.', $array['backspace']);
-        $this->assertEquals('This string has a \t tab character.', $array['tab']);
-        $this->assertEquals('This string has a \n new line character.', $array['newline']);
-        $this->assertEquals('This string has a \f form feed character.', $array['formfeed']);
-        $this->assertEquals('This string has a \r carriage return character.', $array['carriage']);
-        $this->assertEquals('This string has a \/ slash character.', $array['slash']);
-        $this->assertEquals('This string has a \\\\ backslash character.', $array['backslash']);
-    }
-
-    public function testStringEmpty()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('answer = ""');
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals($array['answer'], '');
-    }
-
-    public function testStringEscapes()
-    {
-        $filename = __DIR__.'/fixtures/valid/stringEscapes.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals("This string has a \b backspace character.", $array['backspace']);
-        $this->assertEquals("This string has a \t tab character.", $array['tab']);
-        $this->assertEquals("This string has a \n new line character.", $array['newline']);
-        $this->assertEquals("This string has a \f form feed character.", $array['formfeed']);
-        $this->assertEquals("This string has a \r carriage return character.", $array['carriage']);
-        $this->assertEquals('This string has a " quote character.', $array['quote']);
-        $this->assertEquals('This string has a \\ backslash character.', $array['backslash']);
-        $this->assertEquals('This string does not have a unicode \\u escape.', $array['notunicode1']);
-        $this->assertEquals('This string does not have a unicode \u005Cu escape.', $array['notunicode2']);
-        $this->assertEquals('This string does not have a unicode \\u0075 escape.', $array['notunicode3']);
-        $this->assertEquals("This string does not have a unicode \\\u0075 escape.", $array['notunicode4']);
-    }
-
-    public function testStringSimple()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('answer = "You are not drinking enough whisky."');
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals($array['answer'], 'You are not drinking enough whisky.');
-    }
-
-    public function testStringWithPound()
-    {
-        $filename = __DIR__.'/fixtures/valid/stringWithPound.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals($array['pound'], 'We see no # comments here.');
-        $this->assertEquals($array['poundcomment'], 'But there are # some comments here.');
-    }
-
-    public function testUnicodeEscape()
-    {
-        $filename = __DIR__.'/fixtures/valid/unicodeEscape.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals(json_decode('"\u03B4"'), $array['answer4']);
-        $this->assertEquals(json_decode('"\u0000\u03B4"'), $array['answer8']);
-    }
-
-    public function testUnicodeLitteral()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('answer = "δ"');
-
-        $this->assertNotNull($array);
-
-        $this->assertEquals($array['answer'], 'δ');
-    }
-
-    public function testTableArrayImplicit()
-    {
-        $filename = __DIR__.'/fixtures/valid/tableArrayImplicit.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-        $this->assertCount(1, $array);
-        $this->assertEquals('Glory Days', $array['albums']['songs']['name']);
-    }
-
-    public function testTableArrayMany()
-    {
-        $filename = __DIR__.'/fixtures/valid/tableArrayMany.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-        $this->assertCount(1, $array);
-
-        $this->assertEquals('Bruce', $array['people'][0]['first_name']);
-        $this->assertEquals('Springsteen', $array['people'][0]['last_name']);
-
-        $this->assertEquals('Eric', $array['people'][1]['first_name']);
-        $this->assertEquals('Clapton', $array['people'][1]['last_name']);
-
-        $this->assertEquals('Bob', $array['people'][2]['first_name']);
-        $this->assertEquals('Seger', $array['people'][2]['last_name']);
-    }
-
-    public function testTableArrayNest()
-    {
-        $filename = __DIR__.'/fixtures/valid/tableArrayNest.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-        $this->assertCount(1, $array);
-
-        $this->assertEquals('Born to Run', $array['albums'][0]['name']);
-        $this->assertEquals('Jungleland', $array['albums'][0]['songs'][0]['name']);
-        $this->assertEquals('Meeting Across the River', $array['albums'][0]['songs'][1]['name']);
-
-        $this->assertEquals('Born in the USA', $array['albums'][1]['name']);
-        $this->assertEquals('Glory Days', $array['albums'][1]['songs'][0]['name']);
-        $this->assertEquals('Dancing in the Dark', $array['albums'][1]['songs'][1]['name']);
-    }
-
-    public function testTableArrayOne()
-    {
-        $filename = __DIR__.'/fixtures/valid/tableArrayOne.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-
-        $this->assertNotNull($array);
-        $this->assertCount(1, $array);
-
-        $this->assertEquals('Bruce', $array['people'][0]['first_name']);
-        $this->assertEquals('Springsteen', $array['people'][0]['last_name']);
+        $toml = <<<'toml'
+        best-day-ever = 1987-07-05T17:45:00Z
+        emptyName = ""
+
+        [numtheory]
+        boring = false
+        perfection = [6, 28, 496]
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'best-day-ever' => new \DateTime('1987-07-05T17:45:00Z'),
+            'emptyName' => '',
+            'numtheory' => [
+                'boring' => false,
+                'perfection' => [6, 28, 496],
+            ],
+        ], $array);
     }
 }

@@ -1,5 +1,9 @@
 CHANGELOG
 =========
+1.0.0
+-----
+* Parse returns an empty array in case of empty input. e.g: `$toml->parse('')`.
+
 0.4.0
 -----
 * Better support for dates as specified in the latest TOML spec. See PR #11.

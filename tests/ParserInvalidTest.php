@@ -11,536 +11,565 @@
 
 namespace Yosymfony\Toml\tests;
 
+use PHPUnit\Framework\TestCase;
 use Yosymfony\Toml\Parser;
-use Yosymfony\Toml\Toml;
+use Yosymfony\Toml\Lexer;
 
-/*
- * Tests based on toml-test from BurntSushi
- *
- * @author Victor Puertas <vpgugr@gmail.com>
-
- * @see https://github.com/BurntSushi/toml-test/tree/master/tests/invalid
- */
-class ParserInvalidTest extends \PHPUnit_Framework_TestCase
+class ParserInvalidTest extends TestCase
 {
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testArrayMixedTypesArraysAndInts()
-    {
-        $parser = new Parser();
+    private $parser;
 
-        $array = $parser->parse('arrays-and-ints =  [1, ["Arrays are not integers."]]');
+    public function setUp()
+    {
+        $this->parser = new Parser(new Lexer());
+    }
+
+    public function tearDown()
+    {
+        $this->parser = null;
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testArrayMixedTypesIntsAndFloats()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('ints-and-floats = [1, 1.1]');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testArrayMixedTypesStringsAndInts()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('strings-and-ints = ["hi", 42]');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testDatetimeMalformedNoLeads()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('no-leads = 1987-7-05T17:45:00Z');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testDatetimeMalformedNoSecs()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('no-secs = 1987-07-05T17:45Z');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testDatetimeMalformedNoT()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('no-t = 1987-07-0517:45:00Z');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testDatetimeMalformedWithMilli()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('with-milli = 1987-07-5T17:45:00.12Z');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testInlineTableWithNewline()
-    {
-        $filename = __DIR__.'/fixtures/invalid/inlineTableNewline.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testDuplicateKeyTable()
-    {
-        $filename = __DIR__.'/fixtures/invalid/duplicateKeyTable.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testDuplicateTable()
-    {
-        $filename = __DIR__.'/fixtures/invalid/duplicateTable.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testDuplicateKeys()
-    {
-        $filename = __DIR__.'/fixtures/invalid/duplicateKeys.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testEmptyImplicitTable()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('[naughty..naughty]');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testFloatNoLeadingZero()
-    {
-        $filename = __DIR__.'/fixtures/invalid/floatNoLeadingZero.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testFloatNoTrailingDigits()
-    {
-        $filename = __DIR__.'/fixtures/invalid/floatNoTrailingDigits.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testFloatLeadingUnderscore()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('number = _1.01');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testFloatFinalUnderscore()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('number = 1.01_');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testFloatUnderscorePrefixE()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('number = 1_e6');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
-     */
-    public function testFloatUnderscoreSufixE()
-    {
-        $parser = new Parser();
-
-        $array = $parser->parse('number = 1e_6');
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_EQUAL" at line 1 with value "=".
      */
     public function testKeyEmpty()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('= 1');
+        $this->parser->parse('= 1');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_HASH" at line 1 with value "#".
      */
-    public function testKeyHash()
+    public function testParseMustFailWhenKeyHash()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('a# = 1');
+        $this->parser->parse('a# = 1');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_NEWLINE" at line 1
      */
-    public function testKeyNewline()
+    public function testParseMustFailWhenKeyNewline()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse("a\n= 1");
+        $this->parser->parse("a\n= 1");
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage The key "dupe" has already been defined previously.
      */
-    public function testKeyOpenBracket()
+    public function testDuplicateKeys()
     {
-        $parser = new Parser();
+        $toml = <<<'toml'
+        dupe = false
+        dupe = true
+toml;
 
-        $array = $parser->parse('[abc = 1');
+        $this->parser->parse($toml);
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_SPACE" at line 1
      */
-    public function testKeySingleOpenBracket()
+    public function testParseMustFailWhenKeyOpenBracket()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('[');
+        $this->parser->parse('[abc = 1');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_EOS" at line 1
      */
-    public function testKeySpace()
+    public function testParseMustFailWhenKeySingleOpenBracket()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('a b = 1');
+        $this->parser->parse('[');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 1 with value "b".
      */
-    public function testKeyStartBracket()
+    public function testParseMustFailWhenKeySpace()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse("[a]\n[xyz = 5\n[b]");
+        $this->parser->parse('a b = 1');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_SPACE" at line 2 with value " ".
      */
-    public function testKeyTwoEquals()
+    public function testParseMustFailWhenKeyStartBracket()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('key= = 1');
+        $this->parser->parse("[a]\n[xyz = 5\n[b]");
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\LexerException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_EQUAL" at line 1 with value "=".
      */
-    public function testStringBadByteEscape()
+    public function testParseMustFailWhenKeyTwoEquals()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('naughty = "\xAg"');
+        $this->parser->parse('key= = 1');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\LexerException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 1 with value "the".
      */
-    public function testStringBadEscape()
+    public function testParseMustFailWhenTextAfterInteger()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('invalid-escape = "This string has a bad \a escape character."');
+        $this->parser->parse('answer = 42 the ultimate answer?');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\LexerException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Invalid integer number: leading zeros are not allowed. Token: "T_INTEGER" line: 1 value "042".
      */
-    public function testStringByteEscapes()
+    public function testParseMustFailWhenIntegerLeadingZeros()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('answer = "\x33"');
+        $this->parser->parse('answer = 042');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 1 with value "_42".
      */
-    public function testStringNoClose()
+    public function testParseMustFailWhenIntegerLeadingUnderscore()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('no-ending-quote = "One time, at band camp');
+        $this->parser->parse('answer = _42');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Invalid integer number: underscore must be surrounded by at least one digit.
      */
-    public function testTableEmpty()
+    public function testParseMustFailWhenIntegerFinalUnderscore()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('[]');
+        $this->parser->parse('answer = 42_');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Invalid integer number: leading zeros are not allowed. Token: "T_INTEGER" line: 1 value "0_42".
      */
-    public function testTableWhitespace()
+    public function testParseMustFailWhenIntegerLeadingZerosWithUnderscore()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('[invalid key]');
+        $this->parser->parse('answer = 0_42');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_DOT" at line 1 with value ".".
      */
-    public function testTableWithPound()
+    public function testParseMustFailWhenFloatNoLeadingZero()
     {
-        $parser = new Parser();
+        $toml = <<<'toml'
+        answer = .12345
+        neganswer = -.12345
+toml;
 
-        $array = $parser->parse("[key#group]\nanswer = 42");
+        $this->parser->parse($toml);
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_DOT" at line 1 with value ".".
      */
-    public function testTextAfterArrayEntries()
+    public function testParseMustFailWhenFloatNoTrailingDigits()
     {
-        $filename = __DIR__.'/fixtures/invalid/textAfterArrayEntries.toml';
+        $toml = <<<'toml'
+        answer = 1.
+        neganswer = -1.
+toml;
 
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
+        $this->parser->parse($toml);
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 1 with value "_1".
      */
-    public function testTextAfterInteger()
+    public function testParseMustFailWhenFloatLeadingUnderscore()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('answer = 42 the ultimate answer?');
+        $this->parser->parse('number = _1.01');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Invalid float number: underscore must be surrounded by at least one digit.
      */
-    public function testTextIntegerLeadingZeros()
+    public function testParseMustFailWhenFloatFinalUnderscore()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('answer = 042');
+        $this->parser->parse('number = 1.01_');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Invalid float number: underscore must be surrounded by at least one digit.
      */
-    public function testTextIntegerLeadingUnderscore()
+    public function testParseMustFailWhenFloatUnderscorePrefixE()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('answer = _42');
+        $this->parser->parse('number = 1_e6');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 1 with value "e_6".
      */
-    public function testTextIntegerFinalUnderscore()
+    public function testParseMustFailWhenFloatUnderscoreSufixE()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('answer = 42_');
+        $this->parser->parse('number = 1e_6');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_INTEGER" at line 1 with value "-7".
      */
-    public function testTextIntegerLeadingZerosWithUnderscore()
+    public function testParseMustFailWhenDatetimeMalformedNoLeads()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('answer = 0_42');
-        print_r($array);
+        $this->parser->parse('no-leads = 1987-7-05T17:45:00Z');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 1 with value "T17".
      */
-    public function testTextAfterTable()
+    public function testParseMustFailWhenDatetimeMalformedNoSecs()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('[error] this shouldn\'t be here');
+        $this->parser->parse('no-secs = 1987-07-05T17:45Z');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_INTEGER" at line 1 with value "17".
      */
-    public function testTextAfterString()
+    public function testParseMustFailWhenDatetimeMalformedNoT()
     {
-        $parser = new Parser();
-
-        $array = $parser->parse('string = "Is there life after strings?" No.');
+        $this->parser->parse('no-t = 1987-07-0517:45:00Z');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_INTEGER" at line 1 with value "-07".
      */
-    public function testTextBeforeArraySeparator()
+    public function testParseMustFailWhenDatetimeMalformedWithMilli()
     {
-        $filename = __DIR__.'/fixtures/invalid/textBeforeArraySeparator.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
+        $this->parser->parse('with-milli = 1987-07-5T17:45:00.12Z');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_ESCAPE" at line 1 with value "\". This character is not valid.
      */
-    public function testTextInArray()
+    public function testParseMustFailWhenBasicStringHasBadByteEscape()
     {
-        $filename = __DIR__.'/fixtures/invalid/textInArray.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
+        $this->parser->parse('naughty = "\xAg"');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_ESCAPE" at line 1 with value "\". This character is not valid.
      */
-    public function testTableArrayImplicit()
+    public function testParseMustFailWhenBasicStringHasBadEscape()
     {
-        $filename = __DIR__.'/fixtures/invalid/tableArrayImplicit.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
+        $this->parser->parse('invalid-escape = "This string has a bad \a escape character."');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_ESCAPE" at line 1 with value "\". This character is not valid.
      */
-    public function testTableArrayMalformedBracket()
+    public function testParseMustFailWhenBasicStringHasByteEscapes()
     {
-        $filename = __DIR__.'/fixtures/invalid/tableArrayMalformedBracket.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
+        $this->parser->parse('answer = "\x33"');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_EOS" at line 1 with value "". This character is not valid.
      */
-    public function testTableArrayMalformedEmpty()
+    public function testParseMustFailWhenBasicStringIsNotClose()
     {
-        $filename = __DIR__.'/fixtures/invalid/tableArrayMalformedEmpty.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
+        $this->parser->parse('no-ending-quote = "One time, at band camp');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 1 with value "No". Expected T_NEWLINE or T_EOS.
      */
-    public function testTableNestedBracketsClose()
+    public function testParseMustFailWhenThereIsTextAfterBasicString()
     {
-        $filename = __DIR__.'/fixtures/invalid/tableNestedBracketsClose.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
+        $this->parser->parse('string = "Is there life after strings?" No.');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Data types cannot be mixed in an array. Value: "1".
      */
-    public function testTableNestedBracketsOpen()
+    public function testParseMustFailWhenThereIsAnArrayWithMixedTypesArraysAndInts()
     {
-        $filename = __DIR__.'/fixtures/invalid/tableNestedBracketsOpen.toml';
-
-        $parser = new Parser();
-
-        $array = $parser->parse(file_get_contents($filename));
+        $this->parser->parse('arrays-and-ints =  [1, ["Arrays are not integers."]]');
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\ParseException
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Data types cannot be mixed in an array. Value: "1.1".
      */
-    public function testTableArrayWithSomeNameOfTable()
+    public function testParseMustFailWhenThereIsAnArrayWithMixedTypesIntsAndFloats()
     {
-        $filename = __DIR__.'/fixtures/invalid/tableArrayWithSomeNameOfTable.toml';
+        $this->parser->parse('ints-and-floats = [1, 1.1]');
+    }
 
-        $parser = new Parser();
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Data types cannot be mixed in an array. Value: "42".
+     */
+    public function testParseMustFailWhenThereIsAnArrayWithMixedTypesStringsAndInts()
+    {
+        $this->parser->parse('strings-and-ints = ["hi", 42]');
+    }
 
-        $array = $parser->parse(file_get_contents($filename));
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 2 with value "No".
+     */
+    public function testParseMustFailWhenAppearsTextAfterArrayEntries()
+    {
+        $toml = <<<'toml'
+        array = [
+            "Is there life after an array separator?", No
+            "Entry"
+        ]
+toml;
+
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 2 with value "No".
+     */
+    public function testParseMustFailWhenAppearsTextBeforeArraySeparator()
+    {
+        $toml = <<<'toml'
+        array = [
+            "Is there life before an array separator?" No,
+            "Entry"
+        ]
+toml;
+
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage  Syntax error: unexpected token "T_UNQUOTED_KEY" at line 3 with value "I".
+     */
+    public function testParseMustFailWhenAppearsTextInArray()
+    {
+        $toml = <<<'toml'
+        array = [
+            "Entry 1",
+            I don't belong,
+            "Entry 2",
+        ]
+toml;
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage The key "fruit.type" has already been defined previously.
+     */
+    public function testParseMustFailWhenDuplicateKeyTable()
+    {
+        $toml = <<<'toml'
+        [fruit]
+        type = "apple"
+
+        [fruit.type]
+        apple = "yes"
+toml;
+
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage The key "a" has already been defined previously.
+     */
+    public function testParseMustFailWhenDuplicateTable()
+    {
+        $toml = <<<'toml'
+        [a]
+        [a]
+toml;
+
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_RIGHT_SQUARE_BRAKET" at line 1 with value "]".
+     */
+    public function testParseMustFailWhenTableEmpty()
+    {
+        $this->parser->parse('[]');
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_SPACE" at line 1 with value " ".
+     */
+    public function testParseMustFailWhenTableWhitespace()
+    {
+        $this->parser->parse('[invalid key]');
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_DOT" at line 1 with value ".".
+     */
+    public function testParseMustFailWhenEmptyImplicitTable()
+    {
+        $this->parser->parse('[naughty..naughty]');
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_HASH" at line 1 with value "#".
+     */
+    public function testParseMustFailWhenTableWithPound()
+    {
+        $this->parser->parse("[key#group]\nanswer = 42");
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 1 with value "this".
+     */
+    public function testParseMustFailWhenTextAfterTable()
+    {
+        $this->parser->parse('[error] this shouldn\'t be here');
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_LEFT_SQUARE_BRAKET" at line 1 with value "[".
+     */
+    public function testParseMustFailWhenTableNestedBracketsOpen()
+    {
+        $toml = <<<'toml'
+        [a[b]
+        zyx = 42
+toml;
+
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_UNQUOTED_KEY" at line 1 with value "b".
+     */
+    public function testParseMustFailWhenTableNestedBracketsClose()
+    {
+        $toml = <<<'toml'
+        [a]b]
+        zyx = 42
+toml;
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_NEWLINE" at line 1
+     */
+    public function testParseMustFailWhenInlineTableWithNewline()
+    {
+        $toml = <<<'toml'
+        name = { first = "Tom",
+	           last = "Preston-Werner"
+        }
+toml;
+
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage The key "fruit.variety" has already been defined previously.
+     */
+    public function testParseMustFailWhenTableArrayWithSomeNameOfTable()
+    {
+        $toml = <<<'toml'
+        [[fruit]]
+        name = "apple"
+
+        [[fruit.variety]]
+        name = "red delicious"
+
+        # This table conflicts with the previous table
+        [fruit.variety]
+        name = "granny smith"
+toml;
+
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_RIGHT_SQUARE_BRAKET" at line 1 with value "]".
+     */
+    public function testParseMustFailWhenTableArrayMalformedEmpty()
+    {
+        $toml = <<<'toml'
+        [[]]
+        name = "Born to Run"
+toml;
+
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_NEWLINE" at line 1
+     */
+    public function testParseMustFailWhenTableArrayMalformedBracket()
+    {
+        $toml = <<<'toml'
+        [[albums]
+        name = "Born to Run"
+toml;
+
+        $this->parser->parse($toml);
+    }
+
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage The array of tables "albums" has already been defined as previous table
+     */
+    public function testParseMustFailWhenTableArrayImplicit()
+    {
+        $toml = <<<'toml'
+        # This test is a bit tricky. It should fail because the first use of
+        # `[[albums.songs]]` without first declaring `albums` implies that `albums`
+        # must be a table. The alternative would be quite weird. Namely, it wouldn't
+        # comply with the TOML spec: "Each double-bracketed sub-table will belong to
+        # the most *recently* defined table element *above* it."
+        #
+        # This is in contrast to the *valid* test, table-array-implicit where
+        # `[[albums.songs]]` works by itself, so long as `[[albums]]` isn't declared
+        # later. (Although, `[albums]` could be.)
+        [[albums.songs]]
+        name = "Glory Days"
+
+        [[albums]]
+        name = "Born in the USA"
+toml;
+
+        $this->parser->parse($toml);
     }
 }

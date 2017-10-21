@@ -1,8 +1,0 @@
-pi = 3.14
-negpi = -3.14
-positive = +1.01
-exponent1 = 5e+22
-exponent2 = 1e6
-exponent3 = -2E-2
-exponent4 = 6.626e-34
-underscore = 6.6_26e-3_4

@@ -12,7 +12,7 @@
          bootstrap="vendor/autoload.php"
 >
     <testsuites>
-        <testsuite name="Yosymfony Toml Component Test Suite">
+        <testsuite name="Yosymfony Toml Parser test suite">
             <directory>./tests/</directory>
         </testsuite>
     </testsuites>

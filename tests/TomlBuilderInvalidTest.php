@@ -11,9 +11,10 @@
 
 namespace Yosymfony\Toml\tests;
 
+use PHPUnit\Framework\TestCase;
 use Yosymfony\Toml\TomlBuilder;
 
-class TomlBuilderInvalidTest extends \PHPUnit_Framework_TestCase
+class TomlBuilderInvalidTest extends TestCase
 {
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
