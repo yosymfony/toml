@@ -3,7 +3,9 @@ CHANGELOG
 1.0.0
 -----
 * The code has been rewritten from scratch for PHP 7.1.
-* Parse method of Toml class returns an empty array in case of empty input.
+* Parse method of `Toml` class returns an empty array in case of empty input.
+* The exceptions have been refactored, so the classes `ExceptionInterface`,
+  `LexerException` and `RuntimeException` have been removed.
 
 0.3.3 (2015-08-24)
 ------------------
@@ -15,7 +17,7 @@ CHANGELOG
 
 0.3.1 (2015-03-07)
 ------------------
-* Added support to literal strings in TomlBuilder.
+* Added support to literal strings in `TomlBuilder`.
 
 0.3.0 (2015-03-06)
 ------------------
@@ -26,8 +28,8 @@ CHANGELOG
 --------------------
 * Support for TOML 0.2.0.
 * New tests for arrays of tables.
-* TomlBuilder: new methods addTable
-* TomlBuilder: Deprecated methods addGroup.
+* TomlBuilder: new methods `addTabl`e
+* TomlBuilder: Deprecated methods `addGroup`.
 * Fixtures folder in tests renamed to fixtures.
 * Fixtures reorganized.
 
@@ -35,7 +37,7 @@ CHANGELOG
 ------------------
 * Fixed bug with empty string value parse error.
 * Fixed exception default timezone unset in unit tests.
-* Added travis configuration file.
+* Added Travis configuration file.
 * Fixed some issues in README.md.
 
 0.1.0 (2013-05-12)
@@ -43,4 +45,4 @@ CHANGELOG
 * Initial release.
 * Support for TOML 0.1.0.
 * BurntSushi test suite included.
-* Included TomlBuilder for create inline TOML strings.
+* Included TomlBuilder to create inline TOML strings.

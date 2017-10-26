@@ -16,8 +16,7 @@ namespace Yosymfony\Toml\Exception;
  *
  * @author Victor Puertas <vpgugr@gmail.com>
  *
- * @api
  */
-class DumpException extends RuntimeException
+class DumpException extends \RuntimeException
 {
 }
