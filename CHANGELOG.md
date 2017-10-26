@@ -2,12 +2,8 @@ CHANGELOG
 =========
 1.0.0
 -----
-* Parse returns an empty array in case of empty input. e.g: `$toml->parse('')`.
-
-0.4.0
------
-* Better support for dates as specified in the latest TOML spec. See PR #11.
-* Added support for PHP 7 on Travis CI.
+* The code has been rewritten from scratch for PHP 7.1.
+* Parse method of Toml class returns an empty array in case of empty input.
 
 0.3.3 (2015-08-24)
 ------------------
