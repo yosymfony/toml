@@ -14,26 +14,42 @@ namespace Yosymfony\Toml\tests;
 use PHPUnit\Framework\TestCase;
 use Yosymfony\Toml\Toml;
 
-class TomlTest //extends TestCase
+class TomlTest extends TestCase
 {
-    public function testFile()
-    {
-        $filename = __DIR__.'/fixtures/valid/toml.toml';
-
-        $array = Toml::parse($filename);
-
-        $this->assertNotNull($array);
-    }
-
-    public function testString()
+    public function testParseMustParseAString()
     {
         $array = Toml::parse('data = "question"');
 
-        $this->assertNotNull($array);
+        $this->assertEquals([
+            'data' => 'question',
+        ], $array);
     }
 
-    public function testStringEmpty()
+    public function testParseMustReturnEmptyArrayWhenStringEmpty()
     {
         $array = Toml::parse('');
+
+        $this->assertEquals([], $array);
+    }
+
+    public function testParseFileMustParseFile()
+    {
+        $filename = __DIR__.'/fixtures/simple.toml';
+
+        $array = Toml::parseFile($filename);
+
+        $this->assertEquals([
+            'name' => 'Victor',
+        ], $array);
+    }
+
+    /**
+     * @expectedException Yosymfony\Toml\Exception\ParseException
+     */
+    public function testParseFileMustFailWhenFilenameDoesNotExists()
+    {
+        $filename = __DIR__.'/fixtures/does-not-exists.toml';
+
+        Toml::parseFile($filename);
     }
 }

@@ -17,7 +17,7 @@ use Yosymfony\ParserUtils\TokenStream;
 use Yosymfony\ParserUtils\SyntaxErrorException;
 
 /**
- * Parser for Toml strings (specification version 0.4.0).
+ * Parser for TOML strings (specification version 0.4.0).
  *
  * @author Victor Puertas <vpgugr@vpgugr.com>
  */
