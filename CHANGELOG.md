@@ -10,6 +10,7 @@ CHANGELOG
   (optional) to return the parsed input as an object (an instance of `stdClass`).
 * The exceptions have been refactored, so the classes `ExceptionInterface`,
   `LexerException` and `RuntimeException` have been removed.
+* Fixed bug #13: "Inline sub-tables don't work".
 
 0.3.3 (2015-08-24)
 ------------------

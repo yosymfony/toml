@@ -594,6 +594,24 @@ toml;
         ], $array);
     }
 
+    public function testParseMustParseAnInlineTableDefinedInATable()
+    {
+        $toml = <<<'toml'
+        [tab1]
+        key1 = {name='Donald Duck'}
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'tab1' => [
+                'key1' => [
+                    'name' => 'Donald Duck'
+                ],
+            ],
+        ], $array);
+    }
+
     public function testParseMustParseInlineTableExamples()
     {
         $toml = <<<'toml'
