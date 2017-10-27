@@ -31,17 +31,18 @@ class Toml
      * </code>
      *
      * @param string $input A string containing TOML
+     * @param bool $resultAsObject (optional) Returns the result as an object
      *
-     * @return array The TOML converted to a PHP value
+     * @return mixed The TOML converted to a PHP value
      *
      * @throws ParseException If the TOML is not valid
      */
-    public static function parse(string $input) : array
+    public static function parse(string $input, bool $resultAsObject = false)
     {
         $parser = new Parser(new Lexer());
 
         try {
-            return $parser->parse($input);
+            $data = $parser->parse($input);
         } catch (SyntaxErrorException $e) {
             $exception = new ParseException($e->getMessage());
 
@@ -51,6 +52,12 @@ class Toml
 
             throw $exception;
         }
+
+        if ($resultAsObject) {
+            $data = self::convertToObject($data);
+        }
+
+        return $data;
     }
 
     /**
@@ -63,12 +70,13 @@ class Toml
      * </code>
      *
      * @param string $input A string containing TOML
+     * @param bool $resultAsObject (optional) Returns the result as an object
      *
-     * @return array The TOML converted to a PHP value
+     * @return mixed The TOML converted to a PHP value
      *
      * @throws ParseException If the TOML file is not valid
      */
-    public static function parseFile(string $filename) : array
+    public static function parseFile(string $filename, bool $resultAsObject = false)
     {
         if (!is_file($filename)) {
             throw new ParseException(sprintf('File "%s" does not exist.', $filename));
@@ -81,7 +89,7 @@ class Toml
         $parser = new Parser(new Lexer());
 
         try {
-            return $parser->parse(file_get_contents($filename));
+            $data = $parser->parse(file_get_contents($filename));
         } catch (SyntaxErrorException $e) {
             $exception = new ParseException($e->getMessage());
             $exception->setParsedFile($filename);
@@ -92,5 +100,22 @@ class Toml
 
             throw $exception;
         }
+
+        if ($resultAsObject) {
+            $data = self::convertToObject($data);
+        }
+
+        return $data;
+    }
+
+    private static function convertToObject(array $data) : \stdClass
+    {
+        $object = new \stdClass();
+
+        foreach ($data as $key => $value) {
+            $object->$key = $value;
+        }
+
+        return $object;
     }
 }

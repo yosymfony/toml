@@ -39,8 +39,28 @@ class TomlTest extends TestCase
         $array = Toml::parseFile($filename);
 
         $this->assertEquals([
-            'name' => 'Victor',
+            'name' => 'Víctor',
         ], $array);
+    }
+
+    public function testParseMustReturnAnObjectWhenArgumentResultAsObjectIsTrue()
+    {
+        $actual = Toml::parse('name = "Víctor"', true);
+        $expected = new \stdClass();
+        $expected->name = 'Víctor';
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testParseFileMustReturnAnObjectWhenArgumentResultAsObjectIsTrue()
+    {
+        $filename = __DIR__.'/fixtures/simple.toml';
+
+        $actual = Toml::parseFile($filename, true);
+        $expected = new \stdClass();
+        $expected->name = 'Víctor';
+
+        $this->assertEquals($expected, $actual);
     }
 
     /**

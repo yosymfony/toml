@@ -4,8 +4,10 @@ CHANGELOG
 -----
 * The code has been rewritten from scratch for PHP 7.1.
 * Parse method of `Toml` class returns an empty array in case of empty input.
-* The method `parse` from `Toml` class can only be applied to TOML strings.
+* The method `parse` from `Toml` class must only be applied to TOML strings.
   In case of parsing a TOML filename use the new method `parseFile`.
+* Methods `parse` and `parseFile` from `Toml` class accept a new argument `resultAsObject`
+  (optional) to return the parsed input as an object (an instance of `stdClass`).
 * The exceptions have been refactored, so the classes `ExceptionInterface`,
   `LexerException` and `RuntimeException` have been removed.
 
