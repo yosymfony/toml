@@ -10,6 +10,7 @@ CHANGELOG
 * The exceptions have been refactored, so the classes `ExceptionInterface`,
   `LexerException` and `RuntimeException` have been removed.
 * Fixed bug #13: "Inline sub-tables don't work".
+* Better support for dates as specified in the latest TOML spec. See PR #11.
 
 0.3.3 (2015-08-24)
 ------------------
