@@ -29,7 +29,7 @@ class TomlTest extends TestCase
     {
         $array = Toml::parse('');
 
-        $this->assertEquals([], $array);
+        $this->assertNull($array);
     }
 
     public function testParseFileMustParseFile()

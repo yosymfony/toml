@@ -39,10 +39,8 @@ class Toml
      */
     public static function parse(string $input, bool $resultAsObject = false)
     {
-        $parser = new Parser(new Lexer());
-
         try {
-            $data = $parser->parse($input);
+            $data = self::doParse($input, $resultAsObject);
         } catch (SyntaxErrorException $e) {
             $exception = new ParseException($e->getMessage());
 
@@ -51,10 +49,6 @@ class Toml
             }
 
             throw $exception;
-        }
-
-        if ($resultAsObject) {
-            $data = self::convertToObject($data);
         }
 
         return $data;
@@ -86,10 +80,8 @@ class Toml
             throw new ParseException(sprintf('File "%s" cannot be read.', $filename));
         }
 
-        $parser = new Parser(new Lexer());
-
         try {
-            $data = $parser->parse(file_get_contents($filename));
+            $data = self::doParse(file_get_contents($filename), $resultAsObject);
         } catch (SyntaxErrorException $e) {
             $exception = new ParseException($e->getMessage());
             $exception->setParsedFile($filename);
@@ -101,21 +93,24 @@ class Toml
             throw $exception;
         }
 
-        if ($resultAsObject) {
-            $data = self::convertToObject($data);
-        }
-
         return $data;
     }
 
-    private static function convertToObject(array $data) : \stdClass
+    private static function doParse(string $input, bool $resultAsObject = false)
     {
-        $object = new \stdClass();
+        $parser = new Parser(new Lexer());
+        $values = $parser->parse($input);
 
-        foreach ($data as $key => $value) {
-            $object->$key = $value;
+        if ($resultAsObject) {
+            $object = new \stdClass();
+
+            foreach ($values as $key => $value) {
+                $object->$key = $value;
+            }
+
+            return $object;
         }
 
-        return $object;
+        return empty($values) ? null : $values;
     }
 }
