@@ -25,6 +25,8 @@ Usage
 -----
 You can parse an inline TOML string or from a file with only one method:
 
+To parse an inline TOML string:
+
 ```php
 use Yosymfony\Toml\Toml;
 
@@ -33,18 +35,23 @@ $array = Toml::Parse('key = [1,2,3]');
 print_r($array);
 ```
 
-From a file:
+To parse a TOML file:
 
 ```php
-use Yosymfony\Toml\Toml;
-
-$array = Toml::Parse('example.toml');
+$array = Toml::ParseFile('example.toml');
 
 print_r($array);
 ```
 
+Additionally, method `parse` and `parseFile` accept a second argument called
+`resultAsObject` to return the result as an object based on `stdClass`.
+
+```php
+$object = Toml::Parse('key = [1,2,3]', true);
+```
+
 ### TomlBuilder
-You can create inline TOML string with TomlBuilder. TomlBuilder uses a *fluent interface* for more readable code:
+You can create a TOML string with TomlBuilder. TomlBuilder uses a *fluent interface* for more readable code:
 
 ```php
     use Yosymfony\Toml\TomlBuilder;
