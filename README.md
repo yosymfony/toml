@@ -43,7 +43,7 @@ $array = Toml::ParseFile('example.toml');
 print_r($array);
 ```
 
-Additionally, method `parse` and `parseFile` accept a second argument called
+Additionally, methods `parse` and `parseFile` accept a second argument called
 `resultAsObject` to return the result as an object based on `stdClass`.
 
 ```php
