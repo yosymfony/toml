@@ -7,8 +7,10 @@ CHANGELOG
   In case of parsing a TOML filename use the new method `parseFile`.
 * Methods `parse` and `parseFile` from `Toml` class accept a new argument `resultAsObject`
   (optional) to return the parsed input as an object (an instance of `stdClass`).
+* The method `addGroup` of `TomlBuilder` class has been deleted.
 * The exceptions have been refactored, so the classes `ExceptionInterface`,
   `LexerException` and `RuntimeException` have been removed.
+* Added the inner exception when a `ParseException` is thrown in method `parse` of class `Toml`.
 * Fixed bug #13: "Inline sub-tables don't work".
 * Better support for dates as specified in the latest TOML spec. See PR #11.
 
