@@ -68,7 +68,7 @@ class TomlBuilder
             throw new DumpException(sprintf('Character "#" is not valid for the key.'));
         }
 
-        if (false !== strpos($key, ' ')) {
+        if (preg_match('/^([-A-Z_a-z0-9]+)$/', $key) === 0) {
             $key = '"'.$key.'"';
         }
 
@@ -86,20 +86,6 @@ class TomlBuilder
         $this->append($data, true);
 
         return $this;
-    }
-
-    /**
-     * Alias for addTable method.
-     *
-     * @deprecated Since version 0.2
-     *
-     * @param string $keygroup
-     *
-     * @return TomlBuilder
-     */
-    public function addGroup($keygroup)
-    {
-        return $this->addTable($keygroup);
     }
 
     /**
@@ -443,7 +429,6 @@ class TomlBuilder
             "\f" => '\\f',
             "\r" => '\\r',
             '"' => '\\"',
-            '/' => '\\/',
         );
 
         $normalized = str_replace(array_keys($allowed), $allowed, $val);

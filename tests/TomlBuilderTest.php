@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Yosymfony\Toml\TomlBuilder;
 use Yosymfony\Toml\Toml;
 
-class TomlBuilderTest //extends TestCase
+class TomlBuilderTest extends TestCase
 {
     public function testExample()
     {
@@ -111,7 +111,7 @@ class TomlBuilderTest //extends TestCase
 
         $result = $tb->addValue('valid key', 2)
             ->getTomlString();
-
+            
         $this->assertNotNull(Toml::Parse($result));
     }
 
@@ -135,7 +135,7 @@ class TomlBuilderTest //extends TestCase
             ->addValue('formfeed', "This string has a \f form feed character.")
             ->addValue('carriage', "This string has a \r carriage return character.")
             ->addValue('quote', 'This string has a " quote character.')
-            ->addValue('slash', "This string has a \/ slash character.")
+            ->addValue('slash', "This string has a / slash character.")
             ->addValue('backslash', 'This string has a \\ backslash character.')
             ->getTomlString();
 
@@ -174,7 +174,7 @@ class TomlBuilderTest //extends TestCase
     {
         $tb = new TomlBuilder();
 
-        $result = $tb->addValue("~!@$^&*()_+-`1234567890[]|/?><.,;:'", 1)
+        $result = $tb->addValue('~!@$^&*()_+-`1234567890[]|/?><.,;:\'', 1)
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));
