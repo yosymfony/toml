@@ -42,7 +42,7 @@ class Toml
         try {
             $data = self::doParse($input, $resultAsObject);
         } catch (SyntaxErrorException $e) {
-            $exception = new ParseException($e->getMessage());
+            $exception = new ParseException($e->getMessage(), -1, null, null, $e);
 
             if ($token = $e->getToken()) {
                 $exception->setParsedLine($token->getLine());
