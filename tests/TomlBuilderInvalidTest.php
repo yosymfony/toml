@@ -111,55 +111,11 @@ class TomlBuilderInvalidTest extends TestCase
     /**
      * @expectedException \Yosymfony\Toml\Exception\DumpException
      */
-    public function testNullTable()
-    {
-        $tb = new TomlBuilder();
-
-        $result = $tb->addTable(null)
-            ->getTomlString();
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
-     */
-    public function testNonStringTable()
-    {
-        $tb = new TomlBuilder();
-
-        $result = $tb->addTable(2)
-            ->getTomlString();
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
-     */
-    public function testNonStringKey()
-    {
-        $tb = new TomlBuilder();
-
-        $result = $tb->addValue(2, '2')
-            ->getTomlString();
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
-     */
     public function testInvalidKey()
     {
         $tb = new TomlBuilder();
 
         $result = $tb->addValue('value#1', '2')
-            ->getTomlString();
-    }
-
-    /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
-     */
-    public function testNullKey()
-    {
-        $tb = new TomlBuilder();
-
-        $result = $tb->addValue(null, 'null')
             ->getTomlString();
     }
 

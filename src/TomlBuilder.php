@@ -42,23 +42,23 @@ class TomlBuilder
     /**
      * Constructor.
      *
-     * @param int $indent The amount of spaces to use for indentation of nested nodes.
+     * @param int $indent The amount of spaces to use for indentation of nested nodes
      */
-    public function __constructor($indent = 4)
+    public function __constructor(int $indent = 4)
     {
         $this->prefix = $indent ? str_repeat(' ', $indent) : '';
     }
 
     /**
-     * Add a key-value.
+     * Adds a key value pair
      *
-     * @param string $key
-     * @param mixed  $val
-     * @param string $comment
+     * @param string $key The key name
+     * @param string|int|bool|float|array|Datetime  $val The value
+     * @param string $comment Comment (optional argument).
      *
-     * @return TomlBuilder
+     * @return TomlBuilder The TomlBuilder itself
      */
-    public function addValue($key, $val, $comment = null)
+    public function addValue(string $key, $val, string $comment = null) : TomlBuilder
     {
         if (false === is_string($key)) {
             throw new DumpException(sprintf('The key must be a string.'));
@@ -89,13 +89,13 @@ class TomlBuilder
     }
 
     /**
-     * Add a table.
+     * Adds a table.
      *
-     * @param string $key Tablename. Dot character have a special meant.
+     * @param string $key Tablename. Dot character have a special meant
      *
-     * @return TomlBuilder
+     * @return TomlBuilder The TomlBuilder itself
      */
-    public function addTable($key)
+    public function addTable(string $key) : TomlBuilder
     {
         if (false === is_string($key)) {
             throw new DumpException(sprintf('The key of a table must be a string'));
@@ -123,11 +123,13 @@ class TomlBuilder
     }
 
     /**
-     * @param string $key
+     * Adds an array of tables
      *
-     * @return TomlBuilder
+     * @param string $key The name of the array of tables
+     *
+     * @return TomlBuilder The TomlBuilder itself
      */
-    public function addArrayTables($key)
+    public function addArrayTables(string $key) : TomlBuilder
     {
         if (false === is_string($key)) {
             throw new DumpException(sprintf('The key of a table must be a string'));
@@ -151,13 +153,13 @@ class TomlBuilder
     }
 
     /**
-     * Add a comment line.
+     * Adds a comment line.
      *
-     * @param string $comment
+     * @param string $comment The comment
      *
-     * @return TomlBuilder
+     * @return TomlBuilder The TomlBuilder itself
      */
-    public function addComment($comment)
+    public function addComment(string $comment) : TomlBuilder
     {
         if (is_string($comment)) {
             $this->append($this->dumpComment($comment), true);
@@ -169,16 +171,16 @@ class TomlBuilder
     }
 
     /**
-     * Get the TOML string.
+     * Gets the TOML string
      *
      * @return string
      */
-    public function getTomlString()
+    public function getTomlString() : string
     {
         return $this->output;
     }
 
-    private function dumpValue($val)
+    private function dumpValue($val) : string
     {
         switch (true) {
             case is_string($val):
@@ -194,11 +196,11 @@ class TomlBuilder
             case $val instanceof \Datetime:
                 return $this->dumpDatetime($val);
             default:
-                throw new DumpException(sprintf('Data type not supporter at the key: %s', $this->currentKey));
+                throw new DumpException(sprintf('Data type not supporter at the key "%s"', $this->currentKey));
         }
     }
 
-    private function dumpString($val)
+    private function dumpString(string $val) : string
     {
         if (0 === strpos($val, '@')) {
             return "'".preg_replace('/@/', '', $val, 1)."'";
@@ -207,18 +209,18 @@ class TomlBuilder
         $normalized = $this->normalizeString($val);
 
         if (false === $this->isStringValid($normalized)) {
-            throw new DumpException(sprintf('The string have a invalid cacharters at the key: %s', $this->currentKey));
+            throw new DumpException(sprintf('The string have a invalid cacharters at the key "%s"', $this->currentKey));
         }
 
         return '"'.$normalized.'"';
     }
 
-    private function dumpBool($val)
+    private function dumpBool(bool $val) : string
     {
-        return true === $val ? 'true' : 'false';
+        return $val ? 'true' : 'false';
     }
 
-    private function dumpArray($val)
+    private function dumpArray(array $val) : string
     {
         $result = '';
         $first = true;
@@ -230,7 +232,7 @@ class TomlBuilder
             $dataType = $dataType == null ? $lastType : $dataType;
 
             if ($lastType != $dataType) {
-                throw new DumpException(sprintf('Data types cannot be mixed in an array. Key %s', $this->currentKey));
+                throw new DumpException(sprintf('Data types cannot be mixed in an array. Key "%s"', $this->currentKey));
             }
 
             $result .= $first ? $this->dumpValue($item) : ', '.$this->dumpValue($item);
@@ -240,36 +242,36 @@ class TomlBuilder
         return '['.$result.']';
     }
 
-    private function dumpComment($val)
+    private function dumpComment(string $val) : string
     {
         return '#'.$val;
     }
 
-    private function dumpDatetime($val)
+    private function dumpDatetime(\Datetime $val) : string
     {
         return $val->format('Y-m-d\TH:i:s\Z'); // ZULU form
     }
 
-    private function dumpInteger($val)
+    private function dumpInteger(int $val) : string
     {
         return strval($val);
     }
 
-    private function dumpFloat($val)
+    private function dumpFloat(float $val) : string
     {
         return strval($val);
     }
 
-    private function getKeyPart($key)
+    private function getKeyPart(string $key) : string
     {
-        if (is_string($key) && strlen($key = trim($key)) > 0) {
+        if (strlen($key = trim($key)) > 0) {
             return $key.' = ';
         } else {
             throw new DumpException('The key must be a string and must not be empty');
         }
     }
 
-    private function append($val, $addPostNewline = false, $addIndentation = false, $addPreNewline = false)
+    private function append(string $val, bool $addPostNewline = false, bool $addIndentation = false, bool $addPreNewline = false) : void
     {
         if ($addPreNewline) {
             $this->output .= "\n";
@@ -288,14 +290,14 @@ class TomlBuilder
         }
     }
 
-    private function addKey($key)
+    private function addKey(string $key) : void
     {
         $this->currentKey = $key;
         $absKey = $this->getAbsoluteKey($key, $this->currentTable, $this->currentArrayOfTables);
         $this->addKeyToKeyList($absKey);
     }
 
-    private function addKeyTable($key)
+    private function addKeyTable(string $key) : void
     {
         if (in_array($key, $this->keyListArryOfTables)) {
             throw new DumpException(
@@ -307,9 +309,9 @@ class TomlBuilder
         $this->addKeyToKeyList($absKey);
     }
 
-    private function addKeyArrayOfTables($key, array $keyParts)
+    private function addKeyArrayOfTables(string $key, array $keyParts) : void
     {
-        if (true == $this->isTableImplicit($keyParts)) {
+        if ($this->isTableImplicit($keyParts)) {
             $this->addInvalidArrayOfTablesKey($keyParts);
             $this->addKeyTable($key, $keyParts);
 
@@ -334,7 +336,7 @@ class TomlBuilder
         $this->currentArrayOfTables = $keyPath;
     }
 
-    private function getArrayTablesKeyPath(array $keyParts)
+    private function getArrayTablesKeyPath(array $keyParts) : string
     {
         $path = $simplePath = '';
 
@@ -348,16 +350,16 @@ class TomlBuilder
         return rtrim($path, '.');
     }
 
-    private function addKeyToKeyList($key)
+    private function addKeyToKeyList(string $key) : void
     {
         if (in_array($key, $this->keyList)) {
-            throw new DumpException(sprintf('Syntax error: the key %s has already been defined', $key));
+            throw new DumpException(sprintf('Syntax error: the key "%s" has already been defined', $key));
         }
 
         $this->keyList[] = $key;
     }
 
-    private function getAbsoluteKey($key, $currentKeyTable, $currentKeyArrayOfTables)
+    private function getAbsoluteKey(string $key, string $currentKeyTable, string $currentKeyArrayOfTables) : string
     {
         $prefix = strlen($currentKeyArrayOfTables) > 0 ? $currentKeyArrayOfTables.'.' : '';
         $prefix .= strlen($currentKeyTable) > 0 ? $currentKeyTable.'.' : '';
@@ -365,7 +367,7 @@ class TomlBuilder
         return $prefix.$key;
     }
 
-    private function isTableImplicit(array $keyParts)
+    private function isTableImplicit(array $keyParts) : bool
     {
         if (count($keyParts) > 1) {
             array_pop($keyParts);
@@ -380,7 +382,7 @@ class TomlBuilder
         return false;
     }
 
-    private function addInvalidArrayOfTablesKey(array $keyParts)
+    private function addInvalidArrayOfTablesKey(array $keyParts) : void
     {
         foreach ($keyParts as $keyPart) {
             $this->keyListInvalidArrayOfTables[] = implode('.', $keyParts);
@@ -388,12 +390,7 @@ class TomlBuilder
         }
     }
 
-    /**
-     * @param string $val String encoded by json_encode.
-     *
-     * @return bool True if string is compliance with TOML
-     */
-    private function isStringValid($val)
+    private function isStringValid(string $val) : bool
     {
         $allowed = array(
             '\\\\',
@@ -403,7 +400,6 @@ class TomlBuilder
             '\\f',
             '\\r',
             '\\"',
-            '\\/',
         );
 
         $noSpecialCharacter = str_replace($allowed, '', $val);
@@ -419,7 +415,7 @@ class TomlBuilder
         return true;
     }
 
-    private function normalizeString($val)
+    private function normalizeString(string $val) : string
     {
         $allowed = array(
             '\\' => '\\\\',
