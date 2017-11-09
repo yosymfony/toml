@@ -156,10 +156,6 @@ The result:
         [[fruit.variety]]
         name = "platain"
 
-#### Deprecated methods
-
-* **addGroup**: since version 0.2. Replaced by `addTable`.
-
 Unit tests
 ----------
 This library requires [PHPUnit](https://phpunit.de/) >= 6.3.
