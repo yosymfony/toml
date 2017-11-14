@@ -17,128 +17,117 @@ use Yosymfony\Toml\TomlBuilder;
 class TomlBuilderInvalidTest extends TestCase
 {
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testArrayMixedTypesArraysAndInts()
     {
         $tb = new TomlBuilder();
 
-        $result = $tb->addValue('arrays-and-ints', array(1, array('Arrays are not integers.')))
+        $tb->addValue('arrays-and-ints', array(1, array('Arrays are not integers.')))
             ->getTomlString();
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testArrayMixedTypesIntsAndFloats()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb->addValue('arrays-and-ints', array(1, 1.0))
+        $tb->addValue('arrays-and-ints', array(1, 1.0))
             ->getTomlString();
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testArrayMixedTypesStringsAndInts()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb->addValue('arrays-and-ints', array('hi', 42))
+        $tb->addValue('arrays-and-ints', array('hi', 42))
             ->getTomlString();
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testDuplicateTable()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb->addTable('a')
+        $tb->addTable('a')
             ->addTable('a')
             ->getTomlString();
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testDuplicateKeyTable()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb->addTable('fruit')
+        $tb->addTable('fruit')
             ->addValue('type', 'apple')
             ->addTable('fruit.type')
             ->getTomlString();
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testDuplicateKeys()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb->addValue('dupe', false)
+        $tb->addValue('dupe', false)
             ->addValue('dupe', true)
             ->getTomlString();
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testEmptyTable()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb->addTable('')
+        $tb->addTable('')
             ->getTomlString();
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testEmptyImplicitKeygroup()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb->addTable('naughty..naughty')
+        $tb->addTable('naughty..naughty')
             ->getTomlString();
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testInvalidKey()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb->addValue('value#1', '2')
+        $tb->addValue('value#1', '2')
             ->getTomlString();
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testNullValue()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb->addValue('theNull', null)
+        $tb->addValue('theNull', null)
             ->getTomlString();
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testTableArrayImplicit()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb
-            ->addArrayTables('albums.songs')
+        $tb->addArrayTables('albums.songs')
                 ->addValue('name', 'Glory Days')
             ->addArrayTables('albums')
                 ->addValue('name', 'Born in the USA')
@@ -146,14 +135,12 @@ class TomlBuilderInvalidTest extends TestCase
     }
 
     /**
-     * @expectedException \Yosymfony\Toml\Exception\DumpException
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      */
     public function testTableArrayWithSomeNameOfTable()
     {
         $tb = new TomlBuilder();
-
-        $result = $tb
-            ->addArrayTables('fruit')
+        $tb->addArrayTables('fruit')
                 ->addValue('name', 'apple')
             ->addArrayTables('fruit.variety')
                 ->addValue('name', 'red delicious')
