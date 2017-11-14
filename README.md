@@ -23,7 +23,7 @@ composer require yosymfony/toml
 
 Usage
 -----
-You can parse an inline TOML string or from a file with only one method:
+You can parse an inline TOML string or from a file:
 
 To parse an inline TOML string:
 
