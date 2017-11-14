@@ -24,6 +24,7 @@ use Yosymfony\ParserUtils\SyntaxErrorException;
 class Parser extends AbstractParser
 {
     private $keys = [];
+    private $keyOfTables = [];
     private $keysOfImplicitArrayOfTables = [];
     private $arrayOfTablekeyCounters = [];
     private $currentKeyPrefix = '';
@@ -472,7 +473,7 @@ class Parser extends AbstractParser
             $this->addArrayKeyToWorkArray($key);
         }
 
-        $this->addKeyToKeyStore($this->composeKeyWithCurrentKeyPrefix($fullTableName));
+        $this->addKeyToTableKeyStore($this->composeKeyWithCurrentKeyPrefix($fullTableName));
         $this->currentKeyPrefix = $fullTableName;
         $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
 
@@ -556,6 +557,11 @@ class Parser extends AbstractParser
         $this->keys[] = $keyName;
     }
 
+    private function addKeyToTableKeyStore(string $keyName) : void
+    {
+        $this->addKeyToKeyStore($keyName);
+        $this->keyOfTables[] = $keyName;
+    }
     private function addArrayOfTableKeyToKeyStore(string $keyName) : void
     {
         if (isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
@@ -634,8 +640,14 @@ class Parser extends AbstractParser
             $this->workArray[$keyName][] = [];
         }
 
-        end($this->workArray[$keyName]);
-        $this->workArray = &$this->workArray[$keyName][key($this->workArray[$keyName])];
+        if (in_array($keyName, $this->keyOfTables) === false) {
+            end($this->workArray[$keyName]);
+            $this->workArray = &$this->workArray[$keyName][key($this->workArray[$keyName])];
+
+            return;
+        }
+
+        $this->workArray = &$this->workArray[$keyName];
     }
 
     private function resetWorkArrayToResultArray() : void
