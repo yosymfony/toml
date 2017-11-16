@@ -779,6 +779,35 @@ toml;
         ], $array);
     }
 
+    /**
+     * @see https://github.com/yosymfony/toml/issues/12
+     */
+    public function testParseMustParseATableAndArrayOfTables()
+    {
+        $toml = <<<'toml'
+        [fruit]
+        name = "apple"
+
+        [[fruit.variety]]
+        name = "red delicious"
+
+        [[fruit.variety]]
+        name = "granny smith"
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'fruit' => [
+                'name' => 'apple',
+                'variety' => [
+                    ['name' => 'red delicious'],
+                    ['name' => 'granny smith'],
+                ],
+            ],
+        ], $array);
+    }
+
     public function testParseMustParseCommentsEverywhere()
     {
         $toml = <<<'toml'

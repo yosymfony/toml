@@ -550,7 +550,8 @@ class Parser extends AbstractParser
     {
         if (in_array($keyName, $this->keys, true) === true) {
             $this->syntaxError(sprintf(
-                'The key "%s" has already been defined previously.', $keyName
+                'The key "%s" has already been defined previously.',
+                $keyName
             ));
         }
 
@@ -562,6 +563,7 @@ class Parser extends AbstractParser
         $this->addKeyToKeyStore($keyName);
         $this->keyOfTables[] = $keyName;
     }
+
     private function addArrayOfTableKeyToKeyStore(string $keyName) : void
     {
         if (isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
@@ -571,6 +573,8 @@ class Parser extends AbstractParser
         $keyNameParts = explode('.', $keyName);
 
         if ($this->isNecesaryToProcessImplicitKeyNameParts($keyNameParts)) {
+            array_pop($keyNameParts);
+
             foreach ($keyNameParts as $keyNamePart) {
                 $this->keysOfImplicitArrayOfTables[] = implode('.', $keyNameParts);
                 array_pop($keyNameParts);
@@ -579,7 +583,8 @@ class Parser extends AbstractParser
             return;
         }
 
-        if (in_array($keyName, $this->keysOfImplicitArrayOfTables) === true) {
+        if (in_array($keyName, $this->keysOfImplicitArrayOfTables) === true
+            && isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
             $this->syntaxError(
                 sprintf('The array of tables "%s" has already been defined as previous table', $keyName)
             );

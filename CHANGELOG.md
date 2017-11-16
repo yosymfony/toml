@@ -12,6 +12,7 @@ CHANGELOG
   `LexerException` and `RuntimeException` have been removed.
 * Added the inner exception when a `ParseException` is thrown in method `parse` of class `Toml`.
 * Fixed bug #13: "Inline sub-tables don't work".
+* Fixed bug #12: "Does not parse a table with an array of tables".
 * Better support for dates as specified in the latest TOML spec. See PR #11.
 
 0.3.3 (2015-08-24)

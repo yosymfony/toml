@@ -301,7 +301,8 @@ class TomlBuilder
     {
         if (in_array($key, $this->keyListArryOfTables)) {
             throw new DumpException(
-                sprintf('The table %s has already been defined as previous array of tables', $key));
+                sprintf('The table %s has already been defined as previous array of tables', $key)
+            );
         }
 
         $this->currentTable = $key;
@@ -320,7 +321,8 @@ class TomlBuilder
 
         if (in_array($key, $this->keyListInvalidArrayOfTables)) {
             throw new DumpException(
-                sprintf('The array of tables %s has already been defined as previous table', $key));
+                sprintf('The array of tables %s has already been defined as previous table', $key)
+            );
         }
 
         if (false == isset($this->keyListArryOfTables[$key])) {
