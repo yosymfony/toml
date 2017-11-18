@@ -1,7 +1,7 @@
 CHANGELOG
 =========
-1.0.0
------
+1.0.0 (2017-11-18)
+------------------
 * The code has been rewritten from scratch for PHP 7.1.
 * The method `parse` from `Toml` class must only be applied to TOML strings.
   In case of parsing a TOML filename use the new method `parseFile`.
