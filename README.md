@@ -3,7 +3,7 @@ TOML parser for PHP
 
 A PHP parser for [TOML](https://github.com/toml-lang/toml) compatible with [TOML v0.4.0](https://github.com/toml-lang/toml/releases/tag/v0.4.0).
 
-[![Build Status](https://travis-ci.org/yosymfony/Toml.png?branch=master)](https://travis-ci.org/yosymfony/Toml)
+[![Build Status](https://travis-ci.org/yosymfony/toml.svg?branch=0.x)](https://travis-ci.org/yosymfony/toml)
 [![Latest Stable Version](https://poser.pugx.org/yosymfony/toml/v/stable.png)](https://packagist.org/packages/yosymfony/toml)
 [![Total Downloads](https://poser.pugx.org/yosymfony/toml/downloads.png)](https://packagist.org/packages/yosymfony/toml)
 
@@ -24,11 +24,9 @@ Add the following to your `composer.json` and run `composer update`.
 }
 ```
 
-More informations about the package on [Packagist](https://packagist.org/packages/yosymfony/toml).
-
 Usage
 -----
-You can use this package to parse TOML string inline or from a file with only one method:
+You can use this package for parsing inline TOML strings or a TOML file with only one method:
 
 ```php
 use Yosymfony\Toml\Toml;
@@ -53,7 +51,7 @@ You can create inline TOML string with TomlBuilder. TomlBuilder uses Fluent inte
 
 ```php
     use Yosymfony\Toml\TomlBuilder;
-    
+
     $tb = new TomlBuilder();
 
     $result = $tb->addComment('Toml file')
@@ -80,18 +78,18 @@ You can create inline TOML string with TomlBuilder. TomlBuilder uses Fluent inte
         ->addValue('datetime', new \Datetime())
 
         ->addComment('Related to arrays')
-        
+
         ->addTable('data.array')
         ->addValue('simple', array(1,2,3))
-        ->addValue('multiple', array( 
-            array(1,2), 
-            array('abc', 'def'), 
-            array(1.1, 1.2), 
-            array(true, false), 
+        ->addValue('multiple', array(
+            array(1,2),
+            array('abc', 'def'),
+            array(1.1, 1.2),
+            array(true, false),
             array( new \Datetime()) ))
 
         ->addComment('Array of tables')
-        
+
         ->addArrayTables('fruit')                            // Row
             ->addValue('name', 'apple')
             ->addArrayTables('fruit.variety')
@@ -108,49 +106,49 @@ You can create inline TOML string with TomlBuilder. TomlBuilder uses Fluent inte
 The result of this example:
 
     #Toml file
-    
+
     [data.string]
     name = "Toml" #This is your name
     newline = "This string has a \n new line character."
     winPath = "C:\\Users\\nodejs\\templates"
     literal = '<\i\c*\s*>'
     unicode = "unicode character: δ"
-    
+
     [data.bool]
     t = true
     f = false
-    
+
     [data.integer]
     positive = 25 #Comment inline.
     negative = -25
-    
+
     [data.float]
     positive = 25.25
     negative = -25.25
-    
+
     [data.datetime]
     datetime = 2013-06-10T21:12:48Z
-    
+
     #Related to arrays
-    
+
     [data.array]
     simple = [1, 2, 3]
     multiple = [[1, 2], ["abc", "def"], [1.1, 1.2], [true, false], [2013-06-10T21:12:48Z]]
-    
+
     # Array of tables
-    
+
     [[fruit]]
         name = "apple"
-    
+
         [[fruit.variety]]
             name = "red delicious"
-    
+
         [[fruit.variety]]
             name = "granny smith"
-    
+
     [[fruit]]
         name = "banana"
-    
+
         [[fruit.variety]]
         name = "platain"
 
@@ -164,6 +162,6 @@ This package are in compliance with BurntSushi [test suite for TOML parsers](htt
 
 You can run the unit tests with the following command:
 
-    $ cd your-path/vendor/yosymfony/toml
-    $ composer.phar install --dev
+    $ cd toml
+    $ composer.phar install
     $ phpunit
