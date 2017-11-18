@@ -14,7 +14,7 @@
     ],
     "require": {
         "php": ">=7.1",
-        "yosymfony/parser-utils": "1.0.x-dev"
+        "yosymfony/parser-utils": "^1.0"
     },
     "autoload": {
         "psr-4": { "Yosymfony\\Toml\\": "src/" }
