@@ -13,7 +13,7 @@ Support:
 
 Installation
 ------------
-**Requires PHP >= 7.1.** Go to [branch 0.x](https://github.com/yosymfony/Toml/tree/0.x) for older version of PHP.
+**Requires PHP >= 7.1.**
 
 Use [Composer](http://getcomposer.org/) to install this package:
 
