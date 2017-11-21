@@ -60,10 +60,6 @@ class TomlBuilder
      */
     public function addValue(string $key, $val, string $comment = null) : TomlBuilder
     {
-        if (false === is_string($key)) {
-            throw new DumpException(sprintf('The key must be a string.'));
-        }
-
         if (strpos($key, '#')) {
             throw new DumpException(sprintf('Character "#" is not valid for the key.'));
         }
@@ -97,10 +93,6 @@ class TomlBuilder
      */
     public function addTable(string $key) : TomlBuilder
     {
-        if (false === is_string($key)) {
-            throw new DumpException(sprintf('The key of a table must be a string'));
-        }
-
         $addPreNewline = $this->currentLine > 0 ? true : false;
 
         if (false !== strpos($key, ' ')) {
@@ -131,10 +123,6 @@ class TomlBuilder
      */
     public function addArrayTables(string $key) : TomlBuilder
     {
-        if (false === is_string($key)) {
-            throw new DumpException(sprintf('The key of a table must be a string'));
-        }
-
         $addPreNewline = $this->currentLine > 0 ? true : false;
 
         $keyParts = explode('.', $key);
@@ -161,11 +149,7 @@ class TomlBuilder
      */
     public function addComment(string $comment) : TomlBuilder
     {
-        if (is_string($comment)) {
-            $this->append($this->dumpComment($comment), true);
-        } else {
-            throw new DumpException('The comment must be a string');
-        }
+        $this->append($this->dumpComment($comment), true);
 
         return $this;
     }
