@@ -78,7 +78,7 @@ You can create a TOML string with TomlBuilder. TomlBuilder uses a *fluent interf
         ->addValue('positive', 25.25)
         ->addValue('negative', -25.25)
 
-        ->addTable('data.datetime')->
+        ->addTable('data.datetime')
         ->addValue('datetime', new \Datetime())
 
         ->addComment('Related to arrays')
