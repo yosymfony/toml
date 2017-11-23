@@ -1,5 +1,10 @@
 CHANGELOG
 =========
+1.0.1
+-----
+* Merged the pull request #17: "removing `is_string` check".
+* Minor fixes in README file.
+
 1.0.0 (2017-11-18)
 ------------------
 * The code has been rewritten from scratch for PHP 7.1.
