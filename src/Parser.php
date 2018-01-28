@@ -188,14 +188,18 @@ class Parser extends AbstractParser {
             $ts->moveNext();
         }
     }
-
+    
+    private function duplicateKey(string $keyName) {
+        $this->syntaxError("The key \"$keyName\" has already been defined previously.");
+    }
+    
     private function parseKeyValue(TokenStream $ts, bool $isFromInlineTable = false): void {
         $keyName = $this->parseKeyName($ts);
         if ($this->useKeyStore) {
             $this->addKeyToKeyStore($this->composeKeyWithCurrentKeyPrefix($keyName));
         } else {
             if (isset($this->workArray[$keyName])) {
-                $this->syntaxError('Key has already been set: ' . $keyName);
+                $this->duplicateKey($keyName);
             }
         }
         $this->parseSpaceIfExists($ts);
@@ -554,26 +558,54 @@ class Parser extends AbstractParser {
         $fullTablePath = $this->parseKeyPath($ts);
         $fullTableName = self::pathToName($fullTablePath);
         $offsetPath = $this->getAOTOffset($fullTablePath);
-
-        if (count($fullTablePath) > count($offsetPath)) {
+        
+        $offsetCt = count($offsetPath);
+        
+        if (count($fullTablePath) > $offsetCt) {
             // we are part of AOT offset, and need to
             // set it to the current last table
+           if ($offsetCt == 0) {
+               // This table exactly matches a AOT path - nogood
+               $this->duplicateKey($fullTableName);
+           }
            $this->currentAOTItem();
+           $doImplicit = false; // these things are repeatable
         }
-        $lastIndex = count($offsetPath) - 1;
+        else {
+           $doImplicit = true; // these things are once only
+        }
+        $lastIndex = $offsetCt - 1;
+        $myImplicit = $this->currentKeyPrefix;
+        
         foreach ($offsetPath as $idx => $tableName) {
             if ($idx < $lastIndex) {
                 if (!isset($this->workArray[$tableName])) {
                     $this->workArray[$tableName] = [];
+                    // Implicit table creation
+                    if ($doImplicit) {
+                        if (strlen($myImplicit) > 0) {
+                            $myImplicit .= '.';
+                        }
+                        $myImplicit .= $tableName;
+                        //TODO: Abbrev name and maybe should be [key]=true
+                        $this->keysOfImplicitArrayOfTables[] = $myImplicit;
+                    }
                 }
+                
                 $this->workArray = & $this->workArray[$tableName];
             } else {
-                if (!isset($this->workArray[$tableName])) {
-                    $this->workArray[$tableName] = [];
-                    $this->workArray = & $this->workArray[$tableName];
-                } else {
-                    $this->syntaxError('Table already exists: ' . $fullTableName);
+                if (isset($this->workArray[$tableName])) {
+                    // If created implicitly, should only have 1 value
+                    $isOKThisTime = in_array($fullTableName,$this->keysOfImplicitArrayOfTables)
+                            && (count($this->workArray[$tableName])==1);
+                    if (!$isOKThisTime) {
+                        $this->duplicateKey($fullTableName);
+                    }
                 }
+                else {
+                    $this->workArray[$tableName] = [];
+                }
+                $this->workArray = & $this->workArray[$tableName];
             }
         }
         $offsetName = self::pathToName($offsetPath);
@@ -635,10 +667,29 @@ class Parser extends AbstractParser {
             $lastIndex = count($offsetPath) - 1;
             foreach ($offsetPath as $idx => $tableName) {
                 if ($idx < $lastIndex) {
+                    // current spec test requires implicit first member offset 0
+                    // TOML spec is crazy in places
                     if (!isset($this->workArray[$tableName])) {
                         $this->workArray[$tableName] = [];
+                        $this->workArray = & $this->workArray[$tableName];
+                        $this->workArray[] = []; // set a first member
+                        $this->workArray = &$this->workArray[0];
+                    } 
+                    else {
+                        $this->workArray = & $this->workArray[$tableName];
+                        if(isset($this->workArray[0])) {
+                            // If we have already added more 'implicit' members.
+                            // do we have to use the latest?
+                            // What does it mean? Another assumption to test
+                            // Becomes hard to seperate pure numeric index from keys
+                            // and get pure numeric count
+                            $latest = count($this->workArray)-1;
+                            $this->workArray = & $this->workArray[$latest];
+                        }
                     }
-                    $this->workArray = & $this->workArray[$tableName];
+                    
+                    
+                    
                 } else {
                     if (!isset($this->workArray[$tableName])) {
                         $this->workArray[$tableName] = [];
@@ -711,6 +762,11 @@ class Parser extends AbstractParser {
         $this->keyOfTables[] = $keyName;
     }
 
+    private function tableNameIsAOT($keyName) {
+         $this->syntaxError(
+                sprintf('The array of tables "%s" has already been defined as previous table', $keyName)
+            );
+    }
     private function addArrayOfTableKeyToKeyStore(string $keyName): void {
         if (isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
             $this->addKeyToKeyStore($keyName);
@@ -730,9 +786,7 @@ class Parser extends AbstractParser {
         }
 
         if (in_array($keyName, $this->keysOfImplicitArrayOfTables) === true && isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
-            $this->syntaxError(
-                sprintf('The array of tables "%s" has already been defined as previous table', $keyName)
-            );
+            $this->tableNameIsAOT($keyName);
         }
     }
 
