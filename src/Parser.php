@@ -8,7 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  * 
- * AOT - StackRef additions and  modifications by Michael Rynn <https://github.com/betrixed/toml>
+ * AOT - AOTRef additions and  modifications by Michael Rynn <https://github.com/betrixed/toml>
  */
 
 namespace Yosymfony\Toml;
@@ -23,23 +23,32 @@ use Yosymfony\ParserUtils\SyntaxErrorException;
  *
  * @author Victor Puertas <vpgugr@vpgugr.com>
  */
-class Parser extends AbstractParser {
+class Parser extends AbstractParser
+{
+
+    const PATH_FULL = 2;
+    const PATH_PART = 1;
+    const PATH_NONE = 0;
 
     private $useKeyStore = true; // extra validation??
-    private $keys = [];
-    private $keyOfTables = [];
-    private $keysOfImplicitArrayOfTables = [];
-    private $arrayOfTablekeyCounters = [];
-    private $currentKeyPrefix = '';
+    private $uniqueKeys = [];
+    // parsed result to return
     private $result = [];
+    // path string to array context for key = value
+    // by convention, is either empty , or set with
+    // terminator of '.'
+    private $currentKeyPrefix = '';
+    // array context for key = value
     private $workArray;
-    private $stackAOT = []; // array StackRef
+    // array of all AOTRef using base name string key
+    private $refAOT = [];
+    // tables created in passing
+    private $implicitTables = []; // [key] = true 
     private static $tokensNotAllowedInBasicStrings = [
         'T_ESCAPE',
         'T_NEWLINE',
         'T_EOS',
     ];
-
     private static $tokensNotAllowedInLiteralStrings = [
         'T_NEWLINE',
         'T_EOS',
@@ -52,73 +61,69 @@ class Parser extends AbstractParser {
      * @param array $rootPath
      * @param array $childPath
      */
-    private static function getChildPath(array $rootPath, array $childPath) {
-// Make this work for path seperator '.'
-        $rlen = count($rootPath);
-        $clen = count($childPath);
-        $common = -1;
-        if (($clen >= $rlen) && ($rlen > 0)) {
-            for ($i = 0; $i < $rlen; $i++) {
-                if ($rootPath[$i] == $childPath[$i]) {
-                    $common = $i;
-                } else {
-                    break;
-                }
-            }
-            if ($common >= 0) {
-// exclude common
-                return array_slice($childPath, $common + 1);
-            }
-        }
-// nothing in common, entire path is different
-        return $childPath;
+    /*
+      private static function getChildPath(array $rootPath, array $childPath)
+      {
+      // Make this work for path seperator '.'
+      $rlen = count($rootPath);
+      $clen = count($childPath);
+      $common = -1;
+      if (($clen >= $rlen) && ($rlen > 0)) {
+      for ($i = 0; $i < $rlen; $i++) {
+      if ($rootPath[$i] == $childPath[$i]) {
+      $common = $i;
+      } else {
+      break;
+      }
+      }
+      if ($common >= 0) {
+      // exclude common
+      return array_slice($childPath, $common + 1);
+      }
+      }
+      // nothing in common, entire path is different
+      return $childPath;
+      }
+     */
+    private function registerAOT(AOTRef $obj)
+    {
+        $this->refAOT[$obj->key] = $obj;
     }
 
-    private function pushTable(StackRef $obj) {
-        $this->stackAOT[] = $obj;
+    /**
+     * Lookup dictionary for AOTRef to find a complete, or partial match object for key
+     * by breaking the key up until match found, or no key left.
+     * // TODO: return array of AOTRef objects?
+     * @param string $newName
+     * @return [AOTRef object, match type] 
+     */
+    private function getAOTRef(string $newName)
+    {
+        $testObj = isset($this->refAOT[$newName]) ? $this->refAOT[$newName] : null;
+        if (!is_null($testObj)) {
+            return [$testObj, Parser::PATH_FULL];
+        }
+        $ipos = strrpos($newName, '.');
+        while ($ipos !== false) {
+            $newName = substr($newName, 0, $ipos);
+            $testObj = isset($this->refAOT[$newName]) ? $this->refAOT[$newName] : null;
+            if (!is_null($testObj)) {
+                return [$testObj, Parser::PATH_PART];
+            }
+            $ipos = strrpos($newName, '.');
+        }
+        return [null, Parser::PATH_NONE];
     }
 
-// see if latest Table or Array of Table name is an extension of previous path
-// pop off the stack until a match, and return child path portion,
-// or return empty string
-    // Set the workArray reference accordingly
-    private function getAOTOffset($newPath) {
-        $stackCount = count($this->stackAOT);
-        if ($stackCount > 0) {
-            $obj = $this->stackAOT[$stackCount - 1];
-            $childPath = self::getChildPath($obj->arrayKey, $newPath);
-            $commonCt = count($newPath) - count($childPath);
-            if ($commonCt > 0) {
-                while ($commonCt < count($obj->arrayKey)) {
-                    if ($stackCount > 0) {
-                        array_pop($this->stackAOT);
-                        $stackCount -= 1;
-                        $obj = $this->stackAOT[$stackCount - 1];
-                    } else {
-                        $obj = null; //TODO: error exception here
-                        break;
-                    }
-                }
-                if (is_null($obj)) {
-                    $this->workArray = & $this->result;
-                } else {
-                    $this->workArray = & $obj->arrayRef;
-                }
-                return $childPath;
-            }
-        }
-        $this->stackAOT = [];
-        $this->workArray = & $this->result;
-        return $newPath;
-    }
-/**
+    /**
      * Reads string from specified file path and parses it as TOML.
      *
      * @param (string) File path
      *
      * @return (array) Toml::parse() result
      */
-    public static function parseFile($path) {
+    public static function parseFile($path)
+    {
         if (!is_file($path)) {
             throw new Exception('Invalid file path');
         }
@@ -135,7 +140,8 @@ class Parser extends AbstractParser {
     /**
      * {@inheritdoc}
      */
-    public function parse(string $input) {
+    public function parse(string $input)
+    {
         if (preg_match('//u', $input) === false) {
             throw new SyntaxErrorException('The TOML input does not appear to be valid UTF-8.');
         }
@@ -149,13 +155,19 @@ class Parser extends AbstractParser {
     /**
      * {@inheritdoc}
      */
-    protected function parseImplentation(TokenStream $ts): array {
-        $this->resetWorkArrayToResultArray();
+    protected function parseImplentation(TokenStream $ts): array
+    {
+        try {
+            $this->resetWorkArrayToResultArray();
 
-        while ($ts->hasPendingTokens()) {
-            $this->processExpression($ts);
+            while ($ts->hasPendingTokens()) {
+                $this->processExpression($ts);
+            }
+        } finally {
+            foreach ($this->refAOT as $key => $value) {
+                $value->unlink();
+            }
         }
-
         return $this->result;
     }
 
@@ -164,16 +176,17 @@ class Parser extends AbstractParser {
      *
      * @param TokenStream $ts The token stream
      */
-    private function processExpression(TokenStream $ts): void {
+    private function processExpression(TokenStream $ts): void
+    {
         if ($ts->isNext('T_HASH')) {
             $this->parseComment($ts);
         } elseif ($ts->isNextAny(['T_QUOTATION_MARK', 'T_UNQUOTED_KEY', 'T_APOSTROPHE', 'T_INTEGER'])) {
             $this->parseKeyValue($ts);
-        } elseif ($ts->isNextSequence(['T_LEFT_SQUARE_BRAKET','T_LEFT_SQUARE_BRAKET'])) {
+        } elseif ($ts->isNextSequence(['T_LEFT_SQUARE_BRAKET', 'T_LEFT_SQUARE_BRAKET'])) {
             $this->parseArrayOfTables($ts);
         } elseif ($ts->isNext('T_LEFT_SQUARE_BRAKET')) {
             $this->parseTable($ts);
-        } elseif ($ts->isNextAny(['T_SPACE','T_NEWLINE', 'T_EOS'])) {
+        } elseif ($ts->isNextAny(['T_SPACE', 'T_NEWLINE', 'T_EOS'])) {
             $ts->moveNext();
         } else {
             $msg = 'Expected T_HASH or T_UNQUOTED_KEY.';
@@ -181,22 +194,25 @@ class Parser extends AbstractParser {
         }
     }
 
-    private function parseComment(TokenStream $ts): void {
+    private function parseComment(TokenStream $ts): void
+    {
         $this->matchNext('T_HASH', $ts);
 
         while (!$ts->isNextAny(['T_NEWLINE', 'T_EOS'])) {
             $ts->moveNext();
         }
     }
-    
-    private function duplicateKey(string $keyName) {
+
+    private function duplicateKey(string $keyName)
+    {
         $this->syntaxError("The key \"$keyName\" has already been defined previously.");
     }
-    
-    private function parseKeyValue(TokenStream $ts, bool $isFromInlineTable = false): void {
+
+    private function parseKeyValue(TokenStream $ts, bool $isFromInlineTable = false): void
+    {
         $keyName = $this->parseKeyName($ts);
         if ($this->useKeyStore) {
-            $this->addKeyToKeyStore($this->composeKeyWithCurrentKeyPrefix($keyName));
+            $this->mustBeUnique($this->currentKeyPrefix . $keyName);
         } else {
             if (isset($this->workArray[$keyName])) {
                 $this->duplicateKey($keyName);
@@ -222,7 +238,8 @@ class Parser extends AbstractParser {
         }
     }
 
-    private function parseKeyName(TokenStream $ts): string {
+    private function parseKeyName(TokenStream $ts): string
+    {
         if ($ts->isNext('T_UNQUOTED_KEY')) {
             return $this->matchNext('T_UNQUOTED_KEY', $ts);
         }
@@ -239,7 +256,8 @@ class Parser extends AbstractParser {
     /**
      * @return object An object with two public properties: value and type.
      */
-    private function parseSimpleValue(TokenStream $ts) {
+    private function parseSimpleValue(TokenStream $ts)
+    {
         if ($ts->isNext('T_BOOLEAN')) {
             $type = 'boolean';
             $value = $this->parseBoolean($ts);
@@ -271,6 +289,7 @@ class Parser extends AbstractParser {
         }
 
         $valueStruct = new class() {
+
             public $value;
             public $type;
         };
@@ -281,11 +300,13 @@ class Parser extends AbstractParser {
         return $valueStruct;
     }
 
-    private function parseBoolean(TokenStream $ts): bool {
+    private function parseBoolean(TokenStream $ts): bool
+    {
         return $this->matchNext('T_BOOLEAN', $ts) == 'true' ? true : false;
     }
 
-    private function parseInteger(TokenStream $ts): int {
+    private function parseInteger(TokenStream $ts): int
+    {
         $token = $ts->moveNext();
         $value = $token->getValue();
 
@@ -306,7 +327,8 @@ class Parser extends AbstractParser {
         return (int) $value;
     }
 
-    private function parseFloat(TokenStream $ts): float {
+    private function parseFloat(TokenStream $ts): float
+    {
         $token = $ts->moveNext();
         $value = $token->getValue();
 
@@ -327,7 +349,8 @@ class Parser extends AbstractParser {
         return (float) $value;
     }
 
-    private function parseBasicString(TokenStream $ts): string {
+    private function parseBasicString(TokenStream $ts): string
+    {
         $this->matchNext('T_QUOTATION_MARK', $ts);
 
         $result = '';
@@ -337,7 +360,8 @@ class Parser extends AbstractParser {
                 $this->unexpectedTokenError($ts->moveNext(), 'This character is not valid.');
             }
 
-            $value = $ts->isNext('T_ESCAPED_CHARACTER') ? $this->parseEscapedCharacter($ts) : $ts->moveNext()->getValue();
+            $value = $ts->isNext('T_ESCAPED_CHARACTER') ? $this->parseEscapedCharacter($ts)
+                        : $ts->moveNext()->getValue();
             $result .= $value;
         }
 
@@ -346,7 +370,8 @@ class Parser extends AbstractParser {
         return $result;
     }
 
-    private function parseMultilineBasicString(TokenStream $ts): string {
+    private function parseMultilineBasicString(TokenStream $ts): string
+    {
         $this->matchNext('T_3_QUOTATION_MARK', $ts);
 
         $result = '';
@@ -361,7 +386,7 @@ class Parser extends AbstractParser {
             }
 
             if ($ts->isNext('T_ESCAPE')) {
-                $ts->skipWhileAny(['T_ESCAPE','T_SPACE', 'T_NEWLINE']);
+                $ts->skipWhileAny(['T_ESCAPE', 'T_SPACE', 'T_NEWLINE']);
             }
 
             if ($ts->isNext('T_EOS')) {
@@ -369,7 +394,8 @@ class Parser extends AbstractParser {
             }
 
             if (!$ts->isNext('T_3_QUOTATION_MARK')) {
-                $value = $ts->isNext('T_ESCAPED_CHARACTER') ? $this->parseEscapedCharacter($ts) : $ts->moveNext()->getValue();
+                $value = $ts->isNext('T_ESCAPED_CHARACTER') ? $this->parseEscapedCharacter($ts)
+                            : $ts->moveNext()->getValue();
                 $result .= $value;
             }
         }
@@ -379,7 +405,8 @@ class Parser extends AbstractParser {
         return $result;
     }
 
-    private function parseLiteralString(TokenStream $ts): string {
+    private function parseLiteralString(TokenStream $ts): string
+    {
         $this->matchNext('T_APOSTROPHE', $ts);
 
         $result = '';
@@ -397,7 +424,8 @@ class Parser extends AbstractParser {
         return $result;
     }
 
-    private function parseMultilineLiteralString(TokenStream $ts): string {
+    private function parseMultilineLiteralString(TokenStream $ts): string
+    {
         $this->matchNext('T_3_APOSTROPHE', $ts);
 
         $result = '';
@@ -419,7 +447,8 @@ class Parser extends AbstractParser {
         return $result;
     }
 
-    private function parseEscapedCharacter(TokenStream $ts): string {
+    private function parseEscapedCharacter(TokenStream $ts): string
+    {
         $token = $ts->moveNext();
         $value = $token->getValue();
 
@@ -441,21 +470,23 @@ class Parser extends AbstractParser {
         }
 
         if (strlen($value) === 6) {
-            return json_decode('"'.$value.'"');
+            return json_decode('"' . $value . '"');
         }
 
         preg_match('/\\\U([0-9a-fA-F]{4})([0-9a-fA-F]{4})/', $value, $matches);
 
-        return json_decode('"\u'.$matches[1].'\u'.$matches[2].'"');
+        return json_decode('"\u' . $matches[1] . '\u' . $matches[2] . '"');
     }
 
-    private function parseDatetime(TokenStream $ts): \Datetime {
+    private function parseDatetime(TokenStream $ts): \Datetime
+    {
         $date = $this->matchNext('T_DATE_TIME', $ts);
 
         return new \Datetime($date);
     }
 
-    private function parseArray(TokenStream $ts): array {
+    private function parseArray(TokenStream $ts): array
+    {
         $result = [];
         $leaderType = '';
 
@@ -509,7 +540,8 @@ class Parser extends AbstractParser {
         return $result;
     }
 
-    private function parseInlineTable(TokenStream $ts, string $keyName): void {
+    private function parseInlineTable(TokenStream $ts, string $keyName): void
+    {
         $this->matchNext('T_LEFT_CURLY_BRACE', $ts);
         if ($this->useKeyStore) {
             $priorcurrentKeyPrefix = $this->currentKeyPrefix;
@@ -518,7 +550,7 @@ class Parser extends AbstractParser {
 
         $this->addArrayKeyToWorkArray($keyName);
         if ($this->useKeyStore) {
-            $this->currentKeyPrefix = $this->composeKeyWithCurrentKeyPrefix($keyName);
+            $this->currentKeyPrefix = $this->currentKeyPrefix . $keyName . ".";
         }
         $this->parseSpaceIfExists($ts);
 
@@ -541,8 +573,9 @@ class Parser extends AbstractParser {
         }
         $this->workArray = &$priorWorkArray;
     }
-	
-    private function parseKeyPath(TokenStream $ts) {
+
+    private function parseKeyPath(TokenStream $ts)
+    {
         $fullTablePath = [];
         $fullTablePath[] = $this->parseKeyName($ts);
         while ($ts->isNext('T_DOT')) {
@@ -552,72 +585,83 @@ class Parser extends AbstractParser {
         return $fullTablePath;
     }
 
-    private function parseTable(TokenStream $ts): void {
+    private function registerAOTError($key)
+    {
+        throw new \Exception('Parser Array of Table exists but not registered - ' . $key);
+    }
+
+    private function parseTable(TokenStream $ts): void
+    {
         $this->matchNext('T_LEFT_SQUARE_BRAKET', $ts);
 
         $fullTablePath = $this->parseKeyPath($ts);
         $fullTableName = self::pathToName($fullTablePath);
-        $offsetPath = $this->getAOTOffset($fullTablePath);
-        
-        $offsetCt = count($offsetPath);
-        
-        if (count($fullTablePath) > $offsetCt) {
-            // we are part of AOT offset, and need to
-            // set it to the current last table
-           if ($offsetCt == 0) {
-               // This table exactly matches a AOT path - nogood
-               $this->duplicateKey($fullTableName);
-           }
-           $this->currentAOTItem();
-           $doImplicit = false; // these things are repeatable
+        // get AOT context, if any
+        list($tref, $match) = $this->getAOTRef($fullTableName);
+
+        switch ($match) {
+            case Parser::PATH_PART:
+                $basePath = $tref->getBasePath();
+                $baseName = $tref->getFullIndexName();
+                $offsetPath = array_slice($fullTablePath, count($basePath));
+                $aref = & $tref->ref[$tref->index];
+
+                $lastIndex = count($offsetPath) - 1;
+                $doImplicit = false;
+                break;
+            case Parser::PATH_NONE:
+                // root name space
+                $basePath = [];
+                $baseName = '';
+                $offsetPath = $fullTablePath;
+                $aref = & $this->result;
+                $lastIndex = count($offsetPath) - 1;
+                $doImplicit = true;
+                break;
+            case Parser::PATH_FULL:
+            default:
+                // This table exactly matches a AOT base path - not allowed
+                $this->duplicateKey($fullTableName);
+                break;
         }
-        else {
-           $doImplicit = true; // these things are once only
-        }
-        $lastIndex = $offsetCt - 1;
-        $myImplicit = $this->currentKeyPrefix;
-        
+
+        $myPrefix = $baseName;
+
         foreach ($offsetPath as $idx => $tableName) {
+            $baseName = (strlen($baseName) > 0) ? $baseName . "." . $tableName : $tableName;
             if ($idx < $lastIndex) {
-                if (!isset($this->workArray[$tableName])) {
-                    $this->workArray[$tableName] = [];
+                if (!isset($aref[$tableName])) {
+                    $aref[$tableName] = [];
                     // Implicit table creation
                     if ($doImplicit) {
-                        if (strlen($myImplicit) > 0) {
-                            $myImplicit .= '.';
-                        }
-                        $myImplicit .= $tableName;
-                        //TODO: Abbrev name and maybe should be [key]=true
-                        $this->keysOfImplicitArrayOfTables[] = $myImplicit;
+                        $this->implicitTables[$baseName] = true;
                     }
                 }
-                
-                $this->workArray = & $this->workArray[$tableName];
+                $aref = & $aref[$tableName];
             } else {
-                if (isset($this->workArray[$tableName])) {
-                    // If created implicitly, should only have 1 value
-                    $isOKThisTime = in_array($fullTableName,$this->keysOfImplicitArrayOfTables)
-                            && (count($this->workArray[$tableName])==1);
+                if (isset($aref[$tableName])) {
+                    // If created implicitly before, should only have 1 value
+                    if (isset($this->uniqueKeys[$baseName])) {
+                        $this->duplicateKey($baseName);
+                    }
+                    $isOKThisTime = isset($this->implicitTables[$fullTableName]) && is_array($aref[$tableName]) && (count($aref[$tableName])
+                            == 1);
                     if (!$isOKThisTime) {
                         $this->duplicateKey($fullTableName);
                     }
+                } else {
+                    $aref[$tableName] = [];
                 }
-                else {
-                    $this->workArray[$tableName] = [];
-                }
-                $this->workArray = & $this->workArray[$tableName];
+                $aref = & $aref[$tableName];
             }
         }
-        $offsetName = self::pathToName($offsetPath);
+        $this->workArray = & $aref;
 
         if ($this->useKeyStore) {
-            if ($offsetName != $fullTableName) {
-                $newPrefix = $this->composeKeyWithCurrentKeyPrefix($offsetName);
-            } else {
-                $newPrefix = $fullTableName;
+            if (!$this->setUniqueKey($baseName)) {
+                $this->errorUniqueKey($baseName);
             }
-            $this->addKeyToTableKeyStore($newPrefix);
-            $this->currentKeyPrefix = $newPrefix;
+            $this->currentKeyPrefix = $baseName . ".";
         }
 
         $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
@@ -627,7 +671,8 @@ class Parser extends AbstractParser {
         $this->errorIfNextIsNotNewlineOrEOS($ts);
     }
 
-    private static function pathToName($path) {
+    private static function pathToName($path)
+    {
         $ct = count($path);
         if ($ct > 1) {
             return implode('.', $path);
@@ -638,76 +683,107 @@ class Parser extends AbstractParser {
         }
     }
 
-    /**
-     * Code fragment - workingArray for AOT stack
-     * is stored as base AOT, reference the last Item
-     */
-    private function currentAOTItem() {
-        $pos = count($this->workArray);
-        if ($pos == 0) {
-            // This should not happen? I don't know yet
-            $this->syntaxError('Table is in AOT, but no tables yet');
-        }
-        $pos -= 1;
-        $this->workArray = & $this->workArray[$pos];
-    }
-
-    private function parseArrayOfTables(TokenStream $ts): void {
+    private function parseArrayOfTables(TokenStream $ts): void
+    {
         $this->matchNext('T_LEFT_SQUARE_BRAKET', $ts);
         $this->matchNext('T_LEFT_SQUARE_BRAKET', $ts);
 
         $fullTablePath = $this->parseKeyPath($ts);
         $fullTableName = self::pathToName($fullTablePath);
-        $offsetPath = $this->getAOTOffset($fullTablePath);
+        list($tref, $match) = $this->getAOTRef($fullTableName);
 
-        if (count($offsetPath) > 0) {
-            if (count($fullTablePath) > count($offsetPath)) {
-                $this->currentAOTItem();
-            }
-            $lastIndex = count($offsetPath) - 1;
+        switch ($match) {
+            case Parser::PATH_PART:
+                $basePath = $tref->getBasePath();
+                $baseName = $tref->key;
+                $aref = & $tref->getBaseRef(true);
+                $offsetPath = array_slice($fullTablePath, count($basePath));
+                $lastIndex = count($offsetPath) - 1;
+                break;
+            case Parser::PATH_NONE:
+                // $tref is null
+                $basePath = [];
+                $baseName = '';
+                $offsetPath = $fullTablePath;
+                $aref = & $this->result;
+                $lastIndex = count($offsetPath) - 1;
+                break;
+            case Parser::PATH_FULL:
+            default:
+                /* test case testParseMustParseTableArrayNest 
+                 * If albums path has incremented index,
+                 * and albums.song path is a full match 
+                 * then need to check on the parent references
+                 */
+                $offsetPath = [];
+                $aref = & $tref->getBaseRef(false);
+                $basePath = $tref->getBasePath();
+                $baseName = $fullTableName;
+                $lastIndex = -1; // not going to be used:
+                break;
+        }
+
+
+        if ($lastIndex >= 0) {
             foreach ($offsetPath as $idx => $tableName) {
+                $baseName = (strlen($baseName) > 0) ? $baseName . "." . $tableName
+                            : $tableName;
                 if ($idx < $lastIndex) {
                     // current spec test requires implicit first member offset 0
-                    // TOML spec is crazy in places
-                    if (!isset($this->workArray[$tableName])) {
-                        $this->workArray[$tableName] = [];
-                        $this->workArray = & $this->workArray[$tableName];
-                        $this->workArray[] = []; // set a first member
-                        $this->workArray = &$this->workArray[0];
-                    } 
-                    else {
-                        $this->workArray = & $this->workArray[$tableName];
-                        if(isset($this->workArray[0])) {
-                            // If we have already added more 'implicit' members.
-                            // do we have to use the latest?
-                            // What does it mean? Another assumption to test
-                            // Becomes hard to seperate pure numeric index from keys
-                            // and get pure numeric count
-                            $latest = count($this->workArray)-1;
-                            $this->workArray = & $this->workArray[$latest];
+                    // TOML is intuitive, and so is the spec.
+
+                    if (!isset($aref[$tableName])) {
+                        // should be the case, since AOT not registered
+                        $aref[$tableName] = [];
+                        $aref = & $aref[$tableName];
+                        // register the new implicit path
+                        // Paths don't care (yet) about AOT offsets
+                        $aref[] = []; // set a first member
+                        $tref = new AOTRef($tref, $baseName, $tableName, $aref, true);
+                        $this->registerAOT($tref);
+                        $aref = &$aref[0];
+                    } else {
+                        // not expecting this
+                        // in passing, still need to register as AOT as implicit
+                        if (!is_array($aref[$tableName])) {
+                            $this->errorUniqueKey($baseName);
                         }
+                        //TODO: also must not have $aref[0] set here
+                        $aref = & $aref[$tableName];
+                        // testParseMustParseATableAndArrayOfTables
+                        // according to this test , no AOT is set at this level
+                        //$aref[] = []; // set a first table member
+                        $tref = new AOTRef($tref, $baseName, $tableName, $aref, true);
+                        $this->registerAOT($tref);
+                        //$this->registerAOTError($baseName);
                     }
-                    
-                    
-                    
                 } else {
-                    if (!isset($this->workArray[$tableName])) {
-                        $this->workArray[$tableName] = [];
+                    if (!isset($aref[$tableName])) {
+                        $aref[$tableName] = [];
+                        $aref = & $aref[$tableName];
+                        $tref = new AOTRef($tref, $baseName, $tableName, $aref, false);
+                        $this->registerAOT($tref);
+                    } else {
+                        $this->registerAOTError($baseName);
                     }
-                    $this->workArray = & $this->workArray[$tableName];
                 }
             }
-            // only push the AOT itself
-            $this->pushTable(new StackRef($fullTablePath, $this->workArray));
         }
-        // Always add another []
-        $pos = count($this->workArray);
-        $this->workArray[] = [];
-        $this->workArray = & $this->workArray[$pos];
+
+        // Always add another table?  Not checking actual count?
+        //TODO: check case of accessing intrinsic which has first table?
+        if ($tref->implicit && $match == Parser::PATH_FULL) {
+            $this->tableNameIsAOT($fullTableName);
+        }
+
+
+        $pos = $tref->index + 1;
+        $tref->index = $pos;
+        $aref[] = [];
+        $this->workArray = & $aref[$pos];
 
         if ($this->useKeyStore) {
-            $this->addArrayOfTableKeyToKeyStore($fullTableName);
-            $this->currentKeyPrefix = $fullTableName . $this->getCounterArrayOfTableKey($fullTableName);
+            $this->currentKeyPrefix = $tref->getFullIndexName() . ".";
         }
         $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
         $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
@@ -717,7 +793,8 @@ class Parser extends AbstractParser {
         $this->errorIfNextIsNotNewlineOrEOS($ts);
     }
 
-    private function matchNext(string $tokenName, TokenStream $ts): string {
+    private function matchNext(string $tokenName, TokenStream $ts): string
+    {
         if (!$ts->isNext($tokenName)) {
             $this->unexpectedTokenError($ts->moveNext(), "Expected \"$tokenName\".");
         }
@@ -725,19 +802,22 @@ class Parser extends AbstractParser {
         return $ts->moveNext()->getValue();
     }
 
-    private function parseSpaceIfExists(TokenStream $ts): void {
+    private function parseSpaceIfExists(TokenStream $ts): void
+    {
         if ($ts->isNext('T_SPACE')) {
             $ts->moveNext();
         }
     }
 
-    private function parseCommentIfExists(TokenStream $ts): void {
+    private function parseCommentIfExists(TokenStream $ts): void
+    {
         if ($ts->isNext('T_HASH')) {
             $this->parseComment($ts);
         }
     }
 
-    private function parseCommentsInsideBlockIfExists(TokenStream $ts): void {
+    private function parseCommentsInsideBlockIfExists(TokenStream $ts): void
+    {
         $this->parseCommentIfExists($ts);
 
         while ($ts->isNext('T_NEWLINE')) {
@@ -747,55 +827,44 @@ class Parser extends AbstractParser {
         }
     }
 
-    private function addKeyToKeyStore(string $keyName): void {
-        if (in_array($keyName, $this->keys, true) === true) {
-            $this->syntaxError(sprintf(
-                            'The key "%s" has already been defined previously.', $keyName
-            ));
+    private function errorUniqueKey($keyName)
+    {
+        $this->syntaxError(sprintf(
+                        'The key "%s" has already been defined previously.', $keyName
+        ));
+    }
+
+    private function mustBeUnique(string $keyName)
+    {
+        if (!$this->setUniqueKey($keyName)) {
+            $this->errorUniqueKey($keyName);
         }
-
-        $this->keys[] = $keyName;
     }
 
-    private function addKeyToTableKeyStore(string $keyName): void {
-        $this->addKeyToKeyStore($keyName);
-        $this->keyOfTables[] = $keyName;
+    private function setUniqueKey(string $keyName): bool
+    {
+        if (isset($this->uniqueKeys[$keyName])) {
+            return false;
+        }
+        $this->uniqueKeys[$keyName] = true;
+        return true;
     }
 
-    private function tableNameIsAOT($keyName) {
-         $this->syntaxError(
+    private function tableNameIsAOT($keyName)
+    {
+        $this->syntaxError(
                 sprintf('The array of tables "%s" has already been defined as previous table', $keyName)
-            );
-    }
-    private function addArrayOfTableKeyToKeyStore(string $keyName): void {
-        if (isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
-            $this->addKeyToKeyStore($keyName);
-        }
-
-        $keyNameParts = explode('.', $keyName);
-
-        if ($this->isNecesaryToProcessImplicitKeyNameParts($keyNameParts)) {
-            array_pop($keyNameParts);
-
-            foreach ($keyNameParts as $keyNamePart) {
-                $this->keysOfImplicitArrayOfTables[] = implode('.', $keyNameParts);
-                array_pop($keyNameParts);
-            }
-
-            return;
-        }
-
-        if (in_array($keyName, $this->keysOfImplicitArrayOfTables) === true && isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
-            $this->tableNameIsAOT($keyName);
-        }
+        );
     }
 
-    private function isNecesaryToProcessImplicitKeyNameParts(array $keynameParts): bool {
+    private function isNecesaryToProcessImplicitKeyNameParts(array $keynameParts): bool
+    {
         if (count($keynameParts) > 1) {
             array_pop($keynameParts);
             $implicitArrayOfTablesName = implode('.', $keynameParts);
 
-            if (in_array($implicitArrayOfTablesName, $this->arrayOfTablekeyCounters) === false) {
+            if (in_array($implicitArrayOfTablesName, $this->arrayOfTablekeyCounters)
+                    === false) {
                 return true;
             }
         }
@@ -803,99 +872,184 @@ class Parser extends AbstractParser {
         return false;
     }
 
-    private function getCounterArrayOfTableKey($keyName): int {
-        if (isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
-            return $this->arrayOfTablekeyCounters[$keyName] = 0;
-        }
-
-        return $this->arrayOfTablekeyCounters[$keyName] = $this->arrayOfTablekeyCounters[$keyName] + 1;
-    }
-
-    private function composeKeyWithCurrentKeyPrefix(string $keyName): string {
-        $composedKey = $this->currentKeyPrefix;
-
-        if ($composedKey !== '') {
-            $composedKey .= '.';
-        }
-
-        $composedKey .= $keyName;
-
-        return $composedKey;
-    }
-
-    private function addArrayKeyToWorkArray(string $keyName): void {
+    private function addArrayKeyToWorkArray(string $keyName): void
+    {
         if (isset($this->workArray[$keyName]) === false) {
             $this->workArray[$keyName] = [];
         }
         $this->workArray = &$this->workArray[$keyName];
     }
 
-    private function addArrayOfTableKeyToWorkArray(string $keyName, bool $islast): void {
-        if (isset($this->workArray[$keyName]) === false) {
-            $this->workArray[$keyName] = [];
-            $this->workArray[$keyName][] = [];
-        } elseif ($islast) {
-            $this->workArray[$keyName][] = [];
-        }
-
-        if (in_array($keyName, $this->keyOfTables) === false) {
-            end($this->workArray[$keyName]);
-            $this->workArray = &$this->workArray[$keyName][key($this->workArray[$keyName])];
-
-            return;
-        }
-
-        $this->workArray = &$this->workArray[$keyName];
-    }
-
-    private function resetWorkArrayToResultArray(): void {
+    private function resetWorkArrayToResultArray(): void
+    {
         $this->currentKeyPrefix = '';
         $this->workArray = &$this->result;
     }
 
-    private function errorIfNextIsNotNewlineOrEOS(TokenStream $ts): void {
+    private function errorIfNextIsNotNewlineOrEOS(TokenStream $ts): void
+    {
         if (!$ts->isNextAny(['T_NEWLINE', 'T_EOS'])) {
             $this->unexpectedTokenError($ts->moveNext(), 'Expected T_NEWLINE or T_EOS.');
         }
     }
 
-    private function unexpectedTokenError(Token $token, string $expectedMsg): void {
+    private function unexpectedTokenError(Token $token, string $expectedMsg): void
+    {
         $name = $token->getName();
         $line = $token->getLine();
         $value = $token->getValue();
         $msg = sprintf('Syntax error: unexpected token "%s" at line %s with value "%s".', $name, $line, $value);
 
         if (!empty($expectedMsg)) {
-            $msg = $msg.' '.$expectedMsg;
+            $msg = $msg . ' ' . $expectedMsg;
         }
 
         throw new SyntaxErrorException($msg);
     }
 
-    private function syntaxError($msg, Token $token = null): void {
+    private function syntaxError($msg, Token $token = null): void
+    {
         if ($token !== null) {
             $name = $token->getName();
             $line = $token->getLine();
             $value = $token->getValue();
             $tokenMsg = sprintf('Token: "%s" line: %s value "%s".', $name, $line, $value);
-            $msg .= ' '.$tokenMsg;
+            $msg .= ' ' . $tokenMsg;
         }
 
         throw new SyntaxErrorException($msg);
     }
+
 }
 
 /** Keep track of relevant previous AOT declarations 
- *  Array Key is ordered array of keys
+ *  Array Key is stringified AOT path
+ *  Index to last table 
+ *  Instead of having separate arrays for each AOT property
+ *  cache them all in one indexed object
+ *  No reference to parent AOTRef yet.
+ *  My terminology: Name is a string; Path is array of names
+ *  This class holds references to itself, so maybe the
+ *  Parser should call cleanup, on each one it creates,
+ *  prior to exit of parse function as a finally
  */
-class StackRef {
+class AOTRef
+{
 
-    public $arrayRef;
-    public $arrayKey;
+    public $key; // full path lookup key
+    public $name; // last part of path name
+    public $ref; // base array reference
+    public $index; // index of last table 
+    public $implicit; // indicates implicit creation: part of explicit path
+    public $parent; // follow to parent
 
-    public function __construct($key, & $ref) {
-        $this->arrayKey = $key;
-        $this->arrayRef = & $ref; // Funny, compared to C
+    public function __construct($parent, string $key, string $name, array & $ref, bool $implicit)
+    {
+        $this->parent = $parent;
+        $this->key = $key;
+        $this->name = $name;
+        $this->ref = & $ref;
+        // cannot use count here!
+        $this->index = isset($ref[0]) ? 0 : -1;
+        $this->implicit = $implicit;
+        $this->objPath = $this->calcObjPath();
+    }
+
+    /**
+     * Remove potential cycles from garbage collection
+     */
+    public function unlink()
+    {
+        unset($this->objPath);
+        $this->parent = null;
+    }
+
+    /**
+     * Get this object and its parents in reverse order so root is first
+     * and this is last. Assumes parents are fixed at construction time
+     * @return array
+     */
+    private function calcObjPath(): array
+    {
+        $op = [];
+        $p = $this;
+        while (!is_null($p)) {
+            $op[] = $p;
+            $p = $p->parent;
+        }
+        return array_reverse($op);
+    }
+
+    /**
+     * Each object holds a reference to its base
+     * array, but if nested, that reference becomes
+     * invalid, ie points to a previous base.
+     * Only the root object remains valid, I think.
+     * Don't return reference to  last indexed item of this,
+     * because it may be updated.
+     * If the root got updated, then 
+     * its likely that child items don't exist, so make them.
+     * Also the index values become invalid
+     * @param bool $partial - indicates can index last item.
+     */
+    public function &getBaseRef(bool $partial)
+    {
+        $lastIX = count($this->objPath) - 1;
+        $isReset = false;
+        foreach ($this->objPath as $idx => $obj) {
+            $canDoIndex = ($partial || $idx < $lastIX) && ($obj->index >= 0);
+            if ($idx == 0) {
+                $result = & $obj->ref; // maybe the only thing reliable
+                if ($canDoIndex) {
+                    $result = & $result[$obj->index];
+                }
+            } else {
+                if (!isset($result[$obj->name])) {
+                    $result[$obj->name] = [];
+                    $isReset = true;
+                    $result = & $result[$obj->name];
+                    $obj->ref = & $result;
+                } else {
+                    $result = & $result[$obj->name];
+                }
+
+                if ($isReset) {
+                    if ($canDoIndex) {
+                        $obj->index = 0;
+                        $result[] = [];
+                        $result = & $result[0];
+                    } else {
+                        $obj->index = -1;
+                    }
+                } else {
+                    if ($canDoIndex) {
+                        $result = & $result[$obj->index];
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    public function getBasePath(): array
+    {
+        return array_map(function($obj) {
+            return $obj->name;
+        }, $this->objPath);
+    }
+
+    // recursive build of full index including last index number of each parent
+    public function getFullIndexName(): string
+    {
+        $part = ($this->index >= 0) ? "." . $this->index : '';
+        $name = $this->name . $part;
+        $p = $this->parent;
+        while (!is_null($p)) {
+            $part = ($p->index >= 0) ? "." . $p->index : '';
+            $name = $p->name . $part . "." . $name;
+            $p = $p->parent;
+        }
+        return $name;
     }
 
 }

@@ -17,6 +17,7 @@ use Yosymfony\Toml\Lexer;
 
 class ParserTest extends TestCase
 {
+
     private $parser;
 
     public function setUp()
@@ -47,7 +48,7 @@ toml;
         $this->assertEquals([
             't' => true,
             'f' => false,
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseIntegers()
@@ -66,7 +67,7 @@ toml;
             'neganswer' => -42,
             'positive' => 90,
             'underscore' => 12345,
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseLongIntegers()
@@ -81,7 +82,7 @@ toml;
         $this->assertEquals([
             'answer' => 9223372036854775807,
             'neganswer' => -9223372036854775808,
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseFloats()
@@ -108,7 +109,7 @@ toml;
             'exponent3' => -0.02,
             'exponent4' => 6.6259999999999998E-34,
             'underscore' => 6.6259999999999998E-34,
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseLongFloats()
@@ -123,7 +124,7 @@ toml;
         $this->assertEquals([
             'longpi' => 3.141592653589793,
             'neglongpi' => -3.141592653589793
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseBasicStringsWithASimpleString()
@@ -132,7 +133,7 @@ toml;
 
         $this->assertEquals([
             'answer' => 'You are not drinking enough whisky.',
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseAnEmptyString()
@@ -141,10 +142,10 @@ toml;
 
         $this->assertEquals([
             'answer' => '',
-        ], $array);
+                ], $array);
     }
 
-    public function testParseMustParseStringsWithEscapedCharacters() : void
+    public function testParseMustParseStringsWithEscapedCharacters(): void
     {
         $toml = <<<'toml'
         backspace = "This string has a \b backspace character."
@@ -169,7 +170,7 @@ toml;
             'backslash' => 'This string has a \\ backslash character.',
             'notunicode1' => 'This string does not have a unicode \\u escape.',
             'notunicode2' => 'This string does not have a unicode \\u0075 escape.',
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseStringsWithPound()
@@ -183,7 +184,7 @@ toml;
         $this->assertEquals([
             'pound' => 'We see no # comments here.',
             'poundcomment' => 'But there are # some comments here.'
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseWithUnicodeCharacterEscaped()
@@ -198,7 +199,7 @@ toml;
         $this->assertEquals([
             'answer4' => json_decode('"\u03B4"'),
             'answer8' => json_decode('"\u0000\u03B4"'),
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseStringWithALiteralUnicodeCharacter()
@@ -207,7 +208,7 @@ toml;
 
         $this->assertEquals([
             'answer' => 'δ',
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseMultilineStrings()
@@ -248,7 +249,7 @@ toml;
             'equivalent_one' => 'The quick brown fox jumps over the lazy dog.',
             'equivalent_two' => 'The quick brown fox jumps over the lazy dog.',
             'equivalent_three' => 'The quick brown fox jumps over the lazy dog.',
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseLiteralStrings()
@@ -273,7 +274,7 @@ toml;
             'carriage' => 'This string has a \r carriage return character.',
             'slash' => 'This string has a \/ slash character.',
             'backslash' => 'This string has a \\\\ backslash character.',
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseMultilineLiteralStrings()
@@ -296,7 +297,7 @@ toml;
             'oneline' => "This string has a ' quote character.",
             'firstnl' => "This string has a ' quote character.",
             'multiline' => "This string\nhas ' a quote character\nand more than\none newline\nin it.",
-        ], $array);
+                ], $array);
     }
 
     public function testDatetime()
@@ -320,7 +321,7 @@ toml;
             'bestdayever4' => new \Datetime('1979-05-27T07:32:00'),
             'bestdayever5' => new \Datetime('1979-05-27T00:32:00.999999'),
             'bestdayever6' => new \Datetime('1979-05-27'),
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseArraysWithNoSpaces()
@@ -328,8 +329,8 @@ toml;
         $array = $this->parser->parse('ints = [1,2,3]');
 
         $this->assertEquals([
-            'ints' => [1,2,3],
-        ], $array);
+            'ints' => [1, 2, 3],
+                ], $array);
     }
 
     public function testParseMustParseHeterogeneousArrays()
@@ -338,11 +339,11 @@ toml;
 
         $this->assertEquals([
             'mixed' => [
-                [1,2],
+                [1, 2],
                 ['a', 'b'],
                 [1.1, 2.1],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseArraysNested()
@@ -354,7 +355,7 @@ toml;
                 ['a'],
                 ['b']
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testArrayEmpty()
@@ -371,7 +372,7 @@ toml;
                     ],
                 ],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseArrays()
@@ -407,7 +408,7 @@ toml;
                 new \DateTime('1979-05-27T07:32:00Z'),
                 new \DateTime('2006-06-01T11:00:00Z'),
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseAKeyWithoutNameSpacesAroundEqualSign()
@@ -416,7 +417,7 @@ toml;
 
         $this->assertEquals([
             'answer' => 42,
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseKeyWithSpace()
@@ -427,7 +428,7 @@ toml;
 
         $this->assertEquals([
             'a b' => 1,
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseKeyWithSpecialCharacters()
@@ -436,7 +437,7 @@ toml;
 
         $this->assertEquals([
             '~!@$^&*()_+-`1234567890[]|/?><.,;:\'' => 1,
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseAnEmptyTable()
@@ -445,7 +446,7 @@ toml;
 
         $this->assertEquals([
             'a' => [],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseATableWithAWhiteSpaceInTheName()
@@ -454,7 +455,7 @@ toml;
 
         $this->assertEquals([
             'valid key' => [],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseATableAQuotedName()
@@ -472,7 +473,7 @@ toml;
                     'type' => 'pug',
                 ],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseATableWithAPoundInTheName()
@@ -488,7 +489,7 @@ toml;
             'key#group' => [
                 'answer' => 42,
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseATableAndASubtableEmpties()
@@ -503,7 +504,7 @@ toml;
             'a' => [
                 'b' => [],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseATableWithImplicitGroups()
@@ -523,7 +524,7 @@ toml;
                     ],
                 ],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseAImplicitAndExplicitAfterTable()
@@ -541,13 +542,13 @@ toml;
         $this->assertEquals([
             'a' => [
                 'better' => 43,
-                'b' =>  [
+                'b' => [
                     'c' => [
                         'answer' => 42,
                     ],
                 ],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseImplicitAndExplicitTableBefore()
@@ -565,13 +566,13 @@ toml;
         $this->assertEquals([
             'a' => [
                 'better' => 43,
-                'b' =>  [
+                'b' => [
                     'c' => [
                         'answer' => 42,
                     ],
                 ],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseInlineTableEmpty()
@@ -580,7 +581,7 @@ toml;
 
         $this->assertEquals([
             'name' => [],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseInlineTableOneElement()
@@ -591,7 +592,7 @@ toml;
             'name' => [
                 'first' => 'Tom'
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseAnInlineTableDefinedInATable()
@@ -609,7 +610,7 @@ toml;
                     'name' => 'Donald Duck'
                 ],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseInlineTableExamples()
@@ -654,7 +655,7 @@ toml;
             'another' => [
                 'number' => 1,
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseTableArrayImplicit()
@@ -676,7 +677,86 @@ toml;
                     ],
                 ],
             ],
-        ], $array);
+                ], $array);
+    }
+
+    public function testTakeSingleQuoteKeys()
+    {
+        $toml = <<<'toml'
+        [test]
+        'Like me' = 'yes'
+toml;
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'test' => [
+                'Like me' => 'yes',
+            ]
+                ], $array);
+    }
+
+    public function testTomlSiteExample1()
+    {
+        $toml = <<<'toml'
+[[fruit.blah]]
+  name = "apple"
+
+  [fruit.blah.physical]
+    color = "red"
+    shape = "round"
+
+[[fruit.blah]]
+  name = "banana"
+
+  [fruit.blah.physical]
+    color = "yellow"
+    shape = "bent"
+toml;
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'fruit' => [
+                [
+                    'blah' => [
+                        [
+                            'name' => 'apple',
+                            'physical' => [
+                                'color' => "red",
+                                'shape' => "round",
+                            ],
+                        ],
+                        [
+                            'name' => 'banana',
+                            'physical' => [
+                                'color' => "yellow",
+                                'shape' => "bent",
+                            ],
+                        ]
+                    ]
+                ],
+            ]
+                ], $array);
+    }
+
+    public function testConvertIntegerKeys()
+    {
+        $toml = <<<'toml'
+        [sequence]
+        -1 = 'detect person'
+        0 = 'say hello'
+        1 = 'chat'
+        10 = 'say bye'
+toml;
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'sequence' => [
+                '-1' => 'detect person',
+                '0' => 'say hello',
+                '1' => 'chat',
+                '10' => 'say bye'
+            ]
+                ], $array);
     }
 
     public function testParseMustParseTableArrayOne()
@@ -696,7 +776,7 @@ toml;
                     'last_name' => 'Springsteen',
                 ],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseTableArrayMany()
@@ -732,7 +812,7 @@ toml;
                     'last_name' => 'Seger',
                 ],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseTableArrayNest()
@@ -776,7 +856,7 @@ toml;
                     ],
                 ],
             ],
-        ], $array);
+                ], $array);
     }
 
     /**
@@ -805,7 +885,7 @@ toml;
                     ['name' => 'granny smith'],
                 ],
             ],
-        ], $array);
+                ], $array);
     }
 
     public function testParseMustParseCommentsEverywhere()
@@ -869,6 +949,7 @@ toml;
                 'boring' => false,
                 'perfection' => [6, 28, 496],
             ],
-        ], $array);
+                ], $array);
     }
+
 }
