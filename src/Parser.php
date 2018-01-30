@@ -539,7 +539,14 @@ class Parser extends AbstractParser
 
         return $result;
     }
-
+    private function addArrayKeyToWorkArray(string $keyName): void
+    {
+        if (isset($this->workArray[$keyName]) === false) {
+            $this->workArray[$keyName] = [];
+        }
+        $this->workArray = &$this->workArray[$keyName];
+    }
+    
     private function parseInlineTable(TokenStream $ts, string $keyName): void
     {
         $this->matchNext('T_LEFT_CURLY_BRACE', $ts);
@@ -587,7 +594,7 @@ class Parser extends AbstractParser
 
     private function registerAOTError($key)
     {
-        throw new \Exception('Parser Array of Table exists but not registered - ' . $key);
+        throw new \Exception('Array of Table exists but not registered - ' . $key);
     }
 
     private function parseTable(TokenStream $ts): void
@@ -601,9 +608,8 @@ class Parser extends AbstractParser
 
         switch ($match) {
             case Parser::PATH_PART:
-                $basePath = $tref->getBasePath();
                 $baseName = $tref->getFullIndexName();
-                $offsetPath = array_slice($fullTablePath, count($basePath));
+                $offsetPath = array_slice($fullTablePath, $tref->depth);
                 $aref = & $tref->ref[$tref->index];
 
                 $lastIndex = count($offsetPath) - 1;
@@ -611,7 +617,6 @@ class Parser extends AbstractParser
                 break;
             case Parser::PATH_NONE:
                 // root name space
-                $basePath = [];
                 $baseName = '';
                 $offsetPath = $fullTablePath;
                 $aref = & $this->result;
@@ -694,15 +699,13 @@ class Parser extends AbstractParser
 
         switch ($match) {
             case Parser::PATH_PART:
-                $basePath = $tref->getBasePath();
                 $baseName = $tref->key;
                 $aref = & $tref->getBaseRef(true);
-                $offsetPath = array_slice($fullTablePath, count($basePath));
+                $offsetPath = array_slice($fullTablePath, $tref->depth);
                 $lastIndex = count($offsetPath) - 1;
                 break;
             case Parser::PATH_NONE:
                 // $tref is null
-                $basePath = [];
                 $baseName = '';
                 $offsetPath = $fullTablePath;
                 $aref = & $this->result;
@@ -717,52 +720,35 @@ class Parser extends AbstractParser
                  */
                 $offsetPath = [];
                 $aref = & $tref->getBaseRef(false);
-                $basePath = $tref->getBasePath();
                 $baseName = $fullTableName;
                 $lastIndex = -1; // not going to be used:
                 break;
         }
-
-
         if ($lastIndex >= 0) {
+            // Calculating parts of AOT for the first time. 
+            // Not so good to have this sort of logic in two places.
             foreach ($offsetPath as $idx => $tableName) {
                 $baseName = (strlen($baseName) > 0) ? $baseName . "." . $tableName
                             : $tableName;
                 if ($idx < $lastIndex) {
-                    // current spec test requires implicit first member offset 0
-                    // TOML is intuitive, and so is the spec.
-
                     if (!isset($aref[$tableName])) {
-                        // should be the case, since AOT not registered
-                        $aref[$tableName] = [];
-                        $aref = & $aref[$tableName];
-                        // register the new implicit path
-                        // Paths don't care (yet) about AOT offsets
-                        $aref[] = []; // set a first member
-                        $tref = new AOTRef($tref, $baseName, $tableName, $aref, true);
+                        // should be the case, if AOT not registered
+                        // current spec test requires implicit first member offset 0
+                        $tref = new AOTRef($tref, $baseName, $tableName, true);
                         $this->registerAOT($tref);
-                        $aref = &$aref[0];
+                        $aref = & $tref->makeAOT($aref, true);
                     } else {
-                        // not expecting this
-                        // in passing, still need to register as AOT as implicit
                         if (!is_array($aref[$tableName])) {
                             $this->errorUniqueKey($baseName);
                         }
-                        //TODO: also must not have $aref[0] set here
-                        $aref = & $aref[$tableName];
-                        // testParseMustParseATableAndArrayOfTables
-                        // according to this test , no AOT is set at this level
-                        //$aref[] = []; // set a first table member
-                        $tref = new AOTRef($tref, $baseName, $tableName, $aref, true);
+                        $tref = new AOTRef($tref, $baseName, $tableName, true);
                         $this->registerAOT($tref);
-                        //$this->registerAOTError($baseName);
-                    }
+                        $aref = & $tref->makeAOT($aref, false);                    }
                 } else {
                     if (!isset($aref[$tableName])) {
-                        $aref[$tableName] = [];
-                        $aref = & $aref[$tableName];
-                        $tref = new AOTRef($tref, $baseName, $tableName, $aref, false);
+                        $tref = new AOTRef($tref, $baseName, $tableName, false);
                         $this->registerAOT($tref);
+                        $aref = & $tref->makeAOT($aref, false);                          
                     } else {
                         $this->registerAOTError($baseName);
                     }
@@ -770,17 +756,14 @@ class Parser extends AbstractParser
             }
         }
 
-        // Always add another table?  Not checking actual count?
         //TODO: check case of accessing intrinsic which has first table?
         if ($tref->implicit && $match == Parser::PATH_FULL) {
             $this->tableNameIsAOT($fullTableName);
         }
-
-
-        $pos = $tref->index + 1;
-        $tref->index = $pos;
-        $aref[] = [];
-        $this->workArray = & $aref[$pos];
+        // At this point $tref should be valid and 
+        // and is current location for key-value insertions
+        // hazard this by asking $tref for new table and reference
+        $this->workArray = & $tref->newTable();
 
         if ($this->useKeyStore) {
             $this->currentKeyPrefix = $tref->getFullIndexName() . ".";
@@ -857,28 +840,6 @@ class Parser extends AbstractParser
         );
     }
 
-    private function isNecesaryToProcessImplicitKeyNameParts(array $keynameParts): bool
-    {
-        if (count($keynameParts) > 1) {
-            array_pop($keynameParts);
-            $implicitArrayOfTablesName = implode('.', $keynameParts);
-
-            if (in_array($implicitArrayOfTablesName, $this->arrayOfTablekeyCounters)
-                    === false) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function addArrayKeyToWorkArray(string $keyName): void
-    {
-        if (isset($this->workArray[$keyName]) === false) {
-            $this->workArray[$keyName] = [];
-        }
-        $this->workArray = &$this->workArray[$keyName];
-    }
 
     private function resetWorkArrayToResultArray(): void
     {
@@ -935,71 +896,143 @@ class Parser extends AbstractParser
  */
 class AOTRef
 {
+    public $index = -1; // index of last table 
+    public $ref = null; // base array reference, which may change
+    public $depth = 0; // useful fixed value
+    // If created in implicit path. This isn't used much.
+    public $implicit = false; 
 
     public $key; // full path lookup key
-    public $name; // last part of path name
-    public $ref; // base array reference
-    public $index; // index of last table 
-    public $implicit; // indicates implicit creation: part of explicit path
     public $parent; // follow to parent
+    public $name; // last part of path name
 
-    public function __construct($parent, string $key, string $name, array & $ref, bool $implicit)
+    /**
+     * Construct with enough details so other stuff works
+     * @param ?AOTRef $parent
+     * @param string $key
+     * @param string $name
+     * @param bool $implicit
+     */
+    public function __construct($parent, string $key, string $name,  bool $implicit)
     {
         $this->parent = $parent;
         $this->key = $key;
         $this->name = $name;
-        $this->ref = & $ref;
-        // cannot use count here!
-        $this->index = isset($ref[0]) ? 0 : -1;
         $this->implicit = $implicit;
-        $this->objPath = $this->calcObjPath();
+        
+        $depth = 0;
+        $p = $this;
+        while (!is_null($p)) {
+            $depth += 1;
+            $p = $p->parent;
+        }
+        $this->depth = $depth;
     }
 
+     /** Factorization of create AOT logic,
+     * Sometimes we want to create initial table, sometimes not
+      * Initialize the internal reference
+     * Always return reference to deepest
+     * @param &array $aref Array where the AOT will be made
+     * @param bool $makeTable
+     * @return &array
+     */
+    public function &makeAOT(& $aref, bool $makeTable)
+    {
+        if (!isset($aref[$this->name])) {
+            $aref[$this->name] = [];
+            $this->ref = & $aref[$this->name];
+            $this->index = -1;
+            if ($makeTable) {
+                $aref = & $this->newTable();
+            }
+            else {
+                $aref = & $this->ref;
+            }
+        }
+        else {
+            $this->ref = & $aref[$this->name];
+            // Use or check implicit flag?
+            $this->index = isset($this->ref[0]) ? 0 : -1;
+            if ($makeTable) {
+                //  Most likely only 1, or find last one and make new?
+                if ($this->index >= 0) {
+                    $aref = & $this->ref[0];
+                }
+                else {
+                    $aref = & $this->newTable();
+                }
+            }
+            else {
+                // return what is here
+                if ($this->index >= 0) {
+                    $aref = & $this->ref[0];
+                }
+                else {
+                    $aref = & $this->ref;
+                }
+            }
+        }
+        return $aref;
+    }
     /**
      * Remove potential cycles from garbage collection
+     * Probably have fixed this, if it ever was a problem,
+     * by using getObjPath values as temporary
      */
     public function unlink()
     {
-        unset($this->objPath);
         $this->parent = null;
     }
 
     /**
-     * Get this object and its parents in reverse order so root is first
-     * and this is last. Assumes parents are fixed at construction time
-     * @return array
+     * Hazard that this AOT ref location is the one we want,
+     * and return a reference to a new table
      */
-    private function calcObjPath(): array
+    public function & newTable()
     {
-        $op = [];
+        $this->ref[] = [];
+        $this->index++;
+        return $this->ref[$this->index];
+    }
+
+    /*
+     * Generate temporary array of $root to $this
+     */
+    private function getObjPath()
+    {
+        $objPath = array_fill(0, $this->depth, null);
+        $idx = $this->depth - 1;
         $p = $this;
         while (!is_null($p)) {
-            $op[] = $p;
+            $objPath[$idx] = $p;
+            $idx--;
             $p = $p->parent;
         }
-        return array_reverse($op);
+        return $objPath;
     }
 
     /**
      * Each object holds a reference to its base
-     * array, but if nested, that reference becomes
+     * array, but as nested AOT are repeatedly encountered, that reference becomes
      * invalid, ie points to a previous base.
-     * Only the root object remains valid, I think.
+     * Only the root object remains valid.
      * Don't return reference to  last indexed item of this,
      * because it may be updated.
-     * If the root got updated, then 
+     * If the root gets its index updated, then 
      * its likely that child items don't exist, so make them.
      * Also the index values become invalid
      * @param bool $partial - indicates can index last item.
      */
     public function &getBaseRef(bool $partial)
     {
-        $lastIX = count($this->objPath) - 1;
+        $objPath = $this->getObjPath();
         $isReset = false;
-        foreach ($this->objPath as $idx => $obj) {
+        $lastIX = $this->depth - 1;
+        foreach ($objPath as $idx => $obj) {
             $canDoIndex = ($partial || $idx < $lastIX) && ($obj->index >= 0);
             if ($idx == 0) {
-                $result = & $obj->ref; // maybe the only thing reliable
+                $result = & $obj->ref; // $root base never changes
                 if ($canDoIndex) {
                     $result = & $result[$obj->index];
                 }
@@ -1012,7 +1045,6 @@ class AOTRef
                 } else {
                     $result = & $result[$obj->name];
                 }
-
                 if ($isReset) {
                     if ($canDoIndex) {
                         $obj->index = 0;
@@ -1029,13 +1061,6 @@ class AOTRef
             }
         }
         return $result;
-    }
-
-    public function getBasePath(): array
-    {
-        return array_map(function($obj) {
-            return $obj->name;
-        }, $this->objPath);
     }
 
     // recursive build of full index including last index number of each parent
