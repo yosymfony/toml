@@ -30,61 +30,23 @@ class Parser extends AbstractParser
     const PATH_PART = 1;
     const PATH_NONE = 0;
 
-    private $useKeyStore = true; // extra validation??
-    private $uniqueKeys = [];
+    // Waiting for a test case that shows $useKeyStore is needed
+    private $useKeyStore = false; 
+    private $keys = []; //usage controlled by $useKeyStore
+    private $currentKeyPrefix = '';//usage controlled by $useKeyStore
+    // array context for key = value
     // parsed result to return
     private $result = [];
     // path string to array context for key = value
     // by convention, is either empty , or set with
     // terminator of '.'
-    private $currentKeyPrefix = '';
-    // array context for key = value
+
     private $workArray;
     // array of all AOTRef using base name string key
     private $refAOT = [];
-    // tables created in passing
-    private $implicitTables = []; // [key] = true 
-    private static $tokensNotAllowedInBasicStrings = [
-        'T_ESCAPE',
-        'T_NEWLINE',
-        'T_EOS',
-    ];
-    private static $tokensNotAllowedInLiteralStrings = [
-        'T_NEWLINE',
-        'T_EOS',
-    ];
+    // remenber table paths created in passing
+    private $implicitTables = []; // array[string] of bool
 
-    /**
-     * Return tail of path after removing common parts
-     * Use ordered arrays of keys for each path
-     * Return full path if no common parts.
-     * @param array $rootPath
-     * @param array $childPath
-     */
-    /*
-      private static function getChildPath(array $rootPath, array $childPath)
-      {
-      // Make this work for path seperator '.'
-      $rlen = count($rootPath);
-      $clen = count($childPath);
-      $common = -1;
-      if (($clen >= $rlen) && ($rlen > 0)) {
-      for ($i = 0; $i < $rlen; $i++) {
-      if ($rootPath[$i] == $childPath[$i]) {
-      $common = $i;
-      } else {
-      break;
-      }
-      }
-      if ($common >= 0) {
-      // exclude common
-      return array_slice($childPath, $common + 1);
-      }
-      }
-      // nothing in common, entire path is different
-      return $childPath;
-      }
-     */
     private function registerAOT(AOTRef $obj)
     {
         $this->refAOT[$obj->key] = $obj;
@@ -178,34 +140,57 @@ class Parser extends AbstractParser
      */
     private function processExpression(TokenStream $ts): void
     {
-        if ($ts->isNext('T_HASH')) {
-            $this->parseComment($ts);
-        } elseif ($ts->isNextAny(['T_QUOTATION_MARK', 'T_UNQUOTED_KEY', 'T_APOSTROPHE', 'T_INTEGER'])) {
-            $this->parseKeyValue($ts);
-        } elseif ($ts->isNextSequence(['T_LEFT_SQUARE_BRAKET', 'T_LEFT_SQUARE_BRAKET'])) {
-            $this->parseArrayOfTables($ts);
-        } elseif ($ts->isNext('T_LEFT_SQUARE_BRAKET')) {
-            $this->parseTable($ts);
-        } elseif ($ts->isNextAny(['T_SPACE', 'T_NEWLINE', 'T_EOS'])) {
-            $ts->moveNext();
-        } else {
-            $msg = 'Expected T_HASH or T_UNQUOTED_KEY.';
-            $this->unexpectedTokenError($ts->moveNext(), $msg);
-        }
-    }
-
-    private function parseComment(TokenStream $ts): void
-    {
-        $this->matchNext('T_HASH', $ts);
-
-        while (!$ts->isNextAny(['T_NEWLINE', 'T_EOS'])) {
-            $ts->moveNext();
+        $tokenId = $ts->peekNext();
+        // get name for debugging
+        $tokenName = Lexer::tokenName($tokenId);
+        switch ($tokenId) {
+            case Lexer::T_HASH :
+                $this->parseComment($ts);
+                break;
+            case Lexer::T_QUOTATION_MARK:
+            case Lexer::T_UNQUOTED_KEY:
+            case Lexer::T_APOSTROPHE :
+            case Lexer::T_INTEGER :
+                $this->parseKeyValue($ts);
+                break;
+            case Lexer::T_LEFT_SQUARE_BRAKET:
+                if ($ts->isNextSequence([Lexer::T_LEFT_SQUARE_BRAKET, Lexer::T_LEFT_SQUARE_BRAKET])) {
+                    $this->parseArrayOfTables($ts);
+                } else {
+                    $this->parseTable($ts);
+                }
+                break;
+            case Lexer::T_SPACE :
+            case Lexer::T_NEWLINE:
+            case Lexer::T_EOS:
+                $ts->moveNext();
+                break;
+            default:
+                //TODO: This message is probably outdated by now
+                // Not general enougy, probably to match test cases.
+                $msg = 'Expected T_HASH or T_UNQUOTED_KEY.';
+                $this->unexpectedTokenError($ts->moveNext(), $msg);
+                break;
         }
     }
 
     private function duplicateKey(string $keyName)
     {
         $this->syntaxError("The key \"$keyName\" has already been defined previously.");
+    }
+
+    private function parseComment(TokenStream $ts): void
+    {
+        $this->assertNext(Lexer::T_HASH, $ts);
+        do {
+            $ts->moveNext();
+            $tokenId = $ts->peekNext();
+        } while ($tokenId !== Lexer::T_NEWLINE && $tokenId !== Lexer::T_EOS);
+    }
+
+    private function skipIfSpace(TokenStream $ts): int
+    {
+        return $ts->skipWhile(Lexer::T_SPACE);
     }
 
     private function parseKeyValue(TokenStream $ts, bool $isFromInlineTable = false): void
@@ -218,21 +203,24 @@ class Parser extends AbstractParser
                 $this->duplicateKey($keyName);
             }
         }
-        $this->parseSpaceIfExists($ts);
-        $this->matchNext('T_EQUAL', $ts);
-        $this->parseSpaceIfExists($ts);
 
+        //$this->addKeyToKeyStore($this->composeKeyWithCurrentKeyPrefix($keyName));
+        $this->skipIfSpace($ts);
+        $this->assertNext(Lexer::T_EQUAL, $ts);
+        $this->skipIfSpace($ts);
 
-        if ($ts->isNext('T_LEFT_SQUARE_BRAKET')) {
+        $nextToken = $ts->peekNext();
+
+        if ($nextToken === Lexer::T_LEFT_SQUARE_BRAKET) {
             $this->workArray[$keyName] = $this->parseArray($ts);
-        } elseif ($ts->isNext('T_LEFT_CURLY_BRACE')) {
+        } elseif ($nextToken === Lexer::T_LEFT_CURLY_BRACE) {
             $this->parseInlineTable($ts, $keyName);
         } else {
             $this->workArray[$keyName] = $this->parseSimpleValue($ts)->value;
         }
 
         if (!$isFromInlineTable) {
-            $this->parseSpaceIfExists($ts);
+            $this->skipIfSpace($ts);
             $this->parseCommentIfExists($ts);
             $this->errorIfNextIsNotNewlineOrEOS($ts);
         }
@@ -240,17 +228,21 @@ class Parser extends AbstractParser
 
     private function parseKeyName(TokenStream $ts): string
     {
-        if ($ts->isNext('T_UNQUOTED_KEY')) {
-            return $this->matchNext('T_UNQUOTED_KEY', $ts);
+        $token = $ts->peekNext();
+        switch ($token) {
+            case Lexer::T_UNQUOTED_KEY:
+                return $this->matchNext(Lexer::T_UNQUOTED_KEY, $ts);
+            case Lexer::T_QUOTATION_MARK:
+                return $this->parseBasicString($ts);
+            case Lexer::T_APOSTROPHE:
+                return $this->parseLiteralString($ts);
+            case Lexer::T_INTEGER :
+                return (string) $this->parseInteger($ts);
+            default:
+                $msg = 'Unexpected token in parseKeyName';
+                $this->unexpectedTokenError($ts->moveNext(), $msg);
+                break;
         }
-        if ($ts->isNext('T_APOSTROPHE')) {
-            return $this->parseLiteralString($ts);
-        }
-        if ($ts->isNext('T_INTEGER')) {
-            // integers can be keys, but only as a string (Not a limitation of php)
-            return (string) $this->parseInteger($ts);
-        }
-        return $this->parseBasicString($ts);
     }
 
     /**
@@ -258,36 +250,46 @@ class Parser extends AbstractParser
      */
     private function parseSimpleValue(TokenStream $ts)
     {
-        if ($ts->isNext('T_BOOLEAN')) {
-            $type = 'boolean';
-            $value = $this->parseBoolean($ts);
-        } elseif ($ts->isNext('T_INTEGER')) {
-            $type = 'integer';
-            $value = $this->parseInteger($ts);
-        } elseif ($ts->isNext('T_FLOAT')) {
-            $type = 'float';
-            $value = $this->parseFloat($ts);
-        } elseif ($ts->isNext('T_QUOTATION_MARK')) {
-            $type = 'string';
-            $value = $this->parseBasicString($ts);
-        } elseif ($ts->isNext('T_3_QUOTATION_MARK')) {
-            $type = 'string';
-            $value = $this->parseMultilineBasicString($ts);
-        } elseif ($ts->isNext('T_APOSTROPHE')) {
-            $type = 'string';
-            $value = $this->parseLiteralString($ts);
-        } elseif ($ts->isNext('T_3_APOSTROPHE')) {
-            $type = 'string';
-            $value = $this->parseMultilineLiteralString($ts);
-        } elseif ($ts->isNext('T_DATE_TIME')) {
-            $type = 'datetime';
-            $value = $this->parseDatetime($ts);
-        } else {
-            $this->unexpectedTokenError(
-                    $ts->moveNext(), 'Expected boolean, integer, long, string or datetime.'
-            );
+        $token = $ts->peekNext();
+        switch ($token) {
+            case Lexer::T_BOOLEAN:
+                $type = 'boolean';
+                $value = $this->parseBoolean($ts);
+                break;
+            case Lexer::T_INTEGER:
+                $type = 'integer';
+                $value = $this->parseInteger($ts);
+                break;
+            case Lexer::T_FLOAT:
+                $type = 'float';
+                $value = $this->parseFloat($ts);
+                break;
+            case Lexer::T_QUOTATION_MARK:
+                $type = 'string';
+                $value = $this->parseBasicString($ts);
+                break;
+            case Lexer::T_3_QUOTATION_MARK:
+                $type = 'string';
+                $value = $this->parseMultilineBasicString($ts);
+                break;
+            case Lexer::T_APOSTROPHE:
+                $type = 'string';
+                $value = $this->parseLiteralString($ts);
+                break;
+            case Lexer::T_3_APOSTROPHE:
+                $type = 'string';
+                $value = $this->parseMultilineLiteralString($ts);
+                break;
+            case Lexer::T_DATE_TIME:
+                $type = 'datetime';
+                $value = $this->parseDatetime($ts);
+                break;
+            default:
+                $this->unexpectedTokenError(
+                        $ts->moveNext(), 'Expected boolean, integer, long, string or datetime.'
+                );
+                break;
         }
-
         $valueStruct = new class() {
 
             public $value;
@@ -302,7 +304,7 @@ class Parser extends AbstractParser
 
     private function parseBoolean(TokenStream $ts): bool
     {
-        return $this->matchNext('T_BOOLEAN', $ts) == 'true' ? true : false;
+        return $this->matchNext(Lexer::T_BOOLEAN, $ts) == 'true' ? true : false;
     }
 
     private function parseInteger(TokenStream $ts): int
@@ -351,98 +353,114 @@ class Parser extends AbstractParser
 
     private function parseBasicString(TokenStream $ts): string
     {
-        $this->matchNext('T_QUOTATION_MARK', $ts);
+        $this->assertNext(Lexer::T_QUOTATION_MARK, $ts);
 
         $result = '';
 
-        while (!$ts->isNext('T_QUOTATION_MARK')) {
-            if ($ts->isNextAny(self::$tokensNotAllowedInBasicStrings)) {
+        $tokenId = $ts->peekNext();
+        while ($tokenId !== Lexer::T_QUOTATION_MARK) {
+            if (($tokenId === Lexer::T_NEWLINE) || ($tokenId === Lexer::T_EOS) || ($tokenId
+                === Lexer::T_ESCAPE)) {
+                // throws
                 $this->unexpectedTokenError($ts->moveNext(), 'This character is not valid.');
             }
 
-            $value = $ts->isNext('T_ESCAPED_CHARACTER') ? $this->parseEscapedCharacter($ts)
+            $value = ($tokenId === Lexer::T_ESCAPED_CHARACTER) ? $this->parseEscapedCharacter($ts)
                         : $ts->moveNext()->getValue();
             $result .= $value;
+            $tokenId = $ts->peekNext();
         }
 
-        $this->matchNext('T_QUOTATION_MARK', $ts);
+        $this->assertNext(Lexer::T_QUOTATION_MARK, $ts);
 
         return $result;
     }
 
     private function parseMultilineBasicString(TokenStream $ts): string
     {
-        $this->matchNext('T_3_QUOTATION_MARK', $ts);
+        $this->assertNext(Lexer::T_3_QUOTATION_MARK, $ts);
 
         $result = '';
 
-        if ($ts->isNext('T_NEWLINE')) {
-            $ts->moveNext();
+        $ts->skipWhile(Lexer::T_NEWLINE, 1);
+        $nextToken = $ts->peekNext();
+        while (true) {
+
+            switch ($nextToken) {
+                case Lexer::T_3_QUOTATION_MARK :
+                    $this->assertNext(Lexer::T_3_QUOTATION_MARK, $ts);
+                    break 2;
+                case Lexer::T_EOS:
+                    $this->unexpectedTokenError($ts->moveNext(), 'Expected token "T_3_QUOTATION_MARK".');
+                    break;
+                case Lexer::T_ESCAPE:
+                    do {
+                        $nextToken = $ts->movePeekNext();
+                    } while (($nextToken === Lexer::T_SPACE) || ($nextToken === Lexer::T_NEWLINE) || ($nextToken
+                    === Lexer::T_ESCAPE));
+                    break;
+                case Lexer::T_SPACE:
+                    $result .= ' ';
+                    $nextToken = $ts->movePeekNext();
+                    break;
+                case Lexer::T_NEWLINE:
+                    $result .= "\n";
+                    $nextToken = $ts->movePeekNext();
+                    break;
+                case Lexer::T_ESCAPED_CHARACTER:
+                    $value = $this->parseEscapedCharacter($ts);
+                    $result .= $value;
+                    $nextToken = $ts->peekNext();
+                    break;
+                default:
+                    $value = $ts->moveNext()->getValue();
+                    $result .= $value;
+                    $nextToken = $ts->peekNext();
+                    break;
+            }
         }
-
-        while (!$ts->isNext('T_3_QUOTATION_MARK')) {
-            if ($ts->isNext('T_EOS')) {
-                $this->unexpectedTokenError($ts->moveNext(), 'Expected token "T_3_QUOTATION_MARK".');
-            }
-
-            if ($ts->isNext('T_ESCAPE')) {
-                $ts->skipWhileAny(['T_ESCAPE', 'T_SPACE', 'T_NEWLINE']);
-            }
-
-            if ($ts->isNext('T_EOS')) {
-                $this->unexpectedTokenError($ts->moveNext(), 'Expected token "T_3_QUOTATION_MARK".');
-            }
-
-            if (!$ts->isNext('T_3_QUOTATION_MARK')) {
-                $value = $ts->isNext('T_ESCAPED_CHARACTER') ? $this->parseEscapedCharacter($ts)
-                            : $ts->moveNext()->getValue();
-                $result .= $value;
-            }
-        }
-
-        $this->matchNext('T_3_QUOTATION_MARK', $ts);
-
         return $result;
     }
 
     private function parseLiteralString(TokenStream $ts): string
     {
-        $this->matchNext('T_APOSTROPHE', $ts);
+        $this->assertNext(Lexer::T_APOSTROPHE, $ts);
 
         $result = '';
+        $tokenId = $ts->peekNext();
 
-        while (!$ts->isNext('T_APOSTROPHE')) {
-            if ($ts->isNextAny(self::$tokensNotAllowedInLiteralStrings)) {
+        while ($tokenId !== Lexer::T_APOSTROPHE) {
+            if (($tokenId === Lexer::T_NEWLINE) || ($tokenId === Lexer::T_EOS)) {
                 $this->unexpectedTokenError($ts->moveNext(), 'This character is not valid.');
             }
 
             $result .= $ts->moveNext()->getValue();
+            $tokenId = $ts->peekNext();
         }
-
-        $this->matchNext('T_APOSTROPHE', $ts);
-
+        $this->assertNext(Lexer::T_APOSTROPHE, $ts);
         return $result;
     }
 
     private function parseMultilineLiteralString(TokenStream $ts): string
     {
-        $this->matchNext('T_3_APOSTROPHE', $ts);
+        $this->assertNext(Lexer::T_3_APOSTROPHE, $ts);
 
         $result = '';
 
-        if ($ts->isNext('T_NEWLINE')) {
-            $ts->moveNext();
-        }
+        $ts->skipWhile(Lexer::T_NEWLINE, 1);
 
-        while (!$ts->isNext('T_3_APOSTROPHE')) {
-            if ($ts->isNext('T_EOS')) {
+        while (true) {
+            $tokenId = $ts->peekNext();
+            if ($tokenId === Lexer::T_3_APOSTROPHE) {
+                break;
+            }
+            if ($tokenId === Lexer::T_EOS) {
                 $this->unexpectedTokenError($ts->moveNext(), 'Expected token "T_3_APOSTROPHE".');
             }
-
             $result .= $ts->moveNext()->getValue();
         }
 
-        $this->matchNext('T_3_APOSTROPHE', $ts);
+        $this->assertNext(Lexer::T_3_APOSTROPHE, $ts);
 
         return $result;
     }
@@ -480,9 +498,17 @@ class Parser extends AbstractParser
 
     private function parseDatetime(TokenStream $ts): \Datetime
     {
-        $date = $this->matchNext('T_DATE_TIME', $ts);
+        $date = $this->matchNext(Lexer::T_DATE_TIME, $ts);
 
         return new \Datetime($date);
+    }
+
+    private function skipWhite(TokenStream $ts): void
+    {
+        $tokenId = $ts->peekNext();
+        while ($tokenId === Lexer::T_SPACE || $tokenId === Lexer::T_NEWLINE) {
+            $tokenId = $ts->movePeekNext();
+        }
     }
 
     private function parseArray(TokenStream $ts): array
@@ -490,13 +516,14 @@ class Parser extends AbstractParser
         $result = [];
         $leaderType = '';
 
-        $this->matchNext('T_LEFT_SQUARE_BRAKET', $ts);
+        $this->assertNext(Lexer::T_LEFT_SQUARE_BRAKET, $ts);
 
-        while (!$ts->isNext('T_RIGHT_SQUARE_BRAKET')) {
-            $ts->skipWhileAny(['T_NEWLINE', 'T_SPACE']);
+        while (!$ts->isNext(Lexer::T_RIGHT_SQUARE_BRAKET)) {
+            $this->skipWhite($ts);
+            //$ts->skipWhileAny([Lexer::T_NEWLINE, Lexer::T_SPACE]);
             $this->parseCommentsInsideBlockIfExists($ts);
 
-            if ($ts->isNext('T_LEFT_SQUARE_BRAKET')) {
+            if ($ts->isNext(Lexer::T_LEFT_SQUARE_BRAKET)) {
                 if ($leaderType === '') {
                     $leaderType = 'array';
                 }
@@ -524,49 +551,54 @@ class Parser extends AbstractParser
                 $result[] = $valueStruct->value;
             }
 
-            $ts->skipWhileAny(['T_NEWLINE', 'T_SPACE']);
+            $this->skipWhite($ts);
+            //$ts->skipWhileAny([Lexer::T_NEWLINE, Lexer::T_SPACE]);
             $this->parseCommentsInsideBlockIfExists($ts);
 
-            if (!$ts->isNext('T_RIGHT_SQUARE_BRAKET')) {
-                $this->matchNext('T_COMMA', $ts);
+            if (!$ts->isNext(Lexer::T_RIGHT_SQUARE_BRAKET)) {
+                $this->assertNext(Lexer::T_COMMA, $ts);
             }
 
-            $ts->skipWhileAny(['T_NEWLINE', 'T_SPACE']);
+            $this->skipWhite($ts);
+            //$ts->skipWhileAny([Lexer::T_NEWLINE, Lexer::T_SPACE]);
             $this->parseCommentsInsideBlockIfExists($ts);
         }
 
-        $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
+        $this->assertNext(Lexer::T_RIGHT_SQUARE_BRAKET, $ts);
 
         return $result;
     }
+
     private function addArrayKeyToWorkArray(string $keyName): void
     {
         if (isset($this->workArray[$keyName]) === false) {
             $this->workArray[$keyName] = [];
         }
+
         $this->workArray = &$this->workArray[$keyName];
     }
-    
+
     private function parseInlineTable(TokenStream $ts, string $keyName): void
     {
-        $this->matchNext('T_LEFT_CURLY_BRACE', $ts);
-        if ($this->useKeyStore) {
-            $priorcurrentKeyPrefix = $this->currentKeyPrefix;
-        }
+        $this->assertNext(Lexer::T_LEFT_CURLY_BRACE, $ts);
+
         $priorWorkArray = &$this->workArray;
 
         $this->addArrayKeyToWorkArray($keyName);
+
         if ($this->useKeyStore) {
+            $priorcurrentKeyPrefix = $this->currentKeyPrefix;
             $this->currentKeyPrefix = $this->currentKeyPrefix . $keyName . ".";
         }
+
         $this->parseSpaceIfExists($ts);
 
-        if (!$ts->isNext('T_RIGHT_CURLY_BRACE')) {
+        if ($ts->peekNext() !== Lexer::T_RIGHT_CURLY_BRACE) {
             $this->parseKeyValue($ts, true);
             $this->parseSpaceIfExists($ts);
         }
 
-        while ($ts->isNext('T_COMMA')) {
+        while ($ts->peekNext() === Lexer::T_COMMA) {
             $ts->moveNext();
 
             $this->parseSpaceIfExists($ts);
@@ -574,7 +606,7 @@ class Parser extends AbstractParser
             $this->parseSpaceIfExists($ts);
         }
 
-        $this->matchNext('T_RIGHT_CURLY_BRACE', $ts);
+        $this->assertNext(Lexer::T_RIGHT_CURLY_BRACE, $ts);
         if ($this->useKeyStore) {
             $this->currentKeyPrefix = $priorcurrentKeyPrefix;
         }
@@ -585,9 +617,11 @@ class Parser extends AbstractParser
     {
         $fullTablePath = [];
         $fullTablePath[] = $this->parseKeyName($ts);
-        while ($ts->isNext('T_DOT')) {
+        $tokenId = $ts->peekNext();
+        while ($tokenId === Lexer::T_DOT) {
             $ts->moveNext();
             $fullTablePath[] = $this->parseKeyName($ts);
+            $tokenId = $ts->peekNext();
         }
         return $fullTablePath;
     }
@@ -599,7 +633,7 @@ class Parser extends AbstractParser
 
     private function parseTable(TokenStream $ts): void
     {
-        $this->matchNext('T_LEFT_SQUARE_BRAKET', $ts);
+        $this->assertNext(Lexer::T_LEFT_SQUARE_BRAKET, $ts);
 
         $fullTablePath = $this->parseKeyPath($ts);
         $fullTableName = self::pathToName($fullTablePath);
@@ -646,8 +680,10 @@ class Parser extends AbstractParser
             } else {
                 if (isset($aref[$tableName])) {
                     // If created implicitly before, should only have 1 value
-                    if (isset($this->uniqueKeys[$baseName])) {
-                        $this->duplicateKey($baseName);
+                    if ($this->useKeyStore) {
+                        if (isset($this->keys[$baseName])) {
+                            $this->duplicateKey($baseName);
+                        }
                     }
                     $isOKThisTime = isset($this->implicitTables[$fullTableName]) && is_array($aref[$tableName]) && (count($aref[$tableName])
                             == 1);
@@ -669,7 +705,7 @@ class Parser extends AbstractParser
             $this->currentKeyPrefix = $baseName . ".";
         }
 
-        $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
+        $this->assertNext(Lexer::T_RIGHT_SQUARE_BRAKET, $ts);
 
         $this->parseSpaceIfExists($ts);
         $this->parseCommentIfExists($ts);
@@ -690,8 +726,8 @@ class Parser extends AbstractParser
 
     private function parseArrayOfTables(TokenStream $ts): void
     {
-        $this->matchNext('T_LEFT_SQUARE_BRAKET', $ts);
-        $this->matchNext('T_LEFT_SQUARE_BRAKET', $ts);
+        $this->assertNext(Lexer::T_LEFT_SQUARE_BRAKET, $ts);
+        $this->assertNext(Lexer::T_LEFT_SQUARE_BRAKET, $ts);
 
         $fullTablePath = $this->parseKeyPath($ts);
         $fullTableName = self::pathToName($fullTablePath);
@@ -743,12 +779,13 @@ class Parser extends AbstractParser
                         }
                         $tref = new AOTRef($tref, $baseName, $tableName, true);
                         $this->registerAOT($tref);
-                        $aref = & $tref->makeAOT($aref, false);                    }
+                        $aref = & $tref->makeAOT($aref, false);
+                    }
                 } else {
                     if (!isset($aref[$tableName])) {
                         $tref = new AOTRef($tref, $baseName, $tableName, false);
                         $this->registerAOT($tref);
-                        $aref = & $tref->makeAOT($aref, false);                          
+                        $aref = & $tref->makeAOT($aref, false);
                     } else {
                         $this->registerAOTError($baseName);
                     }
@@ -768,34 +805,58 @@ class Parser extends AbstractParser
         if ($this->useKeyStore) {
             $this->currentKeyPrefix = $tref->getFullIndexName() . ".";
         }
-        $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
-        $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
+        $this->assertNext(Lexer::T_RIGHT_SQUARE_BRAKET, $ts);
+        $this->assertNext(Lexer::T_RIGHT_SQUARE_BRAKET, $ts);
 
         $this->parseSpaceIfExists($ts);
         $this->parseCommentIfExists($ts);
         $this->errorIfNextIsNotNewlineOrEOS($ts);
     }
 
-    private function matchNext(string $tokenName, TokenStream $ts): string
+    /**
+     * Get and consume next token.
+     * Move on if matches, else throw exception.
+     * 
+     * @param int $tokenId
+     * @param TokenStream $ts
+     * @return void
+     */
+    private function assertNext(int $tokenId, TokenStream $ts): void
     {
-        if (!$ts->isNext($tokenName)) {
-            $this->unexpectedTokenError($ts->moveNext(), "Expected \"$tokenName\".");
+        $token = $ts->moveNext(); // token always consumed
+        if ($tokenId !== $token->getId()) {
+            $tokenName = Lexer::tokenName($tokenId);
+            $this->unexpectedTokenError($token, "Expected \"$tokenName\".");
         }
-
-        return $ts->moveNext()->getValue();
     }
 
-    private function parseSpaceIfExists(TokenStream $ts): void
+    /**
+     * Combined assertNext and return token value
+     * @param int $tokenId
+     * @param TokenStream $ts
+     * @return string
+     */
+    private function matchNext(int $tokenId, TokenStream $ts): string
     {
-        if ($ts->isNext('T_SPACE')) {
-            $ts->moveNext();
+        $token = $ts->moveNext(); // token always consumed
+        if ($tokenId !== $token->getId()) {
+            $tokenName = Lexer::tokenName($tokenId);
+            $this->unexpectedTokenError($token, "Expected \"$tokenName\".");
         }
+        return $token->getValue();
     }
 
     private function parseCommentIfExists(TokenStream $ts): void
     {
-        if ($ts->isNext('T_HASH')) {
+        if ($ts->peekNext() === Lexer::T_HASH) {
             $this->parseComment($ts);
+        }
+    }
+
+    private function parseSpaceIfExists(TokenStream $ts): void
+    {
+        if ($ts->peekNext() === Lexer::T_SPACE) {
+            $ts->moveNext();
         }
     }
 
@@ -803,9 +864,9 @@ class Parser extends AbstractParser
     {
         $this->parseCommentIfExists($ts);
 
-        while ($ts->isNext('T_NEWLINE')) {
+        while ($ts->peekNext() === Lexer::T_NEWLINE) {
             $ts->moveNext();
-            $ts->skipWhile('T_SPACE');
+            $ts->skipWhile(Lexer::T_SPACE);
             $this->parseCommentIfExists($ts);
         }
     }
@@ -816,20 +877,30 @@ class Parser extends AbstractParser
                         'The key "%s" has already been defined previously.', $keyName
         ));
     }
-
+    /** 
+     * Runtime check on uniqueness of key
+     * Usage is controller by $this->useKeyStore
+     * @param string $keyName
+     */
     private function mustBeUnique(string $keyName)
     {
         if (!$this->setUniqueKey($keyName)) {
             $this->errorUniqueKey($keyName);
         }
     }
-
+    
+    /**
+     * Return true if key was already set
+     * Usage controlled by $this->useKeyStore
+     * @param string $keyName
+     * @return bool
+     */
     private function setUniqueKey(string $keyName): bool
     {
-        if (isset($this->uniqueKeys[$keyName])) {
+        if (isset($this->keys[$keyName])) {
             return false;
         }
-        $this->uniqueKeys[$keyName] = true;
+        $this->keys[$keyName] = true;
         return true;
     }
 
@@ -840,23 +911,26 @@ class Parser extends AbstractParser
         );
     }
 
-
     private function resetWorkArrayToResultArray(): void
     {
-        $this->currentKeyPrefix = '';
+        if ($this->useKeyStore) {
+            $this->currentKeyPrefix = '';
+        }
         $this->workArray = &$this->result;
     }
 
     private function errorIfNextIsNotNewlineOrEOS(TokenStream $ts): void
     {
-        if (!$ts->isNextAny(['T_NEWLINE', 'T_EOS'])) {
+        $tokenId = $ts->peekNext();
+
+        if ($tokenId !== Lexer::T_NEWLINE && $tokenId !== Lexer::T_EOS) {
             $this->unexpectedTokenError($ts->moveNext(), 'Expected T_NEWLINE or T_EOS.');
         }
     }
 
     private function unexpectedTokenError(Token $token, string $expectedMsg): void
     {
-        $name = $token->getName();
+        $name = Lexer::tokenName($token->getId());
         $line = $token->getLine();
         $value = $token->getValue();
         $msg = sprintf('Syntax error: unexpected token "%s" at line %s with value "%s".', $name, $line, $value);
@@ -871,13 +945,12 @@ class Parser extends AbstractParser
     private function syntaxError($msg, Token $token = null): void
     {
         if ($token !== null) {
-            $name = $token->getName();
+            $name = Lexer::tokenName($token->getId());
             $line = $token->getLine();
             $value = $token->getValue();
             $tokenMsg = sprintf('Token: "%s" line: %s value "%s".', $name, $line, $value);
             $msg .= ' ' . $tokenMsg;
         }
-
         throw new SyntaxErrorException($msg);
     }
 
@@ -896,12 +969,12 @@ class Parser extends AbstractParser
  */
 class AOTRef
 {
+
     public $index = -1; // index of last table 
     public $ref = null; // base array reference, which may change
     public $depth = 0; // useful fixed value
     // If created in implicit path. This isn't used much.
-    public $implicit = false; 
-
+    public $implicit = false;
     public $key; // full path lookup key
     public $parent; // follow to parent
     public $name; // last part of path name
@@ -913,13 +986,14 @@ class AOTRef
      * @param string $name
      * @param bool $implicit
      */
-    public function __construct($parent, string $key, string $name,  bool $implicit)
+
+    public function __construct($parent, string $key, string $name, bool $implicit)
     {
         $this->parent = $parent;
         $this->key = $key;
         $this->name = $name;
         $this->implicit = $implicit;
-        
+
         $depth = 0;
         $p = $this;
         while (!is_null($p)) {
@@ -929,9 +1003,9 @@ class AOTRef
         $this->depth = $depth;
     }
 
-     /** Factorization of create AOT logic,
+    /** Factorization of create AOT logic,
      * Sometimes we want to create initial table, sometimes not
-      * Initialize the internal reference
+     * Initialize the internal reference
      * Always return reference to deepest
      * @param &array $aref Array where the AOT will be made
      * @param bool $makeTable
@@ -945,12 +1019,10 @@ class AOTRef
             $this->index = -1;
             if ($makeTable) {
                 $aref = & $this->newTable();
-            }
-            else {
+            } else {
                 $aref = & $this->ref;
             }
-        }
-        else {
+        } else {
             $this->ref = & $aref[$this->name];
             // Use or check implicit flag?
             $this->index = isset($this->ref[0]) ? 0 : -1;
@@ -958,23 +1030,21 @@ class AOTRef
                 //  Most likely only 1, or find last one and make new?
                 if ($this->index >= 0) {
                     $aref = & $this->ref[0];
-                }
-                else {
+                } else {
                     $aref = & $this->newTable();
                 }
-            }
-            else {
+            } else {
                 // return what is here
                 if ($this->index >= 0) {
                     $aref = & $this->ref[0];
-                }
-                else {
+                } else {
                     $aref = & $this->ref;
                 }
             }
         }
         return $aref;
     }
+
     /**
      * Remove potential cycles from garbage collection
      * Probably have fixed this, if it ever was a problem,
@@ -999,6 +1069,7 @@ class AOTRef
     /*
      * Generate temporary array of $root to $this
      */
+
     private function getObjPath()
     {
         $objPath = array_fill(0, $this->depth, null);
@@ -1013,16 +1084,20 @@ class AOTRef
     }
 
     /**
-     * Each object holds a reference to its base
-     * array, but as nested AOT are repeatedly encountered, that reference becomes
+     * This is rather complicated function,
+     *  and the logic was decided on partly by trial and error test cases.
+     * 
+     * Each AOT object holds a reference to its base
+     * array, but as nested AOT are repeatedly encountered, such references becomes
      * invalid, ie points to a previous base.
-     * Only the root object remains valid.
-     * Don't return reference to  last indexed item of this,
-     * because it may be updated.
+     * Only if it is root object of a path does it remain all-time valid.
+     * If not a partial path, do not return reference to  last indexed item of AOT,
+     * because it will be set by caller.
      * If the root gets its index updated, then 
-     * its likely that child items don't exist, so make them.
-     * Also the index values become invalid
-     * @param bool $partial - indicates can index last item.
+     * its likely that child indexed items don't exist, so they are made as the new
+     * base reference is calculated..
+     * 
+     * @param bool $partial - indicates a partial path, forward last index
      */
     public function &getBaseRef(bool $partial)
     {
