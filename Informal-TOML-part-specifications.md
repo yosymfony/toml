@@ -14,7 +14,7 @@ Quite a few implementations already exist in a number of programming languages, 
 TOM04 needs more test examples that are useful for software conformance testing
 -----
 In so many ways, the sets of "valid" and "invalid" test examples to run through TOML parsers, and their documented output structures, in whatever language, are the real TOM04 specification, as is for XML and other data formatting specifications. Having reference test documents and reference implementations that are able to read them do strongly indicate that the specification is reasonably self-consistant.  The actual TOM04 github site hasn't got that many full document examples. Where they exist, as in the tricky AOT - table example below, there isn't even a comment to say 'valid' or 'invalid'.
-Perhaps the comments, as many bits of TOML documents and example fragments are in the ReadMe document, which are described clearly, even as they set up some collective puzzles.
+Their is some collective wisdom amoung the many bits of TOML descriptions and example fragments in sepecification, which is a README.md document, even as they set up these collective puzzles.
 
 
 Arrays, Tables, Key-values, and Array of Tables.
@@ -140,7 +140,7 @@ So what examples are on the TOML spec that tell us about a shared key path of a 
 
 After all, [table] and key-value pairs share the same key namespace, and the AOT before it, has just established a "key name space" of 'fruit.0.blash.0', and all subsequent key=value pairs are said to be in that name space.
 
-But table names are fully specified. If I want a table called 'physical' inside the current 'blah' leaf, I cannot do it by specifying 'physical', because that is an entirely new unshared subroot. Here is what I think a test case should produce, from the above toml document. Its in my first comment from my fork, in the branch called 'nearyou', as the only change.  Of course its in my 'mdrynn' branch commits in both the parse-utils and toml repository forks, because I sort of went troppo on it.  My enthusiasm is going to dissipate soon, because I have other stuff to do.
+But table names are fully specified. If I want a table called 'physical' inside the current 'blah' leaf, I cannot do it by specifying 'physical', because that is an entirely new unshared, singular subroot. Here is what I think a test case should produce, from the above toml document. Its in my first comment from my fork, in the branch called 'nearyou', as the only change.  Of course its in my 'mrynn' branch commits which need both the parse-utils and toml repository forks, there are dependent changes in both.  My enthusiasm is going to dissipate soon, because I have other stuff to do.
 
 
 
