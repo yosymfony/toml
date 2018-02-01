@@ -151,9 +151,9 @@ My first naive way around this, was to take the term 'most recently defined' tab
 
 But then I thought, what if I imposed a completedly different keypath table, with different root name, in-between any of these 'fruit' example sections. Does this change the relationships? It would most likely wipe out my temporary stacked items. But it by no means changes the relationships and order of the 'fruit' specific data. Therefore, to implement this, I have to concentrate on the key path relationships, between AOT and other AOT and tables, and the current AOT table instances that are implied, and maintain enough information about each AOT.  I don't need table instance information to be stored in quite the same way. 
 
-So the quoted sentence from the TOML site has to be read very carefully, and distrusted as ambiguous and misleading on the superficial level, and the examples information is. Isn't it obvious?
+"Each double-bracketed sub-table will belong to the most recently defined table element above it", isn't quite so obvious, because of the implicit arrays of tables.
 
-I will try here to say what I think the TOML spec should publish and make clear, or tell me I'm wrong.
+I will try here to say what I think the TOML spec should publish and make clear, and how to make AOT declarations more explicit.
 
 Table context depends on the order of shared path relatioships.  If the table came first, before the AOT, it is obviously a different structure altogether, as the table sets up a simple, naive table key path.
 
@@ -196,11 +196,11 @@ Best, most general table path syntax?
 --------------
 Another syntax possible is to build on the nested brackets idea. It is possible enclose kust the array of table levels in brackets, as in the path description [RootTable.[NextLevel].JustATable], or [RootTable.JustATable.[ArrayOfTables]] and even [RootTable.[MiddleAOT.EndAOT].LeafTable].  This is a more general formulation of the current all encompassing  [[Everything.Inside.Here.Is.AOTable]] idea.
 
-To me this seems simple and obvious enough. TOML does aim for general JSON structure representation without all the rigidity and fuss.
+To me this seems simple and obvious enough. TOML does aim for general JSON structure representation equivalence without all the rigidity, fuss, and lack of anywhere to put comments.
 
-Because the above example on the TOML site is very specific and clear, I now distrust all those so called compliant software packages for the various programming languages and libraries, since maybe they may don't implement this correctly. Even though I haven't tried any of them yet, other than PHP. (Other than Yosymphony, there was another PHP candidate that I was using initially, and it was working pretty well, and it claimed compliance, until I started to notice it wasn't exactly tested with rigor, and your version appears to have been built with a consistent discipline of design and test together, and used the phpunit framework. Still I did try a few ideas using the other PHP that claimed 0.4.0 support (https://github.com/leonelquinteros/php-toml), and it is pretty good compliance.
-
-Its possible that 0.4.0 doesn't actually do AOT contexts, and this is a new feature that has been added later, that will be further specified in 1.0.  The TOM04 readme is insufficient on this.
+Because the above example on the TOML site is very specific and clear, I now distrust all those so called compliant software packages for the various programming languages and libraries, since maybe they may don't implement this sublte feature correctly. I haven't tried any of them yet, other than the two PHP versions that appear on a google search. 
+(Other than Yosymphony, there was another PHP candidate that I was using initially, and it was works pretty well, and it claimed TOM04 compliance, until I started to notice it didn't convert integer keys into strings. The Yosymfony version appears to have been built with better test and design discipline, with the use of phpunit testing framework. I played enough with the other at (https://github.com/leonelquinteros/php-toml), to find out that TOM04 is good to use.
+Its possible that TOM04 doesn't actually do AOT contexts, and this is a new feature that has been added later, that will be more fully and generally specified in 1.0, whenever this is published.  The TOM04 readme is insufficient on these details.
 
 So the new TOML seems to be begging to come up with this sort of rule : -
 
@@ -228,9 +228,11 @@ The problem now, is my more specific definition of AOT in a table path, could ma
     name = "plantain"
 ```
 
-Or a rule could be made, that if [[fruit]] has declared that fruit is a direct key to an AOT, any further use of fruit in that key path also implies the same, wether or not the extra brackets get put arround the 'fruit' work. The TOM04 example seems to imply just this idea.
+Or a rule could be made, or restated in this form, that if [[fruit]] has declared directly or implicitly that fruit is a direct key to an AOT structure, any further use of fruit in that key path also implies the same, wether or not extra square brackets are used subsequent declarations around the parth part 'fruit'. The TOM04 example seems to imply just this idea.
+In a statically typed, compile language, the array object is created and can't be changed.
+If 'fruit' is first used without extra square brackets, then it is illegal to put extra square brackets around it in a later declaration.
 
-To be a complete specification, the table path [[fruit].[variety]] is equivalent to [[fruit.variety]].
+To be a complete specification, the table path [[fruit].[variety]] must be equivalent to [[fruit.variety]].
 and to be really specific or annoying we could put braces around table path parts,  such as [[fruit].{physical}], or say that no brackets implies curly braces.
 
 
