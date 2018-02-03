@@ -525,7 +525,7 @@ toml;
 
     /**
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage Path cannot be empty, Line 1
+     * @expectedExceptionMessage AOT Segment cannot be empty, Line 1
      */
     public function testParseMustFailWhenTableArrayMalformedEmpty()
     {
@@ -551,5 +551,17 @@ toml;
         $this->parser->parse($toml);
     }
 
-    
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage AOT Segment cannot be empty, Line 1
+     */
+    public function testParseAOTSegmentNoneEmpty()
+    {
+        $toml = <<<'toml'
+        [[albums].[]]
+        name = "Born to Run"
+toml;
+
+        $this->parser->parse($toml);
+    }    
 }
