@@ -71,8 +71,10 @@ toml;
     }
 
     /**
+     * TOM04 spaces around '.' can be ignored, therefore space after a key name
+     * isn't a problem, the problem is the first wrong character, the '='
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage Syntax error: unexpected token "T_SPACE" at line 1
+     * @expectedExceptionMessage Unexpected '=' in path, Line 1
      */
     public function testParseMustFailWhenKeyOpenBracket()
     {
@@ -96,15 +98,16 @@ toml;
     {
         $this->parser->parse('a b = 1');
     }
-
-    /**
+    /** TOM04 - White space around . is ignored, best practice is no white space, but
+     * the fail problem is the '='
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage Syntax error: unexpected token "T_SPACE" at line 2 with value " ".
+     * @expectedExceptionMessage Unexpected '=' in path, Line 2
      */
     public function testParseMustFailWhenKeyStartBracket()
     {
         $this->parser->parse("[a]\n[xyz = 5\n[b]");
     }
+
 
     /**
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
@@ -399,7 +402,7 @@ toml;
 
     /**
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage The key "a" has already been defined previously.
+     * @expectedExceptionMessage Table path [a] at line 2 interferes with path at line 1
      */
     public function testParseMustFailWhenDuplicateTable()
     {
@@ -413,7 +416,7 @@ toml;
 
     /**
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage Syntax error: unexpected token "T_RIGHT_SQUARE_BRAKET" at line 1 with value "]".
+     * @expectedExceptionMessage Path cannot be empty, Line 1
      */
     public function testParseMustFailWhenTableEmpty()
     {
@@ -421,8 +424,9 @@ toml;
     }
 
     /**
+     * TOM04 - expected a dot
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage Syntax error: unexpected token "T_SPACE" at line 1 with value " ".
+     * @expectedExceptionMessage Expected a '.' after path key, Line 1
      */
     public function testParseMustFailWhenTableWhitespace()
     {
@@ -431,7 +435,7 @@ toml;
 
     /**
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage Syntax error: unexpected token "T_DOT" at line 1 with value ".".
+     * @expectedExceptionMessage Found '..' in path, Line 1
      */
     public function testParseMustFailWhenEmptyImplicitTable()
     {
@@ -440,7 +444,7 @@ toml;
 
     /**
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage Syntax error: unexpected token "T_HASH" at line 1 with value "#".
+     * @expectedExceptionMessage Unexpected '#' in path, Line 1
      */
     public function testParseMustFailWhenTableWithPound()
     {
@@ -458,7 +462,7 @@ toml;
 
     /**
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage Syntax error: unexpected token "T_LEFT_SQUARE_BRAKET" at line 1 with value "[".
+     * @expectedExceptionMessage Expected a '.' after path key, Line 1
      */
     public function testParseMustFailWhenTableNestedBracketsOpen()
     {
@@ -500,7 +504,7 @@ toml;
 
     /**
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage The key "fruit.variety" has already been defined previously.
+     * @expectedExceptionMessage Table path [fruit.variety] at line 8 interferes with path at line 4
      */
     public function testParseMustFailWhenTableArrayWithSomeNameOfTable()
     {
@@ -521,7 +525,7 @@ toml;
 
     /**
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage Syntax error: unexpected token "T_RIGHT_SQUARE_BRAKET" at line 1 with value "]".
+     * @expectedExceptionMessage Path cannot be empty, Line 1
      */
     public function testParseMustFailWhenTableArrayMalformedEmpty()
     {
@@ -535,7 +539,7 @@ toml;
 
     /**
      * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage Syntax error: unexpected token "T_NEWLINE" at line 1
+     * @expectedExceptionMessage New line in unfinished path, Line 1
      */
     public function testParseMustFailWhenTableArrayMalformedBracket()
     {
@@ -547,29 +551,5 @@ toml;
         $this->parser->parse($toml);
     }
 
-    /**
-     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
-     * @expectedExceptionMessage The array of tables "albums" has already been defined as previous table
-     */
-    public function testParseMustFailWhenTableArrayImplicit()
-    {
-        $toml = <<<'toml'
-        # This test is a bit tricky. It should fail because the first use of
-        # `[[albums.songs]]` without first declaring `albums` implies that `albums`
-        # must be a table. The alternative would be quite weird. Namely, it wouldn't
-        # comply with the TOML spec: "Each double-bracketed sub-table will belong to
-        # the most *recently* defined table element *above* it."
-        #
-        # This is in contrast to the *valid* test, table-array-implicit where
-        # `[[albums.songs]]` works by itself, so long as `[[albums]]` isn't declared
-        # later. (Although, `[albums]` could be.)
-        [[albums.songs]]
-        name = "Glory Days"
-
-        [[albums]]
-        name = "Born in the USA"
-toml;
-
-        $this->parser->parse($toml);
-    }
+    
 }

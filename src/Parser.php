@@ -31,9 +31,9 @@ class Parser extends AbstractParser
     const PATH_NONE = 0;
 
     // Waiting for a test case that shows $useKeyStore is needed
-    private $useKeyStore = false; 
+    private $useKeyStore = false;
     private $keys = []; //usage controlled by $useKeyStore
-    private $currentKeyPrefix = '';//usage controlled by $useKeyStore
+    private $currentKeyPrefix = ''; //usage controlled by $useKeyStore
     // array context for key = value
     // parsed result to return
     private $result = [];
@@ -43,7 +43,10 @@ class Parser extends AbstractParser
 
     private $workArray;
     // array of all AOTRef using base name string key
-    private $refAOT = [];
+    private $refAOT = []; // deprecating this version now
+    //
+    private $allPaths = [];  // blend of all registered table paths
+    private $pathFull = null;  // instance of last fully specificied path
     // remenber table paths created in passing
     private $implicitTables = []; // array[string] of bool
 
@@ -154,11 +157,7 @@ class Parser extends AbstractParser
                 $this->parseKeyValue($ts);
                 break;
             case Lexer::T_LEFT_SQUARE_BRAKET:
-                if ($ts->isNextSequence([Lexer::T_LEFT_SQUARE_BRAKET, Lexer::T_LEFT_SQUARE_BRAKET])) {
-                    $this->parseArrayOfTables($ts);
-                } else {
-                    $this->parseTable($ts);
-                }
+                $this->parseTablePath($ts);
                 break;
             case Lexer::T_SPACE :
             case Lexer::T_NEWLINE:
@@ -181,11 +180,16 @@ class Parser extends AbstractParser
 
     private function parseComment(TokenStream $ts): void
     {
-        $this->assertNext(Lexer::T_HASH, $ts);
-        do {
-            $ts->moveNext();
-            $tokenId = $ts->peekNext();
-        } while ($tokenId !== Lexer::T_NEWLINE && $tokenId !== Lexer::T_EOS);
+        $tokenId = $ts->peekNext();
+        if ($tokenId != Lexer::T_HASH) {
+            $this->throwTokenError($ts->moveNext(), $tokenId);
+        }
+        while(true) {
+            $tokenId = $ts->movePeekNext();
+            if ($tokenId === Lexer::T_NEWLINE || $tokenId === Lexer::T_EOS) {
+                break;
+            }
+        }  
     }
 
     private function skipIfSpace(TokenStream $ts): int
@@ -220,22 +224,20 @@ class Parser extends AbstractParser
         }
 
         if (!$isFromInlineTable) {
-            $this->skipIfSpace($ts);
-            $this->parseCommentIfExists($ts);
-            $this->errorIfNextIsNotNewlineOrEOS($ts);
+           $this->finishLine($ts);
         }
     }
 
-    private function parseKeyName(TokenStream $ts): string
+    private function parseKeyName(TokenStream $ts, bool $stripQuote = true): string
     {
         $token = $ts->peekNext();
         switch ($token) {
             case Lexer::T_UNQUOTED_KEY:
                 return $this->matchNext(Lexer::T_UNQUOTED_KEY, $ts);
             case Lexer::T_QUOTATION_MARK:
-                return $this->parseBasicString($ts);
+                return $this->parseBasicString($ts, $stripQuote);
             case Lexer::T_APOSTROPHE:
-                return $this->parseLiteralString($ts);
+                return $this->parseLiteralString($ts, $stripQuote);
             case Lexer::T_INTEGER :
                 return (string) $this->parseInteger($ts);
             default:
@@ -351,16 +353,22 @@ class Parser extends AbstractParser
         return (float) $value;
     }
 
-    private function parseBasicString(TokenStream $ts): string
+    /** In path parsing, we may want to keep quotes, because they can be used
+     *  to enclose a '.' as a none separator. 
+     * @param TokenStream $ts
+     * @param type $stripQuote
+     * @return string
+     */
+    private function parseBasicString(TokenStream $ts, $stripQuote = true): string
     {
         $this->assertNext(Lexer::T_QUOTATION_MARK, $ts);
 
-        $result = '';
+        $result = $stripQuote ? '' : "\"";
 
         $tokenId = $ts->peekNext();
         while ($tokenId !== Lexer::T_QUOTATION_MARK) {
             if (($tokenId === Lexer::T_NEWLINE) || ($tokenId === Lexer::T_EOS) || ($tokenId
-                === Lexer::T_ESCAPE)) {
+                    === Lexer::T_ESCAPE)) {
                 // throws
                 $this->unexpectedTokenError($ts->moveNext(), 'This character is not valid.');
             }
@@ -373,6 +381,9 @@ class Parser extends AbstractParser
 
         $this->assertNext(Lexer::T_QUOTATION_MARK, $ts);
 
+        if (!$stripQuote) {
+            $result .= "\"";
+        }
         return $result;
     }
 
@@ -422,11 +433,17 @@ class Parser extends AbstractParser
         return $result;
     }
 
-    private function parseLiteralString(TokenStream $ts): string
+    /**
+     * 
+     * @param TokenStream $ts
+     * @param bool $stripQuote
+     * @return string
+     */
+    private function parseLiteralString(TokenStream $ts, bool $stripQuote = true): string
     {
         $this->assertNext(Lexer::T_APOSTROPHE, $ts);
 
-        $result = '';
+        $result = $stripQuote ? '' : "'";
         $tokenId = $ts->peekNext();
 
         while ($tokenId !== Lexer::T_APOSTROPHE) {
@@ -436,6 +453,9 @@ class Parser extends AbstractParser
 
             $result .= $ts->moveNext()->getValue();
             $tokenId = $ts->peekNext();
+        }
+        if (!$stripQuote) {
+            $result .= "'";
         }
         $this->assertNext(Lexer::T_APOSTROPHE, $ts);
         return $result;
@@ -631,87 +651,6 @@ class Parser extends AbstractParser
         throw new \Exception('Array of Table exists but not registered - ' . $key);
     }
 
-    private function parseTable(TokenStream $ts): void
-    {
-        $this->assertNext(Lexer::T_LEFT_SQUARE_BRAKET, $ts);
-
-        $fullTablePath = $this->parseKeyPath($ts);
-        $fullTableName = self::pathToName($fullTablePath);
-        // get AOT context, if any
-        list($tref, $match) = $this->getAOTRef($fullTableName);
-
-        switch ($match) {
-            case Parser::PATH_PART:
-                $baseName = $tref->getFullIndexName();
-                $offsetPath = array_slice($fullTablePath, $tref->depth);
-                $aref = & $tref->ref[$tref->index];
-
-                $lastIndex = count($offsetPath) - 1;
-                $doImplicit = false;
-                break;
-            case Parser::PATH_NONE:
-                // root name space
-                $baseName = '';
-                $offsetPath = $fullTablePath;
-                $aref = & $this->result;
-                $lastIndex = count($offsetPath) - 1;
-                $doImplicit = true;
-                break;
-            case Parser::PATH_FULL:
-            default:
-                // This table exactly matches a AOT base path - not allowed
-                $this->duplicateKey($fullTableName);
-                break;
-        }
-
-        $myPrefix = $baseName;
-
-        foreach ($offsetPath as $idx => $tableName) {
-            $baseName = (strlen($baseName) > 0) ? $baseName . "." . $tableName : $tableName;
-            if ($idx < $lastIndex) {
-                if (!isset($aref[$tableName])) {
-                    $aref[$tableName] = [];
-                    // Implicit table creation
-                    if ($doImplicit) {
-                        $this->implicitTables[$baseName] = true;
-                    }
-                }
-                $aref = & $aref[$tableName];
-            } else {
-                if (isset($aref[$tableName])) {
-                    // If created implicitly before, should only have 1 value
-                    if ($this->useKeyStore) {
-                        if (isset($this->keys[$baseName])) {
-                            $this->duplicateKey($baseName);
-                        }
-                    }
-                    $isOKThisTime = isset($this->implicitTables[$fullTableName]) && is_array($aref[$tableName]) && (count($aref[$tableName])
-                            == 1);
-                    if (!$isOKThisTime) {
-                        $this->duplicateKey($fullTableName);
-                    }
-                } else {
-                    $aref[$tableName] = [];
-                }
-                $aref = & $aref[$tableName];
-            }
-        }
-        $this->workArray = & $aref;
-
-        if ($this->useKeyStore) {
-            if (!$this->setUniqueKey($baseName)) {
-                $this->errorUniqueKey($baseName);
-            }
-            $this->currentKeyPrefix = $baseName . ".";
-        }
-
-        $this->assertNext(Lexer::T_RIGHT_SQUARE_BRAKET, $ts);
-
-        $this->parseSpaceIfExists($ts);
-        $this->parseCommentIfExists($ts);
-        $this->errorIfNextIsNotNewlineOrEOS($ts);
-    }
-
     private static function pathToName($path)
     {
         $ct = count($path);
@@ -724,95 +663,260 @@ class Parser extends AbstractParser
         }
     }
 
-    private function parseArrayOfTables(TokenStream $ts): void
+    /**
+     * Nothing more of interest on the line,
+     * anything besides a comment is an error
+     */
+    private function finishLine(TokenStream $ts) : void {
+            $this->skipIfSpace($ts);
+            $this->parseCommentIfExists($ts);
+            $this->errorIfNextIsNotNewlineOrEOS($ts);     
+    }
+    /** Return a PathFull object from the table path.
+     *  The parse is the easy part. What to do with it is hard.
+     * @param TokenStream $ts
+     * @return array [PathFull,$lastMatch]
+     */
+    private function parsePathFull(TokenStream $ts)
     {
-        $this->assertNext(Lexer::T_LEFT_SQUARE_BRAKET, $ts);
-        $this->assertNext(Lexer::T_LEFT_SQUARE_BRAKET, $ts);
-
-        $fullTablePath = $this->parseKeyPath($ts);
-        $fullTableName = self::pathToName($fullTablePath);
-        list($tref, $match) = $this->getAOTRef($fullTableName);
-
-        switch ($match) {
-            case Parser::PATH_PART:
-                $baseName = $tref->key;
-                $aref = & $tref->getBaseRef(true);
-                $offsetPath = array_slice($fullTablePath, $tref->depth);
-                $lastIndex = count($offsetPath) - 1;
-                break;
-            case Parser::PATH_NONE:
-                // $tref is null
-                $baseName = '';
-                $offsetPath = $fullTablePath;
-                $aref = & $this->result;
-                $lastIndex = count($offsetPath) - 1;
-                break;
-            case Parser::PATH_FULL:
-            default:
-                /* test case testParseMustParseTableArrayNest 
-                 * If albums path has incremented index,
-                 * and albums.song path is a full match 
-                 * then need to check on the parent references
-                 */
-                $offsetPath = [];
-                $aref = & $tref->getBaseRef(false);
-                $baseName = $fullTableName;
-                $lastIndex = -1; // not going to be used:
-                break;
+        $pathToken = $ts->moveNext();
+        if ($pathToken->getId() != Lexer::T_LEFT_SQUARE_BRAKET)
+        {
+            $this->tablePathError("Path start [ expected", $pathToken);
         }
-        if ($lastIndex >= 0) {
-            // Calculating parts of AOT for the first time. 
-            // Not so good to have this sort of logic in two places.
-            foreach ($offsetPath as $idx => $tableName) {
-                $baseName = (strlen($baseName) > 0) ? $baseName . "." . $tableName
-                            : $tableName;
-                if ($idx < $lastIndex) {
-                    if (!isset($aref[$tableName])) {
-                        // should be the case, if AOT not registered
-                        // current spec test requires implicit first member offset 0
-                        $tref = new AOTRef($tref, $baseName, $tableName, true);
-                        $this->registerAOT($tref);
-                        $aref = & $tref->makeAOT($aref, true);
+
+        $isAOT = false;
+
+        $parts = [];
+        $dotCount = 0;
+        $hasAOT = false;
+        $hasTables = false;
+
+        while (true) {
+            $tokenId = $ts->peekNext();
+            switch ($tokenId) {
+                case Lexer::T_HASH:
+                    $this->tablePathError("Unexpected '#' in path", $ts->moveNext());
+                    break;
+                case Lexer::T_EQUAL:
+                    $this->tablePathError("Unexpected '=' in path", $ts->moveNext());
+                    break;
+                case Lexer::T_SPACE:
+                    $ts->moveNext();
+                    break;
+                case Lexer::T_NEWLINE:
+                    $this->tablePathError("New line in unfinished path", $ts->moveNext());
+                    break;
+                case Lexer::T_RIGHT_SQUARE_BRAKET:
+                    $ts->moveNext();
+                    if ($isAOT) {
+                        $isAOT = false;
+                        break;
                     } else {
-                        if (!is_array($aref[$tableName])) {
-                            $this->errorUniqueKey($baseName);
-                        }
-                        $tref = new AOTRef($tref, $baseName, $tableName, true);
-                        $this->registerAOT($tref);
-                        $aref = & $tref->makeAOT($aref, false);
+                        break 2;
                     }
-                } else {
-                    if (!isset($aref[$tableName])) {
-                        $tref = new AOTRef($tref, $baseName, $tableName, false);
-                        $this->registerAOT($tref);
-                        $aref = & $tref->makeAOT($aref, false);
-                    } else {
-                        $this->registerAOTError($baseName);
+                case Lexer::T_LEFT_SQUARE_BRAKET:
+                    $token = $ts->moveNext();
+                    if ($dotCount < 1 && count($parts) > 0) {
+                        $this->tablePathError("Expected a '.' after path key", $token);
                     }
-                }
+                    if ($isAOT) {
+                        // one too many
+                        $this->$token("Too many consecutive [ in path", $token);
+                    }
+                    $isAOT = true;
+                    
+                    break;
+                case Lexer::T_DOT;
+                    $token = $ts->moveNext();
+                    if ($dotCount === 1) {
+                        $this->tablePathError("Found '..' in path", $token);
+                    }
+                    $dotCount += 1;
+                    break;
+                default:
+                    if (!$isAOT) {
+                        $hasTables = true;
+                    }
+                    else {
+                        $hasAOT = true;
+                    }
+                    if ($dotCount < 1 && count($parts) > 0) {
+                        $this->tablePathError("Expected a '.' after path key", $ts->moveNext());
+                    }
+                    $dotCount = 0;
+                    $parts[] = new PathPart($this->parseKeyName($ts, false), $isAOT);
+                    break;
             }
         }
-
-        //TODO: check case of accessing intrinsic which has first table?
-        if ($tref->implicit && $match == Parser::PATH_FULL) {
-            $this->tableNameIsAOT($fullTableName);
+        if ($dotCount > 0) {
+            // one too many
+            $this->syntaxError("Extra path '.'", $pathToken);
         }
-        // At this point $tref should be valid and 
-        // and is current location for key-value insertions
-        // hazard this by asking $tref for new table and reference
-        $this->workArray = & $tref->newTable();
-
-        if ($this->useKeyStore) {
-            $this->currentKeyPrefix = $tref->getFullIndexName() . ".";
+        $findKey = '';
+        $lastMatch = '';
+        foreach ($parts as $idx => $p) {
+            if ($idx > 0) {
+                $findKey .= '.';
+            } 
+            $findKey .= $p->name;
+            if (isset($this->allPaths[$findKey])) {
+                $lastMatch = $findKey;
+            }
         }
-        $this->assertNext(Lexer::T_RIGHT_SQUARE_BRAKET, $ts);
-        $this->assertNext(Lexer::T_RIGHT_SQUARE_BRAKET, $ts);
-
-        $this->parseSpaceIfExists($ts);
-        $this->parseCommentIfExists($ts);
-        $this->errorIfNextIsNotNewlineOrEOS($ts);
+        $pf = new PathFull();
+        $pf->key = $findKey;
+        $pf->parts = $parts;
+        $pf->line = $pathToken->getLine();
+        $pf->setKind($hasTables, $hasAOT);
+        if ($pf->kind === PathFull::PF_EMPTY) {
+            $this->tablePathError("Path cannot be empty", $pathToken);
+        }
+        $pf->last = $parts[count($parts) - 1];
+        return [$pf, $lastMatch];
     }
 
+    private function tablePathError($msg,Token $token=null) {
+        if (!is_null($token)) {
+            $msg .= ", Line " . $token->getLine();
+        }
+        throw new SyntaxErrorException($msg);
+    }
+    
+    private function tablePathClash($orig, $pf) {
+        $msg = "Table path [" . $pf->key . "] at line " . $pf->line 
+                . " interferes with path at line " . $orig->line;
+        throw new SyntaxErrorException($msg);
+    }
+    /**
+     * @param TokenStream $ts
+     * For mixed AOT and table paths, some rules to be followed, or else.
+     * For existing paths, a new AOT-T is created if end of path is AOT
+     * New path dynamic AOT segments always create an initial AOT-T
+     * Existing AOT segments ended with a Table Path are unaltered.
+     * 
+     * Traverse the path parts and adjust workArray
+     * 
+     * Would be nice to have a token that says "I am relative" to last path,
+     * //TODO: Try relative paths and replacement. Means more tokens to LEXER
+     * If first character is a "plus" + , it extends and replaces last path
+     * If first character is a "minus" - , it extends last path without replacement
+     * 
+     */
+    
+    
+    private function parseTablePath(TokenStream $ts): void
+    {
+        list($pf, $lastMatch) = $this->parsePathFull($ts);
+
+        $this->finishLine($ts);
+        
+        if (empty($lastMatch) || ($lastMatch !== $pf->key)) {
+            //$match = Parser::PATH_NONE;
+            if (!empty($lastMatch)) {
+                $orig = $this->allPaths[$lastMatch];
+                $hasAOT = false;
+                $hasTables = false;
+                $origParts = $orig->parts;
+                $origCt = count($origParts);
+                foreach($pf->parts as $idx => $part) {
+                    if ($idx < $origCt) {
+                        if ($origParts[$idx]->isAOT) {
+                            $part->isAOT = true;
+                            $hasAOT = true;
+                        }
+                        else {
+                            $hasTables = true;
+                            if ($part->isAOT) {
+                                // lenient here?
+                                $part->isAOT = false;
+                                //$this->tablePathClash($orig, $pf);
+                            }
+                        }
+                    }
+                    else {
+                        if ($part->isAOT) {
+                            $hasAOT = true;
+                        }
+                        else {
+                            $hasTables = true;
+                        }
+                    }
+                }
+                // rewrite kind
+                $pf->setKind($hasTables,$hasAOT);
+            }
+            $this->allPaths[$pf->key] = $pf;
+        } else {
+            // Not all existing test cases can be satisfied here
+            // A exact base path match.
+            $orig = $this->allPaths[$lastMatch];
+            if ($orig->kind === PathFull::PF_TABLE && $pf->kind === PathFull::PF_TABLE) {
+                // obvious duplicate action.
+                $this->tablePathClash($orig, $pf);
+            }
+            elseif ($pf->kind === PathFull::PF_TABLE) {
+                // original has some AOT
+                if ($orig->kind === PathFull::PF_AOT) {
+                    $this->tablePathClash($orig, $pf);
+                }
+                elseif ($orig->kind === PathFull::PF_MIXED && (!$orig->last->isAOT)) {
+                    // let it go through for now
+                }
+            }
+            $pf = $orig; // take as request to reuse original
+        } 
+
+        $aref = & $this->result;
+        $lastIndex = count($pf->parts) - 1;
+        $prefix = ''; // for key prefix
+        
+        foreach ($pf->parts as $idx => $part) {
+            $pname = $part->name;
+            $slen = strlen($pname);
+            if (strlen($pname) >= 2) {
+                $quote = substr($pname,0,1);
+                if ($quote === "'" || $quote === '"') {
+                    $pname = substr($pname,1,$slen-2);
+                }
+            }
+            $prefix = ($idx===0) ? $pname : $prefix .= '.' . $pname;
+            
+            $isNewPart = !isset($aref[$pname]);
+            if ($isNewPart) {
+                $aref[$pname] = [];
+                $aref = & $aref[$pname];
+            } else {
+                $aref = & $aref[$pname];
+                if (!is_array($aref)) {
+                    $this->errorUniqueKey($prefix);
+                }
+            }
+            
+            if ($part->isAOT) {
+                // important that keys do not share with AOT base
+                $lastTableIndex = count($aref);
+                
+                if ($idx == $lastIndex || $isNewPart) {
+                    //extend
+                    $aref[] = [];
+                    $aref = &$aref[$lastTableIndex];
+                }
+                else { // not a new part
+                    $lastTableIndex--;
+                    $aref = &$aref[$lastTableIndex];
+                }
+                $prefix .= '[' . (string) $lastTableIndex . ']';
+            }
+            
+        }
+        $this->currentKeyPrefix = $prefix . "."; 
+        $this->workArray = & $aref;
+    }
+    private function throwTokenError($token, int $expectedId) {
+        $tokenName = Lexer::tokenName($expectedId);
+        $this->unexpectedTokenError($token, "Expected \"$tokenName\".");
+    }
     /**
      * Get and consume next token.
      * Move on if matches, else throw exception.
@@ -825,8 +929,7 @@ class Parser extends AbstractParser
     {
         $token = $ts->moveNext(); // token always consumed
         if ($tokenId !== $token->getId()) {
-            $tokenName = Lexer::tokenName($tokenId);
-            $this->unexpectedTokenError($token, "Expected \"$tokenName\".");
+            $this->throwTokenError($token, $tokenId);
         }
     }
 
@@ -840,8 +943,7 @@ class Parser extends AbstractParser
     {
         $token = $ts->moveNext(); // token always consumed
         if ($tokenId !== $token->getId()) {
-            $tokenName = Lexer::tokenName($tokenId);
-            $this->unexpectedTokenError($token, "Expected \"$tokenName\".");
+            $this->throwTokenError($token, $tokenId);
         }
         return $token->getValue();
     }
@@ -877,7 +979,8 @@ class Parser extends AbstractParser
                         'The key "%s" has already been defined previously.', $keyName
         ));
     }
-    /** 
+
+    /**
      * Runtime check on uniqueness of key
      * Usage is controller by $this->useKeyStore
      * @param string $keyName
@@ -888,7 +991,7 @@ class Parser extends AbstractParser
             $this->errorUniqueKey($keyName);
         }
     }
-    
+
     /**
      * Return true if key was already set
      * Usage controlled by $this->useKeyStore
@@ -956,200 +1059,49 @@ class Parser extends AbstractParser
 
 }
 
-/** Keep track of relevant previous AOT declarations 
- *  Array Key is stringified AOT path
- *  Index to last table 
- *  Instead of having separate arrays for each AOT property
- *  cache them all in one indexed object
- *  No reference to parent AOTRef yet.
- *  My terminology: Name is a string; Path is array of names
- *  This class holds references to itself, so maybe the
- *  Parser should call cleanup, on each one it creates,
- *  prior to exit of parse function as a finally
- */
-class AOTRef
+class PathPart
 {
 
-    public $index = -1; // index of last table 
-    public $ref = null; // base array reference, which may change
-    public $depth = 0; // useful fixed value
-    // If created in implicit path. This isn't used much.
-    public $implicit = false;
-    public $key; // full path lookup key
-    public $parent; // follow to parent
-    public $name; // last part of path name
+    public $name;
+    public $isAOT;
 
-    /**
-     * Construct with enough details so other stuff works
-     * @param ?AOTRef $parent
-     * @param string $key
-     * @param string $name
-     * @param bool $implicit
-     */
-
-    public function __construct($parent, string $key, string $name, bool $implicit)
+    public function __construct(string $name, bool $isAOT)
     {
-        $this->parent = $parent;
-        $this->key = $key;
         $this->name = $name;
-        $this->implicit = $implicit;
-
-        $depth = 0;
-        $p = $this;
-        while (!is_null($p)) {
-            $depth += 1;
-            $p = $p->parent;
-        }
-        $this->depth = $depth;
-    }
-
-    /** Factorization of create AOT logic,
-     * Sometimes we want to create initial table, sometimes not
-     * Initialize the internal reference
-     * Always return reference to deepest
-     * @param &array $aref Array where the AOT will be made
-     * @param bool $makeTable
-     * @return &array
-     */
-    public function &makeAOT(& $aref, bool $makeTable)
-    {
-        if (!isset($aref[$this->name])) {
-            $aref[$this->name] = [];
-            $this->ref = & $aref[$this->name];
-            $this->index = -1;
-            if ($makeTable) {
-                $aref = & $this->newTable();
-            } else {
-                $aref = & $this->ref;
-            }
-        } else {
-            $this->ref = & $aref[$this->name];
-            // Use or check implicit flag?
-            $this->index = isset($this->ref[0]) ? 0 : -1;
-            if ($makeTable) {
-                //  Most likely only 1, or find last one and make new?
-                if ($this->index >= 0) {
-                    $aref = & $this->ref[0];
-                } else {
-                    $aref = & $this->newTable();
-                }
-            } else {
-                // return what is here
-                if ($this->index >= 0) {
-                    $aref = & $this->ref[0];
-                } else {
-                    $aref = & $this->ref;
-                }
-            }
-        }
-        return $aref;
-    }
-
-    /**
-     * Remove potential cycles from garbage collection
-     * Probably have fixed this, if it ever was a problem,
-     * by using getObjPath values as temporary
-     */
-    public function unlink()
-    {
-        $this->parent = null;
-    }
-
-    /**
-     * Hazard that this AOT ref location is the one we want,
-     * and return a reference to a new table
-     */
-    public function & newTable()
-    {
-        $this->ref[] = [];
-        $this->index++;
-        return $this->ref[$this->index];
-    }
-
-    /*
-     * Generate temporary array of $root to $this
-     */
-
-    private function getObjPath()
-    {
-        $objPath = array_fill(0, $this->depth, null);
-        $idx = $this->depth - 1;
-        $p = $this;
-        while (!is_null($p)) {
-            $objPath[$idx] = $p;
-            $idx--;
-            $p = $p->parent;
-        }
-        return $objPath;
-    }
-
-    /**
-     * This is rather complicated function,
-     *  and the logic was decided on partly by trial and error test cases.
-     * 
-     * Each AOT object holds a reference to its base
-     * array, but as nested AOT are repeatedly encountered, such references becomes
-     * invalid, ie points to a previous base.
-     * Only if it is root object of a path does it remain all-time valid.
-     * If not a partial path, do not return reference to  last indexed item of AOT,
-     * because it will be set by caller.
-     * If the root gets its index updated, then 
-     * its likely that child indexed items don't exist, so they are made as the new
-     * base reference is calculated..
-     * 
-     * @param bool $partial - indicates a partial path, forward last index
-     */
-    public function &getBaseRef(bool $partial)
-    {
-        $objPath = $this->getObjPath();
-        $isReset = false;
-        $lastIX = $this->depth - 1;
-        foreach ($objPath as $idx => $obj) {
-            $canDoIndex = ($partial || $idx < $lastIX) && ($obj->index >= 0);
-            if ($idx == 0) {
-                $result = & $obj->ref; // $root base never changes
-                if ($canDoIndex) {
-                    $result = & $result[$obj->index];
-                }
-            } else {
-                if (!isset($result[$obj->name])) {
-                    $result[$obj->name] = [];
-                    $isReset = true;
-                    $result = & $result[$obj->name];
-                    $obj->ref = & $result;
-                } else {
-                    $result = & $result[$obj->name];
-                }
-                if ($isReset) {
-                    if ($canDoIndex) {
-                        $obj->index = 0;
-                        $result[] = [];
-                        $result = & $result[0];
-                    } else {
-                        $obj->index = -1;
-                    }
-                } else {
-                    if ($canDoIndex) {
-                        $result = & $result[$obj->index];
-                    }
-                }
-            }
-        }
-        return $result;
-    }
-
-    // recursive build of full index including last index number of each parent
-    public function getFullIndexName(): string
-    {
-        $part = ($this->index >= 0) ? "." . $this->index : '';
-        $name = $this->name . $part;
-        $p = $this->parent;
-        while (!is_null($p)) {
-            $part = ($p->index >= 0) ? "." . $p->index : '';
-            $name = $p->name . $part . "." . $name;
-            $p = $p->parent;
-        }
-        return $name;
+        $this->isAOT = $isAOT;
     }
 
 }
+
+class PathFull
+{
+
+    const PF_EMPTY = 0;
+    const PF_TABLE = 1;
+    const PF_AOT = 2;
+    const PF_MIXED = 3;
+
+    public $key;
+    public $parts;
+    public $kind;
+    public $last;
+    public $line;
+    
+    public function setKind(bool $hasTables, bool $hasAOT) : void
+    {
+        if ($hasTables && $hasAOT) {
+            $this->kind = PathFull::PF_MIXED;
+        }
+        elseif ($hasAOT) {
+            $this->kind = PathFull::PF_AOT;
+        }
+        elseif ($hasTables) {
+            $this->kind = PathFull::PF_TABLE;
+        }
+        else {
+            $this->kind = PathFull::PF_EMPTY;
+        }
+    }
+
+}
+
