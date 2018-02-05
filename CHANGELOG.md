@@ -2,6 +2,7 @@ CHANGELOG
 =========
 1.0.1
 -----
+* Fixed a bug related to integer keys: now, it's possible to create keys using an integer. Reported by @betrixed.
 * Merged the pull request #17: "removing `is_string` check".
 * Minor fixes in README file.
 

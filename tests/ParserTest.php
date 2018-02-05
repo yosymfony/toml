@@ -439,6 +439,27 @@ toml;
         ], $array);
     }
 
+    public function testParseMustParseBareIntegerKeys()
+    {
+        $toml = <<<'toml'
+        [sequence]
+        -1 = 'detect person'
+        0 = 'say hello'
+        1 = 'chat'
+        10 = 'say bye'
+toml;
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'sequence' => [
+                '-1' => 'detect person',
+                 '0' => 'say hello',
+                 '1' => 'chat',
+                 '10' => 'say bye'
+             ]
+                 ], $array);
+    }
+
     public function testParseMustParseAnEmptyTable()
     {
         $array = $this->parser->parse('[a]');

@@ -80,7 +80,7 @@ class Parser extends AbstractParser
     {
         if ($ts->isNext('T_HASH')) {
             $this->parseComment($ts);
-        } elseif ($ts->isNextAny(['T_QUOTATION_MARK', 'T_UNQUOTED_KEY'])) {
+        } elseif ($ts->isNextAny(['T_QUOTATION_MARK', 'T_UNQUOTED_KEY', 'T_INTEGER'])) {
             $this->parseKeyValue($ts);
         } elseif ($ts->isNextSequence(['T_LEFT_SQUARE_BRAKET','T_LEFT_SQUARE_BRAKET'])) {
             $this->parseArrayOfTables($ts);
@@ -130,6 +130,10 @@ class Parser extends AbstractParser
     {
         if ($ts->isNext('T_UNQUOTED_KEY')) {
             return $this->matchNext('T_UNQUOTED_KEY', $ts);
+        }
+
+        if ($ts->isNext('T_INTEGER')) {
+            return $this->parseInteger($ts);
         }
 
         return $this->parseBasicString($ts);
