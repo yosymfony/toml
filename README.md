@@ -156,6 +156,12 @@ The result:
         [[fruit.variety]]
         name = "platain"
 
+Contributing
+------------
+When Contributing code to this library, you must follow its coding standards.
+Toml follows [PSR-2 coding style](https://www.php-fig.org/psr/psr-2/). To ensure
+the CS, you can use the CLI tool [PHP-CS-Fixer](https://github.com/FriendsOfPHP/PHP-CS-Fixer).
+
 Unit tests
 ----------
 This library requires [PHPUnit](https://phpunit.de/) >= 6.3.
