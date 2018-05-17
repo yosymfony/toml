@@ -25,11 +25,28 @@ class TomlTest extends TestCase
         ], $array);
     }
 
+    /**
+     * @expectedException Yosymfony\Toml\Exception\ParseException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_EOS" at line 1 with value "". Expected "T_EQUAL".
+     */
+    public function testParseShouldThrowParseException()
+    {
+        Toml::parse('invalid_toml_string');
+    }
+
     public function testParseMustReturnEmptyArrayWhenStringEmpty()
     {
         $array = Toml::parse('');
 
         $this->assertNull($array);
+    }
+
+    /**
+     * @expectedException Yosymfony\Toml\Exception\ParseException
+     */
+    public function testParseFileShouldThrowParseException()
+    {
+        Toml::parseFile(__DIR__.'/fixtures/invalid.toml');
     }
 
     public function testParseFileMustParseFile()
