@@ -7,7 +7,7 @@ php:
 
 before_script:
   - composer self-update
-  - composer install --no-interaction --no-dev
+  - composer update --no-interaction --no-dev
 
 matrix:
   allow_failures:

@@ -36,6 +36,16 @@ class ParserTest extends TestCase
         $this->assertEquals([], $array);
     }
 
+    /**
+     * @expectedException Yosymfony\ParserUtils\SyntaxErrorException
+     * @expectedExceptionMessage Syntax error: unexpected token "T_EOS" at line 1 with value "". Expected "T_EQUAL".
+     */
+    public function testParseShouldThrowSyntaxErrorException()
+    {
+        $toml = 'invalid_toml';
+        $array = $this->parser->parse($toml);
+    }
+
     public function testParseMustParseBooleans()
     {
         $toml = <<<'toml'
