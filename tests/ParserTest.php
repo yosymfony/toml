@@ -829,6 +829,49 @@ toml;
         ], $array);
     }
 
+    /**
+     * @see https://github.com/yosymfony/toml/issues/23
+     */
+    public function testParseMustParseTablesContainedWithinArrayTables()
+    {
+        $toml = <<<'toml'
+        [[tls]]
+        entrypoints = ["https"]
+        [tls.certificate]
+            certFile = "certs/foo.crt"
+            keyFile  = "keys/foo.key"
+
+        [[tls]]
+        entrypoints = ["https"]
+        [tls.certificate]
+            certFile = "certs/bar.crt"
+            keyFile  = "keys/bar.key"
+toml;
+
+        $array = $this->parser->parse($toml);
+
+        $this->assertEquals([
+            'tls' => [
+                [
+                    'entrypoints' => ['https'],
+                    'certificate' => [
+                        'certFile' => 'certs/foo.crt',
+                        'keyFile' => 'keys/foo.key',
+                    ],
+
+                ],
+                [
+                    'entrypoints' => ['https'],
+                    'certificate' => [
+                        'certFile' => 'certs/bar.crt',
+                        'keyFile' => 'keys/bar.key',
+                    ],
+
+                ],
+            ],
+        ], $array);
+    }
+
     public function testParseMustParseCommentsEverywhere()
     {
         $toml = <<<'toml'

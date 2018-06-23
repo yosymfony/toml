@@ -103,7 +103,7 @@ You can create a TOML string with TomlBuilder. TomlBuilder uses a *fluent interf
         ->addArrayTables('fruit')                            // Row
             ->addValue('name', 'banana')
             ->addArrayTables('fruit.variety')
-                ->addValue('name', 'platain')
+                ->addValue('name', 'plantain')
 
         ->getTomlString();    // Generate the TOML string
 ```
@@ -154,7 +154,7 @@ The result:
         name = "banana"
 
         [[fruit.variety]]
-        name = "platain"
+        name = "plantain"
 
 Contributing
 ------------
@@ -164,12 +164,18 @@ the CS, you can use the CLI tool [PHP-CS-Fixer](https://github.com/FriendsOfPHP/
 
 Unit tests
 ----------
-This library requires [PHPUnit](https://phpunit.de/) >= 6.3.
 You can run the unit tests with the following command:
 
 ```bash
 $ cd toml
 $ phpunit
+```
+
+or
+
+```bash
+$ cd toml
+$ composer test
 ```
 
 ## License

@@ -23,11 +23,8 @@ use Yosymfony\ParserUtils\SyntaxErrorException;
  */
 class Parser extends AbstractParser
 {
-    private $keys = [];
-    private $keyOfTables = [];
-    private $keysOfImplicitArrayOfTables = [];
-    private $arrayOfTablekeyCounters = [];
-    private $currentKeyPrefix = '';
+    /** @var KeyStore */
+    private $keyStore;
     private $result = [];
     private $workArray;
 
@@ -62,6 +59,7 @@ class Parser extends AbstractParser
      */
     protected function parseImplentation(TokenStream $ts) : array
     {
+        $this->keyStore = new KeyStore();
         $this->resetWorkArrayToResultArray();
 
         while ($ts->hasPendingTokens()) {
@@ -71,11 +69,6 @@ class Parser extends AbstractParser
         return $this->result;
     }
 
-    /**
-     * Process an expression
-     *
-     * @param TokenStream $ts The token stream
-     */
     private function processExpression(TokenStream $ts) : void
     {
         if ($ts->isNext('T_HASH')) {
@@ -106,14 +99,29 @@ class Parser extends AbstractParser
     private function parseKeyValue(TokenStream $ts, bool $isFromInlineTable = false) : void
     {
         $keyName = $this->parseKeyName($ts);
-        $this->addKeyToKeyStore($this->composeKeyWithCurrentKeyPrefix($keyName));
         $this->parseSpaceIfExists($ts);
         $this->matchNext('T_EQUAL', $ts);
         $this->parseSpaceIfExists($ts);
 
+        $isInlineTable = $ts->isNext('T_LEFT_CURLY_BRACE');
+
+        if ($isInlineTable) {
+            if (!$this->keyStore->isValidInlineTable($keyName)) {
+                $this->syntaxError("The inline table key \"{$keyName}\" has already been defined previously.");
+            }
+
+            $this->keyStore->addInlineTableKey($keyName);
+        } else {
+            if (!$this->keyStore->isValidKey($keyName)) {
+                $this->syntaxError("The key \"{$keyName}\" has already been defined previously.");
+            }
+
+            $this->keyStore->addkey($keyName);
+        }
+
         if ($ts->isNext('T_LEFT_SQUARE_BRAKET')) {
             $this->workArray[$keyName] = $this->parseArray($ts);
-        } elseif ($ts->isNext('T_LEFT_CURLY_BRACE')) {
+        } elseif ($isInlineTable) {
             $this->parseInlineTable($ts, $keyName);
         } else {
             $this->workArray[$keyName] = $this->parseSimpleValue($ts)->value;
@@ -433,11 +441,9 @@ class Parser extends AbstractParser
     private function parseInlineTable(TokenStream $ts, string $keyName) : void
     {
         $this->matchNext('T_LEFT_CURLY_BRACE', $ts);
-        $priorcurrentKeyPrefix = $this->currentKeyPrefix;
         $priorWorkArray = &$this->workArray;
 
         $this->addArrayKeyToWorkArray($keyName);
-        $this->currentKeyPrefix = $this->composeKeyWithCurrentKeyPrefix($keyName);
 
         $this->parseSpaceIfExists($ts);
 
@@ -455,7 +461,6 @@ class Parser extends AbstractParser
         }
 
         $this->matchNext('T_RIGHT_CURLY_BRACE', $ts);
-        $this->currentKeyPrefix = $priorcurrentKeyPrefix;
         $this->workArray = &$priorWorkArray;
     }
 
@@ -477,8 +482,11 @@ class Parser extends AbstractParser
             $this->addArrayKeyToWorkArray($key);
         }
 
-        $this->addKeyToTableKeyStore($this->composeKeyWithCurrentKeyPrefix($fullTableName));
-        $this->currentKeyPrefix = $fullTableName;
+        if (!$this->keyStore->isValidTableKey($fullTableName)) {
+            $this->syntaxError("The key \"{$fullTableName}\" has already been defined previously.");
+        }
+
+        $this->keyStore->addTableKey($fullTableName);
         $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
 
         $this->parseSpaceIfExists($ts);
@@ -505,8 +513,15 @@ class Parser extends AbstractParser
             $this->addArrayOfTableKeyToWorkArray($key, !$ts->isNext('T_DOT'));
         }
 
-        $this->addArrayOfTableKeyToKeyStore($fullTableName);
-        $this->currentKeyPrefix = $fullTableName. $this->getCounterArrayOfTableKey($fullTableName);
+        if (!$this->keyStore->isValidArrayTableKey($fullTableName)) {
+            $this->syntaxError("The key \"{$fullTableName}\" has already been defined previously.");
+        }
+
+        if ($this->keyStore->isTableImplicitFromArryTable($fullTableName)) {
+            $this->syntaxError("The array of tables \"{$fullTableName}\" has already been defined as previous table");
+        }
+
+        $this->keyStore->addArrayTableKey($fullTableName);
 
         $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
         $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
@@ -550,89 +565,14 @@ class Parser extends AbstractParser
         }
     }
 
-    private function addKeyToKeyStore(string $keyName) : void
+    private function addArrayKeyToWorkArray(string $keyName) : void
     {
-        if (in_array($keyName, $this->keys, true) === true) {
-            $this->syntaxError(sprintf(
-                'The key "%s" has already been defined previously.',
-                $keyName
-            ));
-        }
-
-        $this->keys[] = $keyName;
-    }
-
-    private function addKeyToTableKeyStore(string $keyName) : void
-    {
-        $this->addKeyToKeyStore($keyName);
-        $this->keyOfTables[] = $keyName;
-    }
-
-    private function addArrayOfTableKeyToKeyStore(string $keyName) : void
-    {
-        if (isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
-            $this->addKeyToKeyStore($keyName);
-        }
-
-        $keyNameParts = explode('.', $keyName);
-
-        if ($this->isNecesaryToProcessImplicitKeyNameParts($keyNameParts)) {
-            array_pop($keyNameParts);
-
-            foreach ($keyNameParts as $keyNamePart) {
-                $this->keysOfImplicitArrayOfTables[] = implode('.', $keyNameParts);
-                array_pop($keyNameParts);
-            }
+        if ($this->keyStore->isRegisteredAsArrayTableKey($keyName)) {
+            $this->addArrayOfTableKeyToWorkArray($keyName, false);
 
             return;
         }
 
-        if (in_array($keyName, $this->keysOfImplicitArrayOfTables) === true
-            && isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
-            $this->syntaxError(
-                sprintf('The array of tables "%s" has already been defined as previous table', $keyName)
-            );
-        }
-    }
-
-    private function isNecesaryToProcessImplicitKeyNameParts(array $keynameParts) : bool
-    {
-        if (count($keynameParts) > 1) {
-            array_pop($keynameParts);
-            $implicitArrayOfTablesName = implode('.', $keynameParts);
-
-            if (in_array($implicitArrayOfTablesName, $this->arrayOfTablekeyCounters) === false) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function getCounterArrayOfTableKey($keyName) : int
-    {
-        if (isset($this->arrayOfTablekeyCounters[$keyName]) === false) {
-            return $this->arrayOfTablekeyCounters[$keyName] = 0;
-        }
-
-        return $this->arrayOfTablekeyCounters[$keyName] = $this->arrayOfTablekeyCounters[$keyName] + 1;
-    }
-
-    private function composeKeyWithCurrentKeyPrefix(string $keyName) : string
-    {
-        $composedKey = $this->currentKeyPrefix;
-
-        if ($composedKey !== '') {
-            $composedKey .= '.';
-        }
-
-        $composedKey .= $keyName;
-
-        return $composedKey;
-    }
-
-    private function addArrayKeyToWorkArray(string $keyName) : void
-    {
         if (isset($this->workArray[$keyName]) === false) {
             $this->workArray[$keyName] = [];
         }
@@ -649,7 +589,7 @@ class Parser extends AbstractParser
             $this->workArray[$keyName][] = [];
         }
 
-        if (in_array($keyName, $this->keyOfTables) === false) {
+        if (!$this->keyStore->isRegisteredAsTableKey($keyName)) {
             end($this->workArray[$keyName]);
             $this->workArray = &$this->workArray[$keyName][key($this->workArray[$keyName])];
 
@@ -661,7 +601,6 @@ class Parser extends AbstractParser
 
     private function resetWorkArrayToResultArray() : void
     {
-        $this->currentKeyPrefix = '';
         $this->workArray = &$this->result;
     }
 
