@@ -94,15 +94,15 @@ You can create a TOML string with TomlBuilder. TomlBuilder uses a *fluent interf
 
         ->addComment('Array of tables')
 
-        ->addArrayTables('fruit')                            // Row
+        ->addArrayOfTable('fruit')                            // Row
             ->addValue('name', 'apple')
-            ->addArrayTables('fruit.variety')
+            ->addArrayOfTable('fruit.variety')
                 ->addValue('name', 'red delicious')
-            ->addArrayTables('fruit.variety')
+            ->addArrayOfTable('fruit.variety')
                 ->addValue('name', 'granny smith')
-        ->addArrayTables('fruit')                            // Row
+        ->addArrayOfTable('fruit')                            // Row
             ->addValue('name', 'banana')
-            ->addArrayTables('fruit.variety')
+            ->addArrayOfTable('fruit.variety')
                 ->addValue('name', 'plantain')
 
         ->getTomlString();    // Generate the TOML string
@@ -155,6 +155,11 @@ The result:
 
         [[fruit.variety]]
         name = "plantain"
+
+Deprecated method
+-----------------
+The following method will be eliminated in version 2.0.0
+* [TomlBuilder] **addArrayTables**
 
 Contributing
 ------------

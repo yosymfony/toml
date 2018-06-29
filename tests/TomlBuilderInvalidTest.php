@@ -104,16 +104,6 @@ class TomlBuilderInvalidTest extends TestCase
     /**
      * @expectedException Yosymfony\Toml\Exception\DumpException
      */
-    public function testInvalidKey()
-    {
-        $tb = new TomlBuilder();
-        $tb->addValue('value#1', '2')
-            ->getTomlString();
-    }
-
-    /**
-     * @expectedException Yosymfony\Toml\Exception\DumpException
-     */
     public function testNullValue()
     {
         $tb = new TomlBuilder();
@@ -127,9 +117,9 @@ class TomlBuilderInvalidTest extends TestCase
     public function testTableArrayImplicit()
     {
         $tb = new TomlBuilder();
-        $tb->addArrayTables('albums.songs')
+        $tb->addArrayOfTable('albums.songs')
                 ->addValue('name', 'Glory Days')
-            ->addArrayTables('albums')
+            ->addArrayOfTable('albums')
                 ->addValue('name', 'Born in the USA')
             ->getTomlString();
     }
@@ -140,9 +130,9 @@ class TomlBuilderInvalidTest extends TestCase
     public function testTableArrayWithSomeNameOfTable()
     {
         $tb = new TomlBuilder();
-        $tb->addArrayTables('fruit')
+        $tb->addArrayOfTable('fruit')
                 ->addValue('name', 'apple')
-            ->addArrayTables('fruit.variety')
+            ->addArrayOfTable('fruit.variety')
                 ->addValue('name', 'red delicious')
             ->addTable('fruit.variety')
                 ->addValue('name', 'granny smith')

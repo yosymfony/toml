@@ -201,16 +201,16 @@ class TomlBuilderTest extends TestCase
     {
         $tb = new TomlBuilder();
 
-        $result = $tb->addArrayTables('fruit')
+        $result = $tb->addArrayOfTable('fruit')
                 ->addValue('name', 'apple')
-            ->addArrayTables('fruit.variety')
+            ->addArrayOfTable('fruit.variety')
                 ->addValue('name', 'red delicious')
-            ->addArrayTables('fruit.variety')
+            ->addArrayOfTable('fruit.variety')
                 ->addValue('name', 'granny smith')
-            ->addArrayTables('fruit')
+            ->addArrayOfTable('fruit')
                 ->addValue('name', 'banana')
-            ->addArrayTables('fruit.variety')
-                ->addValue('name', 'platain')
+            ->addArrayOfTable('fruit.variety')
+                ->addValue('name', 'plantain')
             ->getTomlString();
 
         $this->assertNotNull(Toml::Parse($result));

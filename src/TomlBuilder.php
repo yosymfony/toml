@@ -32,9 +32,9 @@ class TomlBuilder
     protected $prefix = '';
     protected $output = '';
     protected $currentLine = 0;
-    protected $keyList = array();
-    protected $keyListArryOfTables = array();
-    protected $keyListInvalidArrayOfTables = array();
+    protected $keyList = [];
+    protected $keyListArryOfTables = [];
+    protected $keyListInvalidArrayOfTables = [];
     protected $currentTable = '';
     protected $currentArrayOfTables = '';
     protected $currentKey = null;
@@ -60,10 +60,6 @@ class TomlBuilder
      */
     public function addValue(string $key, $val, string $comment = null) : TomlBuilder
     {
-        if (strpos($key, '#')) {
-            throw new DumpException(sprintf('Character "#" is not valid for the key.'));
-        }
-
         if (preg_match('/^([-A-Z_a-z0-9]+)$/', $key) === 0) {
             $key = '"'.$key.'"';
         }
@@ -115,13 +111,22 @@ class TomlBuilder
     }
 
     /**
-     * Adds an array of tables
+     * This method has been marked as deprecated and will be deleted in version 2.0.0
+     * @deprecated 2.0.0 Use the method "addArrayOfTable" instead
+     */
+    public function addArrayTables(string $key) : TomlBuilder
+    {
+        return $this->addArrayOfTable($key);
+    }
+
+    /**
+     * Adds an array of tables element
      *
      * @param string $key The name of the array of tables
      *
      * @return TomlBuilder The TomlBuilder itself
      */
-    public function addArrayTables(string $key) : TomlBuilder
+    public function addArrayOfTable(string $key) : TomlBuilder
     {
         $addPreNewline = $this->currentLine > 0 ? true : false;
 
