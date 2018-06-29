@@ -168,13 +168,6 @@ You can run the unit tests with the following command:
 
 ```bash
 $ cd toml
-$ phpunit
-```
-
-or
-
-```bash
-$ cd toml
 $ composer test
 ```
 

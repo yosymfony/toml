@@ -1,9 +1,10 @@
 CHANGELOG
 =========
-1.0.2
------
+1.0.2 (2018-06-29)
+------------------
 * Fixed the bug #23: "Unable to parse ArrayTables that contain Tables".
 * A new class `KeyStore` has been added to deal with the logic of the keys (keys, tables and array of tables).
+* Package `yosymfony/parser-utils` has been updated to 2.0.0.
 
 1.0.1 (2018-02-05)
 ------------------

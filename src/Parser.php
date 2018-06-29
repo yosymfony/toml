@@ -57,7 +57,7 @@ class Parser extends AbstractParser
     /**
      * {@inheritdoc}
      */
-    protected function parseImplentation(TokenStream $ts) : array
+    protected function parseImplementation(TokenStream $ts) : array
     {
         $this->keyStore = new KeyStore();
         $this->resetWorkArrayToResultArray();
