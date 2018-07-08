@@ -41,6 +41,7 @@ class Toml
     {
         try {
             $data = self::doParse($input, $resultAsObject);
+            is_null($data) or self::postProcess($data);
         } catch (SyntaxErrorException $e) {
             $exception = new ParseException($e->getMessage(), -1, null, null, $e);
 
@@ -112,5 +113,28 @@ class Toml
         }
 
         return empty($values) ? null : $values;
+    }
+
+    /**
+     * remove empty element from $arr recursively
+     * @param $arr array|object
+     * @return array|object
+     */
+    private static function postProcess(&$arr)
+    {
+        if (!is_array($arr) && !is_object($arr)) {
+            throw new ParseException('Param must be an array or a object');
+        }
+        foreach ($arr as $key => &$value) {
+            if (is_array($value) || is_object($value)) {
+                self::postProcess($value);
+            }
+            if ((is_array($value) && count($value) == 0 && is_numeric($key))) {
+                unset($arr[$key]);
+            }
+            if (is_object($value) && 0 == count((array)$value)) {
+                unset($arr->$key);
+            }
+        }
     }
 }
