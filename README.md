@@ -156,6 +156,74 @@ The result:
         [[fruit.variety]]
         name = "plantain"
 
+### TomlBuilderFromArray
+You can also create a TOML string from an array with TomlBuilderFromArray automatically. You could save the result to a Toml file.
+
+```php
+    $array = [
+        'a1' => [
+            'b1' => [
+                'c1'=>[
+                    'c1'=>[
+                        'c1'=>0
+                    ]
+                ]
+            ],
+            'b2' => 2,
+        ],
+        'a2' => [
+            [
+                'b1' => [
+                    'c1' => [
+                        'd1'=>[
+                            'd1'=>[
+                                1,2,3
+                            ]
+                        ]
+                    ],
+                    'c2' => 100
+                ]
+            ],
+            [
+                'b2' => [
+                    'c1' => 200,
+                    'c2' => 200,
+                ]
+            ]
+        ],
+    ];
+    $tbfa = new \Yosymfony\Toml\TomlBuilderFromArray($config);
+    $result = $tbfa->convert();
+```
+The result:
+```
+[a1]
+b2 = 2
+
+[a1.b1]
+
+[a1.b1.c1]
+
+[a1.b1.c1.c1]
+c1 = 0
+
+[[a2]]
+
+[a2.b1]
+c2 = 100
+
+[a2.b1.c1]
+
+[a2.b1.c1.d1]
+d1 = [1, 2, 3]
+
+[[a2]]
+
+[a2.b2]
+c1 = 200
+c2 = 200
+```
+
 Deprecated method
 -----------------
 The following method will be eliminated in version 2.0.0
