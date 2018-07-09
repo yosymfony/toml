@@ -116,23 +116,23 @@ class Toml
     }
 
     /**
-     * remove empty element from $arr recursively
+     * Remove empty element from $arr recursively
      * @param $arr array|object
      * @return array|object
      */
     private static function postProcess(&$arr)
     {
         if (!is_array($arr) && !is_object($arr)) {
-            throw new ParseException('Param must be an array or a object');
+            throw new ParseException('Param must be an array or an object');
         }
         foreach ($arr as $key => &$value) {
             if (is_array($value) || is_object($value)) {
                 self::postProcess($value);
             }
-            if ((is_array($value) && count($value) == 0 && is_numeric($key))) {
+            if (is_array($value) && count($value) == 0 && is_numeric($key)) {
                 unset($arr[$key]);
             }
-            if (is_object($value) && 0 == count((array)$value)) {
+            if (is_object($value) && 0 == count((array)$value) && is_numeric($key)) {
                 unset($arr->$key);
             }
         }
