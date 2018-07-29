@@ -689,11 +689,9 @@ toml;
 
         $this->assertEquals([
             'albums' => [
-                [
-                    'songs' => [
-                        [
-                            'name' => 'Glory Days'
-                        ],
+                'songs' => [
+                    [
+                        'name' => 'Glory Days'
                     ],
                 ],
             ],

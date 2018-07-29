@@ -25,8 +25,8 @@ class Parser extends AbstractParser
 {
     /** @var KeyStore */
     private $keyStore;
-    private $result = [];
-    private $workArray;
+    /** @var TomlArray */
+    private $tomlArray;
 
     private static $tokensNotAllowedInBasicStrings = [
         'T_ESCAPE',
@@ -60,13 +60,13 @@ class Parser extends AbstractParser
     protected function parseImplementation(TokenStream $ts) : array
     {
         $this->keyStore = new KeyStore();
-        $this->resetWorkArrayToResultArray();
+        $this->tomlArray = new TomlArray();
 
         while ($ts->hasPendingTokens()) {
             $this->processExpression($ts);
         }
 
-        return $this->result;
+        return $this->tomlArray->getArray();
     }
 
     private function processExpression(TokenStream $ts) : void
@@ -116,15 +116,15 @@ class Parser extends AbstractParser
                 $this->syntaxError("The key \"{$keyName}\" has already been defined previously.");
             }
 
-            $this->keyStore->addkey($keyName);
+            $this->keyStore->addKey($keyName);
         }
 
         if ($ts->isNext('T_LEFT_SQUARE_BRAKET')) {
-            $this->workArray[$keyName] = $this->parseArray($ts);
+            $this->tomlArray->addKeyValue($keyName, $this->parseArray($ts));
         } elseif ($isInlineTable) {
             $this->parseInlineTable($ts, $keyName);
         } else {
-            $this->workArray[$keyName] = $this->parseSimpleValue($ts)->value;
+            $this->tomlArray->addKeyValue($keyName, $this->parseSimpleValue($ts)->value);
         }
 
         if (!$isFromInlineTable) {
@@ -441,9 +441,8 @@ class Parser extends AbstractParser
     private function parseInlineTable(TokenStream $ts, string $keyName) : void
     {
         $this->matchNext('T_LEFT_CURLY_BRACE', $ts);
-        $priorWorkArray = &$this->workArray;
 
-        $this->addArrayKeyToWorkArray($keyName);
+        $this->tomlArray->beginInlineTableKey($keyName);
 
         $this->parseSpaceIfExists($ts);
 
@@ -461,25 +460,21 @@ class Parser extends AbstractParser
         }
 
         $this->matchNext('T_RIGHT_CURLY_BRACE', $ts);
-        $this->workArray = &$priorWorkArray;
+
+        $this->tomlArray->endCurrentInlineTableKey();
     }
 
     private function parseTable(TokenStream $ts) : void
     {
         $this->matchNext('T_LEFT_SQUARE_BRAKET', $ts);
 
-        $fullTableName = $key = $this->parseKeyName($ts);
-
-        $this->resetWorkArrayToResultArray();
-        $this->addArrayKeyToWorkArray($key);
+        $fullTableName = $this->tomlArray->escapeKey($key = $this->parseKeyName($ts));
 
         while ($ts->isNext('T_DOT')) {
             $ts->moveNext();
 
-            $key = $this->parseKeyName($ts);
+            $key = $this->tomlArray->escapeKey($this->parseKeyName($ts));
             $fullTableName .= ".$key";
-
-            $this->addArrayKeyToWorkArray($key);
         }
 
         if (!$this->keyStore->isValidTableKey($fullTableName)) {
@@ -487,6 +482,7 @@ class Parser extends AbstractParser
         }
 
         $this->keyStore->addTableKey($fullTableName);
+        $this->tomlArray->addTableKey($fullTableName);
         $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
 
         $this->parseSpaceIfExists($ts);
@@ -499,18 +495,13 @@ class Parser extends AbstractParser
         $this->matchNext('T_LEFT_SQUARE_BRAKET', $ts);
         $this->matchNext('T_LEFT_SQUARE_BRAKET', $ts);
 
-        $fullTableName = $key = $this->parseKeyName($ts);
-
-        $this->resetWorkArrayToResultArray();
-        $this->addArrayOfTableKeyToWorkArray($key, !$ts->isNext('T_DOT'));
+        $fullTableName = $key = $this->tomlArray->escapeKey($this->parseKeyName($ts));
 
         while ($ts->isNext('T_DOT')) {
             $ts->moveNext();
 
-            $key = $this->parseKeyName($ts);
+            $key = $this->tomlArray->escapeKey($this->parseKeyName($ts));
             $fullTableName .= ".$key";
-
-            $this->addArrayOfTableKeyToWorkArray($key, !$ts->isNext('T_DOT'));
         }
 
         if (!$this->keyStore->isValidArrayTableKey($fullTableName)) {
@@ -522,6 +513,7 @@ class Parser extends AbstractParser
         }
 
         $this->keyStore->addArrayTableKey($fullTableName);
+        $this->tomlArray->addArrayTableKey($fullTableName);
 
         $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
         $this->matchNext('T_RIGHT_SQUARE_BRAKET', $ts);
@@ -563,45 +555,6 @@ class Parser extends AbstractParser
             $ts->skipWhile('T_SPACE');
             $this->parseCommentIfExists($ts);
         }
-    }
-
-    private function addArrayKeyToWorkArray(string $keyName) : void
-    {
-        if ($this->keyStore->isRegisteredAsArrayTableKey($keyName)) {
-            $this->addArrayOfTableKeyToWorkArray($keyName, false);
-
-            return;
-        }
-
-        if (isset($this->workArray[$keyName]) === false) {
-            $this->workArray[$keyName] = [];
-        }
-
-        $this->workArray = &$this->workArray[$keyName];
-    }
-
-    private function addArrayOfTableKeyToWorkArray(string $keyName, bool $islast) : void
-    {
-        if (isset($this->workArray[$keyName]) === false) {
-            $this->workArray[$keyName] = [];
-            $this->workArray[$keyName][] = [];
-        } elseif ($islast) {
-            $this->workArray[$keyName][] = [];
-        }
-
-        if (!$this->keyStore->isRegisteredAsTableKey($keyName)) {
-            end($this->workArray[$keyName]);
-            $this->workArray = &$this->workArray[$keyName][key($this->workArray[$keyName])];
-
-            return;
-        }
-
-        $this->workArray = &$this->workArray[$keyName];
-    }
-
-    private function resetWorkArrayToResultArray() : void
-    {
-        $this->workArray = &$this->result;
     }
 
     private function errorIfNextIsNotNewlineOrEOS(TokenStream $ts) : void
