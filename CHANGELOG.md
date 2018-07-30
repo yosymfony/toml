@@ -1,7 +1,7 @@
 CHANGELOG
 =========
-1.0.3
------
+1.0.3 (2018-07-31)
+---------
 * `TomlBuilder` does not throw a `DumpException` anymore when the character "#" appears in a quoted key.
 * The method `addArrayTables` from the class `TomlBuilder` has been declared as deprecated. Use the method `addArrayOfTable` instead.
 * Fixed the bug #24: "Wrong array of tables implementation".
