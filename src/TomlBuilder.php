@@ -288,7 +288,7 @@ class TomlBuilder
 
     private function addKeyTable(string $key) : void
     {
-        if (in_array($key, $this->keyListArryOfTables)) {
+        if (array_key_exists($key, $this->keyListArryOfTables)) {
             throw new DumpException(
                 sprintf('The table %s has already been defined as previous array of tables', $key)
             );
@@ -308,7 +308,7 @@ class TomlBuilder
             return;
         }
 
-        if (in_array($key, $this->keyListInvalidArrayOfTables)) {
+        if (in_array($key, $this->keyListInvalidArrayOfTables, true)) {
             throw new DumpException(
                 sprintf('The array of tables %s has already been defined as previous table', $key)
             );
@@ -343,7 +343,7 @@ class TomlBuilder
 
     private function addKeyToKeyList(string $key) : void
     {
-        if (in_array($key, $this->keyList)) {
+        if (in_array($key, $this->keyList, true)) {
             throw new DumpException(sprintf('Syntax error: the key "%s" has already been defined', $key));
         }
 
@@ -365,7 +365,7 @@ class TomlBuilder
 
             $key = implode('.', $keyParts);
 
-            if (false == in_array($key, $this->keyListArryOfTables)) {
+            if (!array_key_exists($key, $this->keyListArryOfTables)) {
                 return true;
             }
         }
