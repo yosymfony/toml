@@ -1,5 +1,10 @@
 CHANGELOG
 =========
+1.0.4
+-----
+* Several corrections in `TomBuilder` class. The problem described in the PR #25 has been solved.
+* The test file `TomlBuilderTest` has been refactored for readability.
+
 1.0.3 (2018-07-31)
 ------------------
 * `TomlBuilder` does not throw a `DumpException` anymore when the character "#" appears in a quoted key.

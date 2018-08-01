@@ -32,20 +32,19 @@ class TomlBuilder
     protected $prefix = '';
     protected $output = '';
     protected $currentLine = 0;
-    protected $keyList = [];
-    protected $keyListArryOfTables = [];
-    protected $keyListInvalidArrayOfTables = [];
-    protected $currentTable = '';
-    protected $currentArrayOfTables = '';
     protected $currentKey = null;
+
+    /** @var KeyStore */
+    protected $keyStore;
 
     /**
      * Constructor.
      *
      * @param int $indent The amount of spaces to use for indentation of nested nodes
      */
-    public function __constructor(int $indent = 4)
+    public function __construct(int $indent = 4)
     {
+        $this->keyStore = new KeyStore();
         $this->prefix = $indent ? str_repeat(' ', $indent) : '';
     }
 
@@ -58,24 +57,23 @@ class TomlBuilder
      *
      * @return TomlBuilder The TomlBuilder itself
      */
-    public function addValue(string $key, $val, string $comment = null) : TomlBuilder
+    public function addValue(string $key, $val, string $comment = '') : TomlBuilder
     {
-        if (preg_match('/^([-A-Z_a-z0-9]+)$/', $key) === 0) {
+        $this->currentKey = $key;
+        $this->exceptionIfKeyEmpty($key);
+        $this->addKey($key);
+
+        if (!$this->isUnquotedKey($key)) {
             $key = '"'.$key.'"';
         }
 
-        $keyPart = $this->getKeyPart($key);
+        $line = "{$key} = {$this->dumpValue($val)}";
 
-        $this->append($keyPart);
-
-        $data = $this->dumpValue($val);
-
-        if (is_string($comment)) {
-            $data .= ' '.$this->dumpComment($comment);
+        if (!empty($comment)) {
+            $line .= ' '.$this->dumpComment($comment);
         }
 
-        $this->addKey($key);
-        $this->append($data, true);
+        $this->append($line, true);
 
         return $this;
     }
@@ -83,29 +81,24 @@ class TomlBuilder
     /**
      * Adds a table.
      *
-     * @param string $key Tablename. Dot character have a special meant
+     * @param string $key Table name. Dot character have a special mean. e.g: "fruit.type"
      *
      * @return TomlBuilder The TomlBuilder itself
      */
     public function addTable(string $key) : TomlBuilder
     {
+        $this->exceptionIfKeyEmpty($key);
         $addPreNewline = $this->currentLine > 0 ? true : false;
-
-        if (false !== strpos($key, ' ')) {
-            $key = '"'.$key.'"';
-        }
-
         $keyParts = explode('.', $key);
-        $val = '['.$key.']';
 
         foreach ($keyParts as $keyPart) {
-            if (strlen($keyPart) == 0) {
-                throw new DumpException(sprintf('The key must not be empty at table: %s', $key));
-            }
+            $this->exceptionIfKeyEmpty($keyPart, "Table: \"{$key}\".");
+            $this->exceptionIfKeyIsNotUnquotedKey($keyPart);
         }
 
-        $this->addKeyTable($key, $keyParts);
-        $this->append($val, true, false, $addPreNewline);
+        $line = "[{$key}]";
+        $this->addKeyTable($key);
+        $this->append($line, true, false, $addPreNewline);
 
         return $this;
     }
@@ -128,19 +121,18 @@ class TomlBuilder
      */
     public function addArrayOfTable(string $key) : TomlBuilder
     {
+        $this->exceptionIfKeyEmpty($key);
         $addPreNewline = $this->currentLine > 0 ? true : false;
-
         $keyParts = explode('.', $key);
-        $val = '[['.$key.']]';
 
         foreach ($keyParts as $keyPart) {
-            if (strlen($keyPart) == 0) {
-                throw new DumpException(sprintf('The key must not be empty at array of tables: %s', $key));
-            }
+            $this->exceptionIfKeyEmpty($keyPart, "Array of table: \"{$key}\".");
+            $this->exceptionIfKeyIsNotUnquotedKey($keyPart);
         }
 
-        $this->addKeyArrayOfTables($key, $keyParts);
-        $this->append($val, true, false, $addPreNewline);
+        $line = "[[{$key}]]";
+        $this->addKeyArrayOfTables($key);
+        $this->append($line, true, false, $addPreNewline);
 
         return $this;
     }
@@ -185,23 +177,28 @@ class TomlBuilder
             case $val instanceof \Datetime:
                 return $this->dumpDatetime($val);
             default:
-                throw new DumpException(sprintf('Data type not supporter at the key "%s"', $this->currentKey));
+                throw new DumpException("Data type not supporter at the key: \"{$this->currentKey}\".");
         }
     }
 
     private function dumpString(string $val) : string
     {
-        if (0 === strpos($val, '@')) {
+        if ($this->isLiteralString($val)) {
             return "'".preg_replace('/@/', '', $val, 1)."'";
         }
 
         $normalized = $this->normalizeString($val);
 
         if (false === $this->isStringValid($normalized)) {
-            throw new DumpException(sprintf('The string have a invalid cacharters at the key "%s"', $this->currentKey));
+            throw new DumpException("The string has an invalid charters at the key \"{$this->currentKey}\".");
         }
 
         return '"'.$normalized.'"';
+    }
+
+    private function isLiteralString(string $val) : bool
+    {
+        return strpos($val, '@') === 0;
     }
 
     private function dumpBool(bool $val) : string
@@ -221,7 +218,7 @@ class TomlBuilder
             $dataType = $dataType == null ? $lastType : $dataType;
 
             if ($lastType != $dataType) {
-                throw new DumpException(sprintf('Data types cannot be mixed in an array. Key "%s"', $this->currentKey));
+                throw new DumpException("Data types cannot be mixed in an array. Key: \"{$this->currentKey}\".");
             }
 
             $result .= $first ? $this->dumpValue($item) : ', '.$this->dumpValue($item);
@@ -251,15 +248,6 @@ class TomlBuilder
         return strval($val);
     }
 
-    private function getKeyPart(string $key) : string
-    {
-        if (strlen($key = trim($key)) > 0) {
-            return $key.' = ';
-        } else {
-            throw new DumpException('The key must be a string and must not be empty');
-        }
-    }
-
     private function append(string $val, bool $addPostNewline = false, bool $addIndentation = false, bool $addPreNewline = false) : void
     {
         if ($addPreNewline) {
@@ -281,104 +269,37 @@ class TomlBuilder
 
     private function addKey(string $key) : void
     {
-        $this->currentKey = $key;
-        $absKey = $this->getAbsoluteKey($key, $this->currentTable, $this->currentArrayOfTables);
-        $this->addKeyToKeyList($absKey);
+        if (!$this->keyStore->isValidKey($key)) {
+            throw new DumpException("The key \"{$key}\" has already been defined previously.");
+        }
+
+        $this->keyStore->addKey($key);
     }
 
     private function addKeyTable(string $key) : void
     {
-        if (in_array($key, $this->keyListArryOfTables)) {
-            throw new DumpException(
-                sprintf('The table %s has already been defined as previous array of tables', $key)
-            );
+        if (!$this->keyStore->isValidTableKey($key)) {
+            throw new DumpException("The table key \"{$key}\" has already been defined previously.");
         }
 
-        $this->currentTable = $key;
-        $absKey = $this->getAbsoluteKey($key, '', $this->currentArrayOfTables);
-        $this->addKeyToKeyList($absKey);
+        if ($this->keyStore->isRegisteredAsArrayTableKey($key)) {
+            throw new DumpException("The table \"{$key}\" has already been defined as previous array of tables.");
+        }
+
+        $this->keyStore->addTableKey($key);
     }
 
-    private function addKeyArrayOfTables(string $key, array $keyParts) : void
+    private function addKeyArrayOfTables(string $key) : void
     {
-        if ($this->isTableImplicit($keyParts)) {
-            $this->addInvalidArrayOfTablesKey($keyParts);
-            $this->addKeyTable($key, $keyParts);
-
-            return;
+        if (!$this->keyStore->isValidArrayTableKey($key)) {
+            throw new DumpException("The array of table key \"{$key}\" has already been defined previously.");
         }
 
-        if (in_array($key, $this->keyListInvalidArrayOfTables)) {
-            throw new DumpException(
-                sprintf('The array of tables %s has already been defined as previous table', $key)
-            );
+        if ($this->keyStore->isTableImplicitFromArryTable($key)) {
+            throw new DumpException("The key \"{$key}\" has been defined as a implicit table from a previous array of tables.");
         }
 
-        if (false == isset($this->keyListArryOfTables[$key])) {
-            $this->keyListArryOfTables[$key] = 0;
-            $this->addKeyToKeyList($key);
-        } else {
-            $counter = $this->keyListArryOfTables[$key] + 1;
-            $this->keyListArryOfTables[$key] = $counter + 1;
-        }
-
-        $keyPath = $this->getArrayTablesKeyPath($keyParts);
-        $this->addKeyToKeyList($keyPath);
-        $this->currentArrayOfTables = $keyPath;
-    }
-
-    private function getArrayTablesKeyPath(array $keyParts) : string
-    {
-        $path = $simplePath = '';
-
-        foreach ($keyParts as $keyPart) {
-            $simplePath .= $keyPart;
-            $counter = $this->keyListArryOfTables[$simplePath];
-            $path .= $keyPart.$counter.'.';
-            $simplePath .= '.';
-        }
-
-        return rtrim($path, '.');
-    }
-
-    private function addKeyToKeyList(string $key) : void
-    {
-        if (in_array($key, $this->keyList)) {
-            throw new DumpException(sprintf('Syntax error: the key "%s" has already been defined', $key));
-        }
-
-        $this->keyList[] = $key;
-    }
-
-    private function getAbsoluteKey(string $key, string $currentKeyTable, string $currentKeyArrayOfTables) : string
-    {
-        $prefix = strlen($currentKeyArrayOfTables) > 0 ? $currentKeyArrayOfTables.'.' : '';
-        $prefix .= strlen($currentKeyTable) > 0 ? $currentKeyTable.'.' : '';
-
-        return $prefix.$key;
-    }
-
-    private function isTableImplicit(array $keyParts) : bool
-    {
-        if (count($keyParts) > 1) {
-            array_pop($keyParts);
-
-            $key = implode('.', $keyParts);
-
-            if (false == in_array($key, $this->keyListArryOfTables)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function addInvalidArrayOfTablesKey(array $keyParts) : void
-    {
-        foreach ($keyParts as $keyPart) {
-            $this->keyListInvalidArrayOfTables[] = implode('.', $keyParts);
-            array_pop($keyParts);
-        }
+        $this->keyStore->addArrayTableKey($key);
     }
 
     private function isStringValid(string $val) : bool
@@ -421,5 +342,30 @@ class TomlBuilder
         $normalized = str_replace(array_keys($allowed), $allowed, $val);
 
         return $normalized;
+    }
+
+    private function exceptionIfKeyEmpty(string $key, string $additionalMessage = '') : void
+    {
+        $message = 'A key, table name or array of table name cannot be empty or null.';
+
+        if ($additionalMessage != '') {
+            $message .= " {$additionalMessage}";
+        }
+
+        if (empty(trim($key))) {
+            throw new DumpException($message);
+        }
+    }
+
+    private function exceptionIfKeyIsNotUnquotedKey($key) : void
+    {
+        if (!$this->isUnquotedKey($key)) {
+            throw new DumpException("Only unquoted keys are allowed in this implementation. Key: \"{$key}\".");
+        }
+    }
+
+    private function isUnquotedKey(string $key) : bool
+    {
+        return preg_match('/^([-A-Z_a-z0-9]+)$/', $key) === 1;
     }
 }

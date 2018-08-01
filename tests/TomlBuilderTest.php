@@ -115,16 +115,6 @@ class TomlBuilderTest extends TestCase
         $this->assertNotNull(Toml::Parse($result));
     }
 
-    public function testTableWhitespace()
-    {
-        $tb = new TomlBuilder();
-
-        $result = $tb->addTable('valid key')
-            ->getTomlString();
-
-        $this->assertNotNull(Toml::Parse($result));
-    }
-
     public function testStringEscapesDoubleQuote()
     {
         $tb = new TomlBuilder();
