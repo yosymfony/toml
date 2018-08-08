@@ -31,10 +31,10 @@ class TomlBuilder
 {
     protected $prefix = '';
     protected $output = '';
-    protected $currentLine = 0;
-    protected $currentKey = null;
+    protected $currentKey;
     /** @var KeyStore */
     protected $keyStore;
+    private $currentLine = 0;
     /** @var array */
     private static $specialCharacters;
     /** @var array */
@@ -109,7 +109,7 @@ class TomlBuilder
         }
 
         $line = "[{$key}]";
-        $this->addKeyTable($key);
+        $this->addTableKey($key);
         $this->append($line, true, false, $addPreNewline);
 
         return $this;
@@ -143,7 +143,7 @@ class TomlBuilder
         }
 
         $line = "[[{$key}]]";
-        $this->addKeyArrayOfTables($key);
+        $this->addArrayOfTableKey($key);
         $this->append($line, true, false, $addPreNewline);
 
         return $this;
@@ -173,6 +173,9 @@ class TomlBuilder
         return $this->output;
     }
 
+    /**
+     * Returns the escaped characters for basic strings
+     */
     protected function getEscapedCharacters() : array
     {
         if (self::$escapedSpecialCharacters !== null) {
@@ -182,6 +185,9 @@ class TomlBuilder
         return self::$escapedSpecialCharacters = \array_values(self::$specialCharactersMapping);
     }
 
+    /**
+     * Returns the special characters for basic strings
+     */
     protected function getSpecialCharacters() : array
     {
         if (self::$specialCharacters !== null) {
@@ -191,7 +197,70 @@ class TomlBuilder
         return self::$specialCharacters = \array_keys(self::$specialCharactersMapping);
     }
 
-    private function dumpValue($val) : string
+    /**
+     * Adds a key to the store
+     *
+     * @param string $key The key name
+     *
+     * @return void
+     */
+    protected function addKey(string $key) : void
+    {
+        if (!$this->keyStore->isValidKey($key)) {
+            throw new DumpException("The key \"{$key}\" has already been defined previously.");
+        }
+
+        $this->keyStore->addKey($key);
+    }
+
+    /**
+     * Adds a table key to the store
+     *
+     * @param string $key The table key name
+     *
+     * @return void
+     */
+    protected function addTableKey(string $key) : void
+    {
+        if (!$this->keyStore->isValidTableKey($key)) {
+            throw new DumpException("The table key \"{$key}\" has already been defined previously.");
+        }
+
+        if ($this->keyStore->isRegisteredAsArrayTableKey($key)) {
+            throw new DumpException("The table \"{$key}\" has already been defined as previous array of tables.");
+        }
+
+        $this->keyStore->addTableKey($key);
+    }
+
+    /**
+     * Adds an array of table key to the store
+     *
+     * @param string $key The key name
+     *
+     * @return void
+     */
+    protected function addArrayOfTableKey(string $key) : void
+    {
+        if (!$this->keyStore->isValidArrayTableKey($key)) {
+            throw new DumpException("The array of table key \"{$key}\" has already been defined previously.");
+        }
+
+        if ($this->keyStore->isTableImplicitFromArryTable($key)) {
+            throw new DumpException("The key \"{$key}\" has been defined as a implicit table from a previous array of tables.");
+        }
+
+        $this->keyStore->addArrayTableKey($key);
+    }
+
+    /**
+     * Dumps a value
+     *
+     * @param string|int|bool|float|array|Datetime  $val The value
+     *
+     * @return string
+     */
+    protected function dumpValue($val) : string
     {
         switch (true) {
             case is_string($val):
@@ -208,6 +277,35 @@ class TomlBuilder
                 return $this->dumpDatetime($val);
             default:
                 throw new DumpException("Data type not supporter at the key: \"{$this->currentKey}\".");
+        }
+    }
+
+    /**
+     * Adds content to the output
+     *
+     * @param string $val
+     * @param bool $addPostNewline Indicates if add a newline after the value
+     * @param bool $addIndentation Indicates if add indentation to the line
+     * @param bool $addPreNewline Indicates if add a new line before the value
+     *
+     * @return void
+     */
+    protected function append(string $val, bool $addPostNewline = false, bool $addIndentation = false, bool $addPreNewline = false) : void
+    {
+        if ($addPreNewline) {
+            $this->output .= "\n";
+            ++$this->currentLine;
+        }
+
+        if ($addIndentation) {
+            $val = $this->prefix.$val;
+        }
+
+        $this->output .= $val;
+
+        if ($addPostNewline) {
+            $this->output .= "\n";
+            ++$this->currentLine;
         }
     }
 
@@ -276,60 +374,6 @@ class TomlBuilder
     private function dumpFloat(float $val) : string
     {
         return strval($val);
-    }
-
-    private function append(string $val, bool $addPostNewline = false, bool $addIndentation = false, bool $addPreNewline = false) : void
-    {
-        if ($addPreNewline) {
-            $this->output .= "\n";
-            ++$this->currentLine;
-        }
-
-        if ($addIndentation) {
-            $val = $this->prefix.$val;
-        }
-
-        $this->output .= $val;
-
-        if ($addPostNewline) {
-            $this->output .= "\n";
-            ++$this->currentLine;
-        }
-    }
-
-    private function addKey(string $key) : void
-    {
-        if (!$this->keyStore->isValidKey($key)) {
-            throw new DumpException("The key \"{$key}\" has already been defined previously.");
-        }
-
-        $this->keyStore->addKey($key);
-    }
-
-    private function addKeyTable(string $key) : void
-    {
-        if (!$this->keyStore->isValidTableKey($key)) {
-            throw new DumpException("The table key \"{$key}\" has already been defined previously.");
-        }
-
-        if ($this->keyStore->isRegisteredAsArrayTableKey($key)) {
-            throw new DumpException("The table \"{$key}\" has already been defined as previous array of tables.");
-        }
-
-        $this->keyStore->addTableKey($key);
-    }
-
-    private function addKeyArrayOfTables(string $key) : void
-    {
-        if (!$this->keyStore->isValidArrayTableKey($key)) {
-            throw new DumpException("The array of table key \"{$key}\" has already been defined previously.");
-        }
-
-        if ($this->keyStore->isTableImplicitFromArryTable($key)) {
-            throw new DumpException("The key \"{$key}\" has been defined as a implicit table from a previous array of tables.");
-        }
-
-        $this->keyStore->addArrayTableKey($key);
     }
 
     private function isStringValid(string $val) : bool
