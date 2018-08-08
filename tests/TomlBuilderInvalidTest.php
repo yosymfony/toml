@@ -52,6 +52,39 @@ class TomlBuilderInvalidTest extends TestCase
 
     /**
      * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedExceptionMessage A key, table name or array of table name cannot be empty or null.
+     */
+    public function testAddValueMustFailWhenKeyWithJustWhiteSpaces()
+    {
+        $whiteSpaceKey = ' ';
+
+        $this->builder->addValue($whiteSpaceKey, 'value');
+    }
+
+    /**
+    * @expectedException Yosymfony\Toml\Exception\DumpException
+    * @expectedExceptionMessage A key, table name or array of table name cannot be empty or null.
+    */
+    public function testAddTableMustFailWhenKeyWithJustWhiteSpaces()
+    {
+        $whiteSpaceKey = ' ';
+
+        $this->builder->addTable($whiteSpaceKey);
+    }
+
+    /**
+     * @expectedException Yosymfony\Toml\Exception\DumpException
+     * @expectedExceptionMessage A key, table name or array of table name cannot be empty or null.
+     */
+    public function testAddArrayOfTableMustFailWhenKeyWithJustWhiteSpaces()
+    {
+        $whiteSpaceKey = ' ';
+
+        $this->builder->addArrayOfTable($whiteSpaceKey);
+    }
+
+    /**
+     * @expectedException Yosymfony\Toml\Exception\DumpException
      * @expectedExceptionMessage Data types cannot be mixed in an array. Key: "strings-and-ints".
      */
     public function testAddValueMustFailWhenMixedTypes()
