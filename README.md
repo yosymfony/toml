@@ -104,7 +104,6 @@ You can create a TOML string with TomlBuilder. TomlBuilder uses a *fluent interf
             ->addValue('name', 'banana')
             ->addArrayOfTable('fruit.variety')
                 ->addValue('name', 'plantain')
-
         ->getTomlString();    // Generate the TOML string
 ```
 The result:
@@ -155,6 +154,10 @@ The result:
 
         [[fruit.variety]]
         name = "plantain"
+
+#### Limitations
+The `TomlBuilder` class is an utility to get Toml strings that has the following limitations:
+* Only admits `basic strings` and `literal strings`.
 
 Deprecated method
 -----------------

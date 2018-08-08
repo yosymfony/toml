@@ -4,6 +4,7 @@ CHANGELOG
 -----
 * Several corrections in `TomBuilder` class. The problem described in the PR #25 "fixed a bug when used the function 'in_array'" has been solved.
 * The test file `TomlBuilderTest` has been refactored for readability. Added some tests.
+* The `README.md` file has been updated with the `TomlBuilder` class limitations.
 
 1.0.3 (2018-07-31)
 ------------------
