@@ -33,9 +33,21 @@ class TomlBuilder
     protected $output = '';
     protected $currentLine = 0;
     protected $currentKey = null;
-
     /** @var KeyStore */
     protected $keyStore;
+    /** @var array */
+    private static $specialCharacters;
+    /** @var array */
+    private static $escapedSpecialCharacters;
+    private static $specialCharactersMapping = [
+        '\\' => '\\\\',
+        "\b" => '\\b',
+        "\t" => '\\t',
+        "\n" => '\\n',
+        "\f" => '\\f',
+        "\r" => '\\r',
+        '"' => '\\"',
+    ];
 
     /**
      * Constructor.
@@ -138,7 +150,7 @@ class TomlBuilder
     }
 
     /**
-     * Adds a comment line.
+     * Adds a comment line
      *
      * @param string $comment The comment
      *
@@ -159,6 +171,24 @@ class TomlBuilder
     public function getTomlString() : string
     {
         return $this->output;
+    }
+
+    protected function getEscapedCharacters() : array
+    {
+        if (self::$escapedSpecialCharacters !== null) {
+            return self::$escapedSpecialCharacters;
+        }
+
+        return self::$escapedSpecialCharacters = \array_values(self::$specialCharactersMapping);
+    }
+
+    protected function getSpecialCharacters() : array
+    {
+        if (self::$specialCharacters !== null) {
+            return self::$specialCharacters;
+        }
+
+        return self::$specialCharacters = \array_keys(self::$specialCharactersMapping);
     }
 
     private function dumpValue($val) : string
@@ -189,7 +219,7 @@ class TomlBuilder
 
         $normalized = $this->normalizeString($val);
 
-        if (false === $this->isStringValid($normalized)) {
+        if (!$this->isStringValid($normalized)) {
             throw new DumpException("The string has an invalid charters at the key \"{$this->currentKey}\".");
         }
 
@@ -304,23 +334,13 @@ class TomlBuilder
 
     private function isStringValid(string $val) : bool
     {
-        $allowed = array(
-            '\\\\',
-            '\\b',
-            '\\t',
-            '\\n',
-            '\\f',
-            '\\r',
-            '\\"',
-        );
-
-        $noSpecialCharacter = str_replace($allowed, '', $val);
-        $noSpecialCharacter = preg_replace('/\\\\u([0-9a-fA-F]{4})/', '', $noSpecialCharacter);
-        $noSpecialCharacter = preg_replace('/\\\\u([0-9a-fA-F]{8})/', '', $noSpecialCharacter);
+        $noSpecialCharacter = \str_replace($this->getEscapedCharacters(), '', $val);
+        $noSpecialCharacter = \preg_replace('/\\\\u([0-9a-fA-F]{4})/', '', $noSpecialCharacter);
+        $noSpecialCharacter = \preg_replace('/\\\\u([0-9a-fA-F]{8})/', '', $noSpecialCharacter);
 
         $pos = strpos($noSpecialCharacter, '\\');
 
-        if (false !== $pos) {
+        if ($pos !== false) {
             return false;
         }
 
@@ -329,17 +349,7 @@ class TomlBuilder
 
     private function normalizeString(string $val) : string
     {
-        $allowed = array(
-            '\\' => '\\\\',
-            "\b" => '\\b',
-            "\t" => '\\t',
-            "\n" => '\\n',
-            "\f" => '\\f',
-            "\r" => '\\r',
-            '"' => '\\"',
-        );
-
-        $normalized = str_replace(array_keys($allowed), $allowed, $val);
+        $normalized = \str_replace($this->getSpecialCharacters(), $this->getEscapedCharacters(), $val);
 
         return $normalized;
     }
@@ -366,6 +376,6 @@ class TomlBuilder
 
     private function isUnquotedKey(string $key) : bool
     {
-        return preg_match('/^([-A-Z_a-z0-9]+)$/', $key) === 1;
+        return \preg_match('/^([-A-Z_a-z0-9]+)$/', $key) === 1;
     }
 }
