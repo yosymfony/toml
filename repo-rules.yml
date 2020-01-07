@@ -1,0 +1,16 @@
+config:
+  source:
+    path: "src/"
+  test:
+    path: "tests/"
+
+rules:
+  - rule: "All modified code files must have an associated test file"
+    mandatory: true
+    conditions:
+      - all(plugins.get('github').code, plugins.get('github').test, 'code,test -> test.filename == code.filename')     
+
+  - rule: "All commit messages must be between 5 and 100 characters"
+    mandatory: false
+    conditions:
+      - every(plugins.get('github').prCommits, 'x -> x.message.length() >= 5 && x.message.length() <= 100')
