@@ -373,7 +373,13 @@ class TomlBuilder
 
     private function dumpFloat(float $val) : string
     {
-        return strval($val);
+        $result = strval($val);
+
+        if ($val == floor($val)) {
+            $result .= '.0';
+        }
+
+        return $result;
     }
 
     private function isStringValid(string $val) : bool
