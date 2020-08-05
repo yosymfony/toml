@@ -108,53 +108,54 @@ You can create a TOML string with TomlBuilder. TomlBuilder uses a *fluent interf
 ```
 The result:
 
-    #Toml file
+```toml
+#Toml file
 
-    [data.string]
-    name = "Toml" #This is your name
-    newline = "This string has a \n new line character."
-    winPath = "C:\\Users\\nodejs\\templates"
-    literal = '<\i\c*\s*>'
-    unicode = "unicode character: δ"
+[data.string]
+name = "Toml" #This is your name
+newline = "This string has a \n new line character."
+winPath = "C:\\Users\\nodejs\\templates"
+literal = '<\i\c*\s*>'
+unicode = "unicode character: δ"
 
-    [data.bool]
-    t = true
-    f = false
+[data.bool]
+t = true
+f = false
 
-    [data.integer]
-    positive = 25 #Comment inline.
-    negative = -25
+[data.integer]
+positive = 25 #Comment inline.
+negative = -25
 
-    [data.float]
-    positive = 25.25
-    negative = -25.25
+[data.float]
+positive = 25.25
+negative = -25.25
 
-    [data.datetime]
-    datetime = 2013-06-10T21:12:48Z
+[data.datetime]
+datetime = 2013-06-10T21:12:48Z
 
-    #Related to arrays
+#Related to arrays
 
-    [data.array]
-    simple = [1, 2, 3]
-    multiple = [[1, 2], ["abc", "def"], [1.1, 1.2], [true, false], [2013-06-10T21:12:48Z]]
+[data.array]
+simple = [1, 2, 3]
+multiple = [[1, 2], ["abc", "def"], [1.1, 1.2], [true, false], [2013-06-10T21:12:48Z]]
 
-    # Array of tables
+# Array of tables
 
-    [[fruit]]
-        name = "apple"
+[[fruit]]
+name = "apple"
 
-        [[fruit.variety]]
-            name = "red delicious"
+[[fruit.variety]]
+name = "red delicious"
 
-        [[fruit.variety]]
-            name = "granny smith"
+[[fruit.variety]]
+name = "granny smith"
 
-    [[fruit]]
-        name = "banana"
+[[fruit]]
+name = "banana"
 
-        [[fruit.variety]]
-        name = "plantain"
-
+[[fruit.variety]]
+name = "plantain"
+```
 #### Limitations
 The `TomlBuilder` class is an utility to get Toml strings that has the following limitations:
 * Only admits `basic strings` and `literal strings`.
