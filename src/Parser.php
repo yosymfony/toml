@@ -578,7 +578,7 @@ class Parser extends AbstractParser
         throw new SyntaxErrorException($msg);
     }
 
-    private function syntaxError($msg, Token $token = null) : void
+    private function syntaxError($msg, ?Token $token = null) : void
     {
         if ($token !== null) {
             $name = $token->getName();
